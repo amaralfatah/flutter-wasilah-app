@@ -162,7 +162,7 @@ class MockPortfolioRepository implements PortfolioRepository {
     ),
   ];
 
-  final List<AllocationTarget> _targets = const [
+  final List<AllocationTarget> _targets = [
     AllocationTarget(
       id: 'target-crypto',
       category: AssetCategory.crypto,
@@ -204,6 +204,58 @@ class MockPortfolioRepository implements PortfolioRepository {
   Future<List<Asset>> getAssets() async {
     await _wait();
     return _assets.toList(growable: false);
+  }
+
+  @override
+  Future<void> createAsset(Asset asset) async {
+    await _wait();
+
+    if (_assets.any((item) => item.id == asset.id)) {
+      throw StateError('Asset sudah ada.');
+    }
+
+    _assets.add(asset);
+    final history = _assetHistories.putIfAbsent(
+      asset.id,
+      () => <AssetSnapshot>[],
+    );
+    _replaceSnapshot(
+      history,
+      AssetSnapshot(
+        id: '${asset.id}-${asset.lastUpdatedAt.microsecondsSinceEpoch}',
+        assetId: asset.id,
+        totalValue: asset.currentValue,
+        recordedAt: asset.lastUpdatedAt,
+      ),
+    );
+    _recalculateAllocations();
+    _replacePortfolioSnapshot(asset.lastUpdatedAt);
+  }
+
+  @override
+  Future<void> updateAsset(Asset asset) async {
+    await _wait();
+
+    final assetIndex = _assets.indexWhere((item) => item.id == asset.id);
+    if (assetIndex == -1) {
+      throw StateError('Asset tidak ditemukan.');
+    }
+
+    final existing = _assets[assetIndex];
+    _assets[assetIndex] = existing.copyWith(
+      name: asset.name,
+      code: asset.code,
+      category: asset.category,
+    );
+  }
+
+  @override
+  Future<void> deleteAsset(String assetId) async {
+    await _wait();
+
+    _assets.removeWhere((asset) => asset.id == assetId);
+    _assetHistories.remove(assetId);
+    _recalculateAllocations();
   }
 
   @override
@@ -257,8 +309,8 @@ class MockPortfolioRepository implements PortfolioRepository {
       assetId,
       () => <AssetSnapshot>[],
     );
-    history.insert(
-      0,
+    _replaceSnapshot(
+      history,
       AssetSnapshot(
         id: '$assetId-${recordedAt.microsecondsSinceEpoch}',
         assetId: assetId,
@@ -270,24 +322,31 @@ class MockPortfolioRepository implements PortfolioRepository {
 
     _recalculateAllocations();
 
-    final total = _currentTotalValue;
-    final previousPortfolioTotal =
-        _portfolioHistory.firstOrNull?.totalValue ?? total;
+    _replacePortfolioSnapshot(recordedAt, note: note);
 
-    _portfolioHistory.insert(
-      0,
-      AssetSnapshot(
-        id: 'portfolio-${recordedAt.microsecondsSinceEpoch}',
-        assetId: 'portfolio',
-        totalValue: total,
-        recordedAt: recordedAt,
-        note: note,
-      ),
+    _monthlyChangePercentage = _calculateMonthlyChange(_portfolioHistory);
+    _targetProgressPercentage = _estimateTargetProgress();
+  }
+
+  @override
+  Future<void> saveAllocationTarget(AllocationTarget target) async {
+    await _wait();
+
+    _targets.removeWhere(
+      (item) => item.id == target.id || item.category == target.category,
     );
+    _targets.add(target);
+    _targets.sort(
+      (left, right) => left.category.index.compareTo(right.category.index),
+    );
+    _targetProgressPercentage = _estimateTargetProgress();
+  }
 
-    _monthlyChangePercentage = previousPortfolioTotal == 0
-        ? 0
-        : ((total - previousPortfolioTotal) / previousPortfolioTotal) * 100;
+  @override
+  Future<void> deleteAllocationTarget(String targetId) async {
+    await _wait();
+
+    _targets.removeWhere((target) => target.id == targetId);
     _targetProgressPercentage = _estimateTargetProgress();
   }
 
@@ -329,6 +388,45 @@ class MockPortfolioRepository implements PortfolioRepository {
         allocationPercentage: (asset.currentValue / total) * 100,
       );
     }
+  }
+
+  void _replaceSnapshot(List<AssetSnapshot> snapshots, AssetSnapshot snapshot) {
+    snapshots.removeWhere(
+      (item) =>
+          item.assetId == snapshot.assetId &&
+          item.recordedAt == snapshot.recordedAt,
+    );
+    snapshots.add(snapshot);
+    snapshots.sort(
+      (left, right) => right.recordedAt.compareTo(left.recordedAt),
+    );
+  }
+
+  void _replacePortfolioSnapshot(DateTime recordedAt, {String? note}) {
+    _replaceSnapshot(
+      _portfolioHistory,
+      AssetSnapshot(
+        id: 'portfolio-${recordedAt.microsecondsSinceEpoch}',
+        assetId: 'portfolio',
+        totalValue: _currentTotalValue,
+        recordedAt: recordedAt,
+        note: note,
+      ),
+    );
+  }
+
+  double _calculateMonthlyChange(List<AssetSnapshot> history) {
+    if (history.length < 2) {
+      return 0;
+    }
+
+    final latest = history.first.totalValue;
+    final previous = history[1].totalValue;
+    if (previous == 0) {
+      return 0;
+    }
+
+    return ((latest - previous) / previous) * 100;
   }
 
   Future<void> _wait() => Future<void>.delayed(simulatedDelay);

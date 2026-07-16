@@ -10,8 +10,10 @@ import 'package:flutter_wasilah_app/core/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/core/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/core/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/core/widgets/section_header.dart';
+import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 
 class PortfolioHistoryPage extends ConsumerStatefulWidget {
   const PortfolioHistoryPage({super.key});
@@ -27,6 +29,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final historyValue = ref.watch(portfolioHistoryProvider);
+    final targetItems = ref.watch(targetAllocationItemsProvider).asData?.value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Histori')),
@@ -98,6 +101,10 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                if (targetItems != null) ...[
+                  _HistoryInsightCard(items: targetItems),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
                 const SectionHeader(title: 'Pergerakan nilai'),
                 const SizedBox(height: AppSpacing.md),
                 if (filteredHistory.isEmpty)
@@ -205,4 +212,96 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
 
     return Theme.of(context).colorScheme.onSurfaceVariant;
   }
+}
+
+class _HistoryInsightCard extends StatelessWidget {
+  const _HistoryInsightCard({required this.items});
+
+  final List<TargetAllocationData> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final insight = _buildInsight();
+
+    return AppCard(
+      backgroundColor: colorScheme.secondaryContainer,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(insight.icon, color: colorScheme.onSecondaryContainer),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Insight saat ini',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  insight.message,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _HistoryInsight _buildInsight() {
+    if (items.isEmpty) {
+      return const _HistoryInsight(
+        icon: Icons.insights_outlined,
+        message: 'Belum ada data target untuk disorot pada histori portofolio.',
+      );
+    }
+
+    final sortedItems = [...items]
+      ..sort(
+        (left, right) => right.differencePercentage.abs().compareTo(
+          left.differencePercentage.abs(),
+        ),
+      );
+
+    final topItem = sortedItems.first;
+    final difference = topItem.differencePercentage.abs().toStringAsFixed(0);
+
+    switch (topItem.status) {
+      case TargetStatus.onTrack:
+        return const _HistoryInsight(
+          icon: Icons.check_circle_outline,
+          message:
+              'Komposisi portofolio saat ini sudah paling dekat dengan target. Lanjutkan pencatatan rutin untuk memantau perubahan berikutnya.',
+        );
+      case TargetStatus.below:
+        return _HistoryInsight(
+          icon: Icons.trending_up,
+          message:
+              '${topItem.category.label} masih $difference% di bawah target. Pertimbangkan penambahan pada kategori ini agar alokasi kembali seimbang.',
+        );
+      case TargetStatus.above:
+        return _HistoryInsight(
+          icon: Icons.balance_outlined,
+          message:
+              '${topItem.category.label} berada $difference% di atas target. Pertimbangkan penambahan pada kategori lain agar komposisi kembali seimbang.',
+        );
+    }
+  }
+}
+
+class _HistoryInsight {
+  const _HistoryInsight({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
 }

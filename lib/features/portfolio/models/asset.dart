@@ -4,6 +4,8 @@ enum AssetCategory {
   crypto,
   stock,
   mutualFund,
+  indexEtf,
+  preciousMetal,
   cash,
   other,
 }
@@ -17,6 +19,10 @@ extension AssetCategoryX on AssetCategory {
         return 'Saham';
       case AssetCategory.mutualFund:
         return 'Reksa Dana';
+      case AssetCategory.indexEtf:
+        return 'Indeks / ETF';
+      case AssetCategory.preciousMetal:
+        return 'Logam Mulia';
       case AssetCategory.cash:
         return 'Kas';
       case AssetCategory.other:
@@ -105,12 +111,12 @@ class Asset {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        code,
-        category,
-        currentValue,
-        allocationPercentage,
-        lastUpdatedAt,
-      );
+    id,
+    name,
+    code,
+    category,
+    currentValue,
+    allocationPercentage,
+    lastUpdatedAt,
+  );
 }

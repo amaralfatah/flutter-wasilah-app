@@ -12,11 +12,13 @@ class AssetListItem extends StatelessWidget {
     required this.asset,
     this.onTap,
     this.showCategory = true,
+    this.showUpdatedAt = true,
   });
 
   final Asset asset;
   final VoidCallback? onTap;
   final bool showCategory;
+  final bool showUpdatedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +39,7 @@ class AssetListItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showCategory) Text(asset.category.label),
-            Text('Diperbarui ${formatFullDate(asset.lastUpdatedAt)}'),
+            if (showUpdatedAt) Text('Diperbarui ${formatFullDate(asset.lastUpdatedAt)}'),
           ],
         ),
       ),

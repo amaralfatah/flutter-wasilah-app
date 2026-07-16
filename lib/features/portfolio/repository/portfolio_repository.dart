@@ -10,6 +10,12 @@ abstract interface class PortfolioRepository {
 
   Future<Asset?> getAssetById(String assetId);
 
+  Future<void> createAsset(Asset asset);
+
+  Future<void> updateAsset(Asset asset);
+
+  Future<void> deleteAsset(String assetId);
+
   Future<List<AssetSnapshot>> getPortfolioHistory();
 
   Future<List<AssetSnapshot>> getAssetHistory(String assetId);
@@ -22,4 +28,8 @@ abstract interface class PortfolioRepository {
   });
 
   Future<List<AllocationTarget>> getAllocationTargets();
+
+  Future<void> saveAllocationTarget(AllocationTarget target);
+
+  Future<void> deleteAllocationTarget(String targetId);
 }

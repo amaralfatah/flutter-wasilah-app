@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/core/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/core/widgets/app_primary_button.dart';
@@ -33,6 +33,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   void initState() {
     super.initState();
     _selectedAssetId = widget.assetId;
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
   }
 
   @override
@@ -93,7 +95,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                   keyboardType: TextInputType.number,
                   prefixText: 'Rp',
                   validator: validateCurrencyValue,
-                  inputFormatters: const [_RupiahInputFormatter()],
+                  inputFormatters: const [RupiahInputFormatter()],
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -270,29 +272,6 @@ class _PreviewRow extends StatelessWidget {
           ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
-    );
-  }
-}
-
-class _RupiahInputFormatter extends TextInputFormatter {
-  const _RupiahInputFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) {
-      return const TextEditingValue();
-    }
-
-    final formatted = formatCurrency(
-      double.parse(digits),
-    ).replaceFirst('Rp', '');
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

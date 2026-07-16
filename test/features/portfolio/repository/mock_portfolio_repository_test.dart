@@ -32,9 +32,42 @@ void main() {
       expect(afterBitcoin!.currentValue, 50000000);
       expect(afterBitcoin.lastUpdatedAt, DateTime(2026, 7, 15));
       expect(afterBitcoin.allocationPercentage, closeTo(57.6, 0.01));
-      expect(afterHistory, hasLength(3));
+      expect(afterHistory, hasLength(2));
       expect(afterHistory.first.totalValue, 50000000);
       expect(afterHistory.first.note, 'Update Juli');
+    },
+  );
+
+  test(
+    'updateAssetValue replaces same-day history with the latest value',
+    () async {
+      final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+      final recordedAt = DateTime(2026, 7, 16);
+
+      await repository.updateAssetValue(
+        assetId: 'btc',
+        totalValue: 20000000,
+        recordedAt: recordedAt,
+        note: 'Update pagi',
+      );
+
+      await repository.updateAssetValue(
+        assetId: 'btc',
+        totalValue: 21000000,
+        recordedAt: recordedAt,
+        note: 'Update sore',
+      );
+
+      final asset = await repository.getAssetById('btc');
+      final history = await repository.getAssetHistory('btc');
+
+      expect(asset, isNotNull);
+      expect(asset!.currentValue, 21000000);
+      expect(asset.lastUpdatedAt, recordedAt);
+      expect(history, hasLength(3));
+      expect(history.first.recordedAt, recordedAt);
+      expect(history.first.totalValue, 21000000);
+      expect(history.first.note, 'Update sore');
     },
   );
 }

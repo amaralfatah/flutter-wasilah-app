@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
+import 'package:flutter_wasilah_app/core/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/asset_list_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/portfolio_history_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/settings/pages/settings_page.dart';
+import 'package:flutter_wasilah_app/features/target/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/pages/target_page.dart';
 
 void main() {
@@ -39,6 +43,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RefreshIndicator), findsOneWidget);
+    expect(find.text('Insight saat ini'), findsOneWidget);
   });
 
   testWidgets('asset list uses pull-to-refresh for top-level content', (
@@ -54,6 +59,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RefreshIndicator), findsOneWidget);
+    expect(_scrollPadding(tester).bottom, greaterThan(AppSpacing.xl));
   });
 
   testWidgets('target page uses Material chips for allocation status', (
@@ -70,6 +76,30 @@ void main() {
 
     expect(find.byType(RefreshIndicator), findsOneWidget);
     expect(find.byType(Chip), findsWidgets);
+    expect(_scrollPadding(tester).bottom, greaterThan(AppSpacing.xl));
+  });
+
+  testWidgets('target form follows the same Material pattern as asset form', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        child: const TargetFormPage(targetId: 'target-crypto'),
+        repository: MockPortfolioRepository(simulatedDelay: Duration.zero),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppPrimaryButton), findsOneWidget);
+    expect(find.text('Simpan Perubahan'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Hapus target'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<AssetCategory>));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Logam Mulia'), findsOneWidget);
+    expect(find.text('Indeks / ETF'), findsOneWidget);
   });
 
   testWidgets('settings uses the standard Material about dialog flow', (
@@ -83,11 +113,14 @@ void main() {
     );
 
     await tester.pumpAndSettle();
+    expect(find.text('Versi aplikasi'), findsOneWidget);
+    expect(find.text('Backup Google Drive'), findsOneWidget);
+    expect(find.text('Keluar'), findsOneWidget);
     await tester.tap(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
 
     expect(find.text('Wasilah'), findsOneWidget);
-    expect(find.text('1.0.0+1'), findsOneWidget);
+    expect(find.text('1.0.0+1'), findsWidgets);
   });
 }
 
@@ -114,4 +147,12 @@ class _FakePreferencesService implements PreferencesService {
   Future<void> writeThemeMode(ThemeMode mode) async {
     _themeMode = mode;
   }
+}
+
+EdgeInsets _scrollPadding(WidgetTester tester) {
+  final scrollView = tester.widget<SingleChildScrollView>(
+    find.byType(SingleChildScrollView),
+  );
+
+  return scrollView.padding! as EdgeInsets;
 }

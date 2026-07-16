@@ -12,6 +12,13 @@ import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_provi
 import 'package:flutter_wasilah_app/features/portfolio/widgets/asset_list_item.dart';
 import 'package:go_router/go_router.dart';
 
+const _assetListPagePadding = EdgeInsets.fromLTRB(
+  AppSpacing.xl,
+  AppSpacing.xl,
+  AppSpacing.xl,
+  AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
+);
+
 class AssetListPage extends ConsumerWidget {
   const AssetListPage({super.key});
 
@@ -22,10 +29,11 @@ class AssetListPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Aset')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(RouteNames.assetUpdate),
-        icon: const Icon(Icons.add_chart_outlined),
-        label: const Text('Update nilai'),
-        tooltip: 'Update nilai aset',
+        heroTag: 'asset_list_create_asset_fab',
+        onPressed: () => context.push(RouteNames.assetCreate),
+        icon: const Icon(Icons.add_outlined),
+        label: const Text('Tambah aset'),
+        tooltip: 'Tambah aset',
       ),
       body: AsyncValueView(
         value: assetsValue,
@@ -34,9 +42,10 @@ class AssetListPage extends ConsumerWidget {
           if (assets.isEmpty) {
             return RefreshablePageBody(
               onRefresh: () => ref.refresh(assetListProvider.future),
+              padding: _assetListPagePadding,
               child: const AppEmptyState(
                 title: 'Belum ada aset',
-                message: 'Aset muncul setelah nilai pertama dicatat.',
+                message: 'Tambahkan aset pertama untuk mulai mencatat nilai.',
               ),
             );
           }
@@ -47,6 +56,7 @@ class AssetListPage extends ConsumerWidget {
 
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(assetListProvider.future),
+            padding: _assetListPagePadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -75,15 +85,19 @@ class AssetListPage extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.xl),
                 const SectionHeader(title: 'Daftar aset'),
                 const SizedBox(height: AppSpacing.md),
-                ...assets.map(
-                  (asset) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: AppCard(
-                      child: AssetListItem(
-                        asset: asset,
-                        onTap: () =>
-                            context.push('${RouteNames.assets}/${asset.id}'),
-                      ),
+                AppCard(
+                  child: Column(
+                    children: _assetItems(
+                      assets
+                          .map(
+                            (asset) => AssetListItem(
+                              asset: asset,
+                              onTap: () => context.push(
+                                '${RouteNames.assets}/${asset.id}',
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
                     ),
                   ),
                 ),
@@ -93,5 +107,18 @@ class AssetListPage extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  List<Widget> _assetItems(List<Widget> items) {
+    final widgets = <Widget>[];
+
+    for (var index = 0; index < items.length; index++) {
+      widgets.add(items[index]);
+      if (index < items.length - 1) {
+        widgets.add(const Divider(height: AppSpacing.xl));
+      }
+    }
+
+    return widgets;
   }
 }

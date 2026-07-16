@@ -10,6 +10,7 @@ class TargetAllocationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final progressValue = item.targetPercentage == 0
         ? 0.0
@@ -59,7 +60,18 @@ class TargetAllocationItem extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          LinearProgressIndicator(value: progressValue),
+          Semantics(
+            label: 'Progres alokasi ${item.category.label}',
+            value:
+                'Aktual ${_formatPercentage(item.actualPercentage)} dari target ${_formatPercentage(item.targetPercentage)}',
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: 8,
+              borderRadius: BorderRadius.circular(999),
+              color: item.statusColor,
+              backgroundColor: colorScheme.surfaceContainerHighest,
+            ),
+          ),
         ],
       ),
     );

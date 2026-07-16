@@ -8,12 +8,14 @@ enum TargetStatus { onTrack, below, above }
 
 class TargetAllocationData {
   const TargetAllocationData({
+    required this.id,
     required this.category,
     required this.targetPercentage,
     required this.actualPercentage,
     required this.status,
   });
 
+  final String id;
   final AssetCategory category;
   final double targetPercentage;
   final double actualPercentage;
@@ -25,9 +27,9 @@ class TargetAllocationData {
       case TargetStatus.onTrack:
         return 'Sesuai target';
       case TargetStatus.below:
-        return 'Kurang';
+        return 'Di bawah target';
       case TargetStatus.above:
-        return 'Berlebih';
+        return 'Di atas target';
     }
   }
 
@@ -63,6 +65,7 @@ final targetAllocationItemsProvider =
             final difference = actual - target.targetPercentage;
 
             return TargetAllocationData(
+              id: target.id,
               category: target.category,
               targetPercentage: target.targetPercentage,
               actualPercentage: actual,

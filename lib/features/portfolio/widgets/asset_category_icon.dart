@@ -26,6 +26,10 @@ class AssetCategoryIcon extends StatelessWidget {
         return Icons.show_chart;
       case AssetCategory.mutualFund:
         return Icons.pie_chart_outline;
+      case AssetCategory.indexEtf:
+        return Icons.stacked_line_chart;
+      case AssetCategory.preciousMetal:
+        return Icons.diamond_outlined;
       case AssetCategory.cash:
         return Icons.account_balance_wallet_outlined;
       case AssetCategory.other:

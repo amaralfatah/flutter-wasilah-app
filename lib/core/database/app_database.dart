@@ -13,7 +13,7 @@ class AppDatabase extends GeneratedDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
@@ -55,6 +55,13 @@ class AppDatabase extends GeneratedDatabase {
         CREATE INDEX asset_snapshots_asset_recorded_idx
         ON asset_snapshots (asset_id, recorded_at DESC);
       ''');
+    },
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await customStatement('DELETE FROM asset_snapshots');
+        await customStatement('DELETE FROM assets');
+        await customStatement('DELETE FROM allocation_targets');
+      }
     },
   );
 }

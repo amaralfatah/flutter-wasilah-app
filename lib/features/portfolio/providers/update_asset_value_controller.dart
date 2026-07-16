@@ -6,8 +6,8 @@ import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_provi
 
 final updateAssetValueControllerProvider =
     AsyncNotifierProvider<UpdateAssetValueController, void>(
-  UpdateAssetValueController.new,
-);
+      UpdateAssetValueController.new,
+    );
 
 class UpdateAssetValueController extends AsyncNotifier<void> {
   @override
@@ -36,7 +36,9 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
     state = const AsyncLoading();
 
     try {
-      await ref.read(portfolioRepositoryProvider).updateAssetValue(
+      await ref
+          .read(portfolioRepositoryProvider)
+          .updateAssetValue(
             assetId: assetId,
             totalValue: totalValue,
             recordedAt: recordedAt,

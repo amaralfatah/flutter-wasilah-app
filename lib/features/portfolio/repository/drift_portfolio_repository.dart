@@ -10,18 +10,15 @@ class DriftPortfolioRepository implements PortfolioRepository {
   DriftPortfolioRepository(this._database);
 
   final AppDatabase _database;
-  Future<void>? _initialization;
 
   @override
   Future<List<AllocationTarget>> getAllocationTargets() async {
     await _ensureInitialized();
-    final rows = await _database.customSelect(
-      '''
+    final rows = await _database.customSelect('''
       SELECT id, category, target_percentage
       FROM allocation_targets
       ORDER BY category ASC
-      ''',
-    ).get();
+      ''').get();
 
     return rows
         .map(
@@ -32,21 +29,25 @@ class DriftPortfolioRepository implements PortfolioRepository {
           ),
         )
         .toList(growable: false)
-      ..sort((left, right) => left.category.index.compareTo(right.category.index));
+      ..sort(
+        (left, right) => left.category.index.compareTo(right.category.index),
+      );
   }
 
   @override
   Future<Asset?> getAssetById(String assetId) async {
     await _ensureInitialized();
-    final row = await _database.customSelect(
-      '''
+    final row = await _database
+        .customSelect(
+          '''
       SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at
       FROM assets
       WHERE id = ?
       LIMIT 1
       ''',
-      variables: [Variable.withString(assetId)],
-    ).getSingleOrNull();
+          variables: [Variable.withString(assetId)],
+        )
+        .getSingleOrNull();
 
     return row == null ? null : _mapAsset(row);
   }
@@ -54,29 +55,96 @@ class DriftPortfolioRepository implements PortfolioRepository {
   @override
   Future<List<Asset>> getAssets() async {
     await _ensureInitialized();
-    final rows = await _database.customSelect(
-      '''
+    final rows = await _database.customSelect('''
       SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at
       FROM assets
       ORDER BY current_value DESC, name ASC
-      ''',
-    ).get();
+      ''').get();
 
     return rows.map(_mapAsset).toList(growable: false);
   }
 
   @override
+  Future<void> createAsset(Asset asset) async {
+    await _ensureInitialized();
+
+    await _database.transaction(() async {
+      await _database.customStatement(
+        '''
+        INSERT INTO assets (
+          id, name, code, category, current_value, allocation_percentage, last_updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          asset.id,
+          asset.name,
+          asset.code,
+          asset.category.name,
+          asset.currentValue,
+          asset.allocationPercentage,
+          _dateToSql(asset.lastUpdatedAt),
+        ],
+      );
+
+      await _saveSnapshot(
+        assetId: asset.id,
+        totalValue: asset.currentValue,
+        recordedAt: asset.lastUpdatedAt,
+      );
+      await _recalculateAllocations();
+      await _savePortfolioSnapshot(asset.lastUpdatedAt);
+    });
+  }
+
+  @override
+  Future<void> updateAsset(Asset asset) async {
+    await _ensureInitialized();
+
+    await _database.customUpdate(
+      '''
+      UPDATE assets
+      SET name = ?, code = ?, category = ?
+      WHERE id = ?
+      ''',
+      variables: [
+        Variable.withString(asset.name),
+        Variable.withString(asset.code),
+        Variable.withString(asset.category.name),
+        Variable.withString(asset.id),
+      ],
+    );
+  }
+
+  @override
+  Future<void> deleteAsset(String assetId) async {
+    await _ensureInitialized();
+
+    await _database.transaction(() async {
+      await _database.customStatement(
+        'DELETE FROM asset_snapshots WHERE asset_id = ?',
+        [assetId],
+      );
+      await _database.customStatement('DELETE FROM assets WHERE id = ?', [
+        assetId,
+      ]);
+      await _recalculateAllocations();
+    });
+  }
+
+  @override
   Future<List<AssetSnapshot>> getAssetHistory(String assetId) async {
     await _ensureInitialized();
-    final rows = await _database.customSelect(
-      '''
+    final rows = await _database
+        .customSelect(
+          '''
       SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note
       FROM asset_snapshots
       WHERE asset_id = ?
       ORDER BY recorded_at DESC, row_id DESC
       ''',
-      variables: [Variable.withString(assetId)],
-    ).get();
+          variables: [Variable.withString(assetId)],
+        )
+        .get();
 
     return rows.map(_mapSnapshot).toList(growable: false);
   }
@@ -96,9 +164,11 @@ class DriftPortfolioRepository implements PortfolioRepository {
       0,
       (sum, asset) => sum + asset.currentValue,
     );
-    final lastUpdatedAt = assets
-        .map((asset) => asset.lastUpdatedAt)
-        .reduce((latest, next) => latest.isAfter(next) ? latest : next);
+    final lastUpdatedAt = assets.isEmpty
+        ? DateTime.fromMillisecondsSinceEpoch(0)
+        : assets
+              .map((asset) => asset.lastUpdatedAt)
+              .reduce((latest, next) => latest.isAfter(next) ? latest : next);
 
     return PortfolioSummary(
       totalValue: totalValue,
@@ -137,18 +207,11 @@ class DriftPortfolioRepository implements PortfolioRepository {
         ],
       );
 
-      await _database.customStatement(
-        '''
-        INSERT INTO asset_snapshots (id, asset_id, total_value, recorded_at, note)
-        VALUES (?, ?, ?, ?, ?)
-        ''',
-        [
-          _buildSnapshotId(assetId, recordedAt),
-          assetId,
-          totalValue,
-          _dateToSql(recordedAt),
-          note,
-        ],
+      await _saveSnapshot(
+        assetId: assetId,
+        totalValue: totalValue,
+        recordedAt: recordedAt,
+        note: note,
       );
 
       final assets = await getAssets();
@@ -157,94 +220,78 @@ class DriftPortfolioRepository implements PortfolioRepository {
         (sum, asset) => sum + asset.currentValue,
       );
 
-      for (final asset in assets) {
-        final allocationPercentage = portfolioTotal == 0
-            ? 0.0
-            : (asset.currentValue / portfolioTotal) * 100;
-        await _database.customStatement(
-          'UPDATE assets SET allocation_percentage = ? WHERE id = ?',
-          [allocationPercentage, asset.id],
-        );
-      }
+      await _recalculateAllocations();
 
-      await _database.customStatement(
-        '''
-        INSERT INTO asset_snapshots (id, asset_id, total_value, recorded_at, note)
-        VALUES (?, ?, ?, ?, ?)
-        ''',
-        [
-          _buildSnapshotId(_portfolioAssetId, recordedAt),
-          _portfolioAssetId,
-          portfolioTotal,
-          _dateToSql(recordedAt),
-          note,
-        ],
+      await _saveSnapshot(
+        assetId: _portfolioAssetId,
+        totalValue: portfolioTotal,
+        recordedAt: recordedAt,
+        note: note,
       );
     });
   }
 
-  Future<void> _ensureInitialized() {
-    return _initialization ??= _seedIfNeeded();
-  }
-
-  Future<void> _seedIfNeeded() async {
-    final existing = await _database.customSelect(
-      'SELECT id FROM assets LIMIT 1',
-    ).getSingleOrNull();
-    if (existing != null) {
-      return;
-    }
+  @override
+  Future<void> saveAllocationTarget(AllocationTarget target) async {
+    await _ensureInitialized();
 
     await _database.transaction(() async {
-      for (final asset in _seedAssets) {
-        await _database.customStatement(
-          '''
-          INSERT INTO assets (
-            id, name, code, category, current_value, allocation_percentage, last_updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          ''',
-          [
-            asset.id,
-            asset.name,
-            asset.code,
-            asset.category.name,
-            asset.currentValue,
-            asset.allocationPercentage,
-            _dateToSql(asset.lastUpdatedAt),
-          ],
-        );
-      }
-
-      for (final snapshot in _seedSnapshots) {
-        await _database.customStatement(
-          '''
-          INSERT INTO asset_snapshots (id, asset_id, total_value, recorded_at, note)
-          VALUES (?, ?, ?, ?, ?)
-          ''',
-          [
-            snapshot.id,
-            snapshot.assetId,
-            snapshot.totalValue,
-            _dateToSql(snapshot.recordedAt),
-            snapshot.note,
-          ],
-        );
-      }
-
-      for (final target in _seedTargets) {
-        await _database.customStatement(
-          '''
-          INSERT INTO allocation_targets (id, category, target_percentage)
-          VALUES (?, ?, ?)
-          ''',
-          [
-            target.id,
-            target.category.name,
-            target.targetPercentage,
-          ],
-        );
-      }
+      await _database.customStatement(
+        'DELETE FROM allocation_targets WHERE id = ? OR category = ?',
+        [target.id, target.category.name],
+      );
+      await _database.customStatement(
+        '''
+        INSERT INTO allocation_targets (id, category, target_percentage)
+        VALUES (?, ?, ?)
+        ''',
+        [target.id, target.category.name, target.targetPercentage],
+      );
     });
+  }
+
+  @override
+  Future<void> deleteAllocationTarget(String targetId) async {
+    await _ensureInitialized();
+
+    await _database.customStatement(
+      'DELETE FROM allocation_targets WHERE id = ?',
+      [targetId],
+    );
+  }
+
+  Future<void> _ensureInitialized() async {}
+
+  Future<void> _recalculateAllocations() async {
+    final assets = await getAssets();
+    final portfolioTotal = assets.fold<double>(
+      0,
+      (sum, asset) => sum + asset.currentValue,
+    );
+
+    for (final asset in assets) {
+      final allocationPercentage = portfolioTotal == 0
+          ? 0.0
+          : (asset.currentValue / portfolioTotal) * 100;
+      await _database.customStatement(
+        'UPDATE assets SET allocation_percentage = ? WHERE id = ?',
+        [allocationPercentage, asset.id],
+      );
+    }
+  }
+
+  Future<void> _savePortfolioSnapshot(DateTime recordedAt) async {
+    final assets = await getAssets();
+    final portfolioTotal = assets.fold<double>(
+      0,
+      (sum, asset) => sum + asset.currentValue,
+    );
+
+    await _saveSnapshot(
+      assetId: _portfolioAssetId,
+      totalValue: portfolioTotal,
+      recordedAt: recordedAt,
+    );
   }
 
   double _calculateMonthlyChange(List<AssetSnapshot> history) {
@@ -265,6 +312,10 @@ class DriftPortfolioRepository implements PortfolioRepository {
     List<Asset> assets,
     List<AllocationTarget> targets,
   ) {
+    if (assets.isEmpty || targets.isEmpty) {
+      return 0;
+    }
+
     final actualByCategory = <AssetCategory, double>{};
     for (final asset in assets) {
       actualByCategory.update(
@@ -305,6 +356,37 @@ class DriftPortfolioRepository implements PortfolioRepository {
       note: row.readNullable<String>('note'),
     );
   }
+
+  Future<void> _saveSnapshot({
+    required String assetId,
+    required double totalValue,
+    required DateTime recordedAt,
+    String? note,
+  }) async {
+    final recordedAtSql = _dateToSql(recordedAt);
+
+    await _database.customStatement(
+      '''
+      DELETE FROM asset_snapshots
+      WHERE asset_id = ? AND recorded_at = ?
+      ''',
+      [assetId, recordedAtSql],
+    );
+
+    await _database.customStatement(
+      '''
+      INSERT INTO asset_snapshots (id, asset_id, total_value, recorded_at, note)
+      VALUES (?, ?, ?, ?, ?)
+      ''',
+      [
+        _buildSnapshotId(assetId, recordedAt),
+        assetId,
+        totalValue,
+        recordedAtSql,
+        note,
+      ],
+    );
+  }
 }
 
 String _buildSnapshotId(String assetId, DateTime recordedAt) {
@@ -314,162 +396,3 @@ String _buildSnapshotId(String assetId, DateTime recordedAt) {
 int _dateToSql(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;
 
 const _portfolioAssetId = 'portfolio';
-
-final _seedAssets = <Asset>[
-  Asset(
-    id: 'btc',
-    name: 'Bitcoin',
-    code: 'BTC',
-    category: AssetCategory.crypto,
-    currentValue: 18200000,
-    allocationPercentage: 33.1,
-    lastUpdatedAt: DateTime(2026, 7, 15),
-  ),
-  Asset(
-    id: 'bmri',
-    name: 'Bank Mandiri',
-    code: 'BMRI',
-    category: AssetCategory.stock,
-    currentValue: 10700000,
-    allocationPercentage: 19.5,
-    lastUpdatedAt: DateTime(2026, 7, 15),
-  ),
-  Asset(
-    id: 'bbri',
-    name: 'Bank Rakyat Indonesia',
-    code: 'BBRI',
-    category: AssetCategory.stock,
-    currentValue: 10200000,
-    allocationPercentage: 18.6,
-    lastUpdatedAt: DateTime(2026, 7, 15),
-  ),
-  Asset(
-    id: 'rd',
-    name: 'Reksa Dana',
-    code: 'RDPT',
-    category: AssetCategory.mutualFund,
-    currentValue: 9300000,
-    allocationPercentage: 16.9,
-    lastUpdatedAt: DateTime(2026, 7, 14),
-  ),
-  Asset(
-    id: 'cash',
-    name: 'Kas',
-    code: 'CASH',
-    category: AssetCategory.cash,
-    currentValue: 6600000,
-    allocationPercentage: 12,
-    lastUpdatedAt: DateTime(2026, 7, 12),
-  ),
-];
-
-final _seedSnapshots = <AssetSnapshot>[
-  AssetSnapshot(
-    id: 'btc-20260715',
-    assetId: 'btc',
-    totalValue: 18200000,
-    recordedAt: DateTime(2026, 7, 15),
-    note: 'Rekap nilai Juli',
-  ),
-  AssetSnapshot(
-    id: 'btc-20260615',
-    assetId: 'btc',
-    totalValue: 17400000,
-    recordedAt: DateTime(2026, 6, 15),
-  ),
-  AssetSnapshot(
-    id: 'bmri-20260715',
-    assetId: 'bmri',
-    totalValue: 10700000,
-    recordedAt: DateTime(2026, 7, 15),
-  ),
-  AssetSnapshot(
-    id: 'bmri-20260615',
-    assetId: 'bmri',
-    totalValue: 10200000,
-    recordedAt: DateTime(2026, 6, 15),
-  ),
-  AssetSnapshot(
-    id: 'bbri-20260715',
-    assetId: 'bbri',
-    totalValue: 10200000,
-    recordedAt: DateTime(2026, 7, 15),
-  ),
-  AssetSnapshot(
-    id: 'bbri-20260615',
-    assetId: 'bbri',
-    totalValue: 9900000,
-    recordedAt: DateTime(2026, 6, 15),
-  ),
-  AssetSnapshot(
-    id: 'rd-20260714',
-    assetId: 'rd',
-    totalValue: 9300000,
-    recordedAt: DateTime(2026, 7, 14),
-  ),
-  AssetSnapshot(
-    id: 'rd-20260614',
-    assetId: 'rd',
-    totalValue: 9100000,
-    recordedAt: DateTime(2026, 6, 14),
-  ),
-  AssetSnapshot(
-    id: 'cash-20260712',
-    assetId: 'cash',
-    totalValue: 6600000,
-    recordedAt: DateTime(2026, 7, 12),
-  ),
-  AssetSnapshot(
-    id: 'cash-20260612',
-    assetId: 'cash',
-    totalValue: 6600000,
-    recordedAt: DateTime(2026, 6, 12),
-  ),
-  AssetSnapshot(
-    id: 'portfolio-20260715',
-    assetId: _portfolioAssetId,
-    totalValue: 55000000,
-    recordedAt: DateTime(2026, 7, 15),
-  ),
-  AssetSnapshot(
-    id: 'portfolio-20260615',
-    assetId: _portfolioAssetId,
-    totalValue: 53200000,
-    recordedAt: DateTime(2026, 6, 15),
-  ),
-  AssetSnapshot(
-    id: 'portfolio-20260515',
-    assetId: _portfolioAssetId,
-    totalValue: 51500000,
-    recordedAt: DateTime(2026, 5, 15),
-  ),
-  AssetSnapshot(
-    id: 'portfolio-20260415',
-    assetId: _portfolioAssetId,
-    totalValue: 49800000,
-    recordedAt: DateTime(2026, 4, 15),
-  ),
-];
-
-const _seedTargets = <AllocationTarget>[
-  AllocationTarget(
-    id: 'target-crypto',
-    category: AssetCategory.crypto,
-    targetPercentage: 35,
-  ),
-  AllocationTarget(
-    id: 'target-stock',
-    category: AssetCategory.stock,
-    targetPercentage: 40,
-  ),
-  AllocationTarget(
-    id: 'target-mutual-fund',
-    category: AssetCategory.mutualFund,
-    targetPercentage: 15,
-  ),
-  AllocationTarget(
-    id: 'target-cash',
-    category: AssetCategory.cash,
-    targetPercentage: 10,
-  ),
-];

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/app/router/route_names.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/asset_detail_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/asset_list_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/portfolio_history_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/update_asset_value_page.dart';
 import 'package:flutter_wasilah_app/features/settings/pages/settings_page.dart';
+import 'package:flutter_wasilah_app/features/target/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/pages/target_page.dart';
 import 'package:go_router/go_router.dart';
 
@@ -66,6 +68,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const UpdateAssetValuePage(),
       ),
       GoRoute(
+        path: RouteNames.assetCreate,
+        builder: (context, state) => const AssetFormPage(),
+      ),
+      GoRoute(
         path: '${RouteNames.assets}/:id',
         builder: (context, state) {
           final assetId = state.pathParameters['id']!;
@@ -79,7 +85,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return UpdateAssetValuePage(assetId: assetId);
             },
           ),
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) {
+              final assetId = state.pathParameters['id']!;
+              return AssetFormPage(assetId: assetId);
+            },
+          ),
         ],
+      ),
+      GoRoute(
+        path: RouteNames.targetCreate,
+        builder: (context, state) => const TargetFormPage(),
+      ),
+      GoRoute(
+        path: '${RouteNames.target}/:id/edit',
+        builder: (context, state) {
+          final targetId = state.pathParameters['id']!;
+          return TargetFormPage(targetId: targetId);
+        },
       ),
     ],
   );
