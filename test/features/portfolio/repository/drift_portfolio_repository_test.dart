@@ -203,6 +203,48 @@ void main() {
 
       expect(await repository.getAllocationTargets(), isEmpty);
     });
+
+    test(
+      'target progress stays above zero when targets exist but allocation is still imbalanced',
+      () async {
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.createAsset(
+          Asset(
+            id: 'bbri',
+            name: 'Bank Rakyat Indonesia',
+            code: 'BBRI',
+            category: AssetCategory.stock,
+            currentValue: 12000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 7, 16),
+          ),
+        );
+
+        await repository.saveAllocationTarget(
+          const AllocationTarget(
+            id: 'target-stock',
+            category: AssetCategory.stock,
+            targetPercentage: 50,
+          ),
+        );
+        await repository.saveAllocationTarget(
+          const AllocationTarget(
+            id: 'target-cash',
+            category: AssetCategory.cash,
+            targetPercentage: 50,
+          ),
+        );
+
+        final summary = await repository.getPortfolioSummary();
+
+        expect(summary.targetProgressPercentage, 50);
+      },
+    );
   });
 }
 

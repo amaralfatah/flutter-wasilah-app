@@ -370,7 +370,7 @@ class MockPortfolioRepository implements PortfolioRepository {
               .abs();
     }
 
-    return (100 - (totalDifference * 1.5)).clamp(0, 100).toDouble();
+    return (100 - (totalDifference / 2)).clamp(0, 100).toDouble();
   }
 
   void _recalculateAllocations() {
