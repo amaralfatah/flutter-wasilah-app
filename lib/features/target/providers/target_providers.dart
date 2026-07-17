@@ -4,6 +4,10 @@ import 'package:flutter_wasilah_app/app/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 
+/// Rebalancing band (percentage points). The industry rule of thumb is ±5pp:
+/// allocation drift within this band does not warrant action.
+const double _rebalanceTolerance = 5;
+
 enum TargetStatus { onTrack, below, above }
 
 class TargetAllocationData {
@@ -58,7 +62,7 @@ final targetAllocationItemsProvider =
               category: target.category,
               targetPercentage: target.targetPercentage,
               actualPercentage: actual,
-              status: difference.abs() <= 1
+              status: difference.abs() <= _rebalanceTolerance
                   ? TargetStatus.onTrack
                   : difference < 0
                   ? TargetStatus.below
