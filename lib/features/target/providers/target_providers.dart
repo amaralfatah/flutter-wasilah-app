@@ -31,6 +31,10 @@ class TargetAllocationData {
   final TargetStatus status;
   double get differencePercentage => actualPercentage - targetPercentage;
 
+  double get tolerance => _rebalanceTolerance(targetPercentage);
+  double get lowerBound => (targetPercentage - tolerance).clamp(0, 100);
+  double get upperBound => (targetPercentage + tolerance).clamp(0, 100);
+
   Color statusColor(BuildContext context) {
     switch (status) {
       case TargetStatus.onTrack:

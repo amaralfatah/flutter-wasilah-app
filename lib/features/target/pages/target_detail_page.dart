@@ -63,6 +63,8 @@ class TargetDetailPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppCard(child: TargetAllocationItem(item: item)),
+                const SizedBox(height: AppSpacing.md),
+                _ToleranceCard(item: item),
                 const SizedBox(height: AppSpacing.xl),
                 SectionHeader(title: 'Aset ${item.category.label}'),
                 const SizedBox(height: AppSpacing.md),
@@ -97,6 +99,44 @@ class TargetDetailPage extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ToleranceCard extends StatelessWidget {
+  const _ToleranceCard({required this.item});
+
+  final TargetAllocationData item;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    String percent(double value) =>
+        '${value.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')}%';
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Batas wajar', style: textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${percent(item.lowerBound)} - ${percent(item.upperBound)} '
+            '(toleransi ±${percent(item.tolerance)})',
+            style: textTheme.bodyLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Mengikuti aturan 5/25: penyesuaian baru diperlukan saat alokasi '
+            'melewati 5 poin persen atau 25% dari target, mana yang lebih kecil.',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
