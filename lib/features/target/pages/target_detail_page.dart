@@ -62,9 +62,23 @@ class TargetDetailPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppCard(child: TargetAllocationItem(item: item)),
-                const SizedBox(height: AppSpacing.md),
-                _ToleranceCard(item: item),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TargetAllocationItem(item: item),
+                      const SizedBox(height: AppSpacing.sm),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => _showToleranceInfo(context, item),
+                          icon: const Icon(Icons.info_outline, size: 18),
+                          label: const Text('Batas wajar'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 SectionHeader(title: 'Aset ${item.category.label}'),
                 const SizedBox(height: AppSpacing.md),
@@ -104,40 +118,42 @@ class TargetDetailPage extends ConsumerWidget {
   }
 }
 
-class _ToleranceCard extends StatelessWidget {
-  const _ToleranceCard({required this.item});
+String _formatPercent(double value) {
+  return '${value.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')}%';
+}
 
-  final TargetAllocationData item;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    String percent(double value) =>
-        '${value.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')}%';
-
-    return AppCard(
-      child: Column(
+Future<void> _showToleranceInfo(
+  BuildContext context,
+  TargetAllocationData item,
+) {
+  return showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Batas wajar'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Batas wajar', style: textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.xs),
           Text(
-            '${percent(item.lowerBound)} - ${percent(item.upperBound)} '
-            '(toleransi ±${percent(item.tolerance)})',
-            style: textTheme.bodyLarge,
+            '${_formatPercent(item.lowerBound)} - '
+            '${_formatPercent(item.upperBound)} '
+            '(toleransi ±${_formatPercent(item.tolerance)})',
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Mengikuti aturan 5/25: penyesuaian baru diperlukan saat alokasi '
             'melewati 5 poin persen atau 25% dari target, mana yang lebih kecil.',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),
-    );
-  }
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Tutup'),
+        ),
+      ],
+    ),
+  );
 }
