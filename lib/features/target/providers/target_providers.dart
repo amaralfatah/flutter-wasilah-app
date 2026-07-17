@@ -4,9 +4,14 @@ import 'package:flutter_wasilah_app/app/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 
-/// Rebalancing band (percentage points). The industry rule of thumb is ±5pp:
-/// allocation drift within this band does not warrant action.
-const double _rebalanceTolerance = 5;
+/// Rebalancing band per the industry "5/25 rule" (Swedroe): drift is
+/// acceptable up to the lesser of 5 percentage points absolute or 25%
+/// relative to the target, so small targets get a proportionally fair band.
+double _rebalanceTolerance(double targetPercentage) {
+  const absoluteBand = 5.0;
+  final relativeBand = targetPercentage * 0.25;
+  return relativeBand < absoluteBand ? relativeBand : absoluteBand;
+}
 
 enum TargetStatus { onTrack, below, above }
 
@@ -62,7 +67,9 @@ final targetAllocationItemsProvider =
               category: target.category,
               targetPercentage: target.targetPercentage,
               actualPercentage: actual,
-              status: difference.abs() <= _rebalanceTolerance
+              status:
+                  difference.abs() <=
+                      _rebalanceTolerance(target.targetPercentage)
                   ? TargetStatus.onTrack
                   : difference < 0
                   ? TargetStatus.below
