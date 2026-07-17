@@ -62,25 +62,12 @@ class TargetDetailPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TargetAllocationItem(item: item),
-                      const SizedBox(height: AppSpacing.sm),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: () => _showToleranceInfo(context, item),
-                          icon: const Icon(Icons.info_outline, size: 18),
-                          label: const Text('Batas wajar'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                AppCard(child: TargetAllocationItem(item: item)),
                 const SizedBox(height: AppSpacing.xl),
-                SectionHeader(title: 'Aset ${item.category.label}'),
+                SectionHeader(
+                  title: 'Aset ${item.category.label}',
+                  onInfoTap: () => _showToleranceInfo(context, item),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 if (categoryAssets.isEmpty)
                   const AppEmptyState(
