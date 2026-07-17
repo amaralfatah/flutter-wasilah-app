@@ -110,6 +110,11 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
   }
 
   @override
+  Future<void> deleteSnapshot(String snapshotId) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> saveAllocationTarget(AllocationTarget target) {
     throw UnimplementedError();
   }

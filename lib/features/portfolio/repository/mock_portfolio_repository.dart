@@ -222,7 +222,7 @@ class MockPortfolioRepository implements PortfolioRepository {
     _replaceSnapshot(
       history,
       AssetSnapshot(
-        id: '${asset.id}-${asset.lastUpdatedAt.microsecondsSinceEpoch}',
+        id: '${asset.id}-${asset.lastUpdatedAt.year}-${asset.lastUpdatedAt.month.toString().padLeft(2, '0')}',
         assetId: asset.id,
         totalValue: asset.currentValue,
         recordedAt: asset.lastUpdatedAt,
@@ -256,6 +256,14 @@ class MockPortfolioRepository implements PortfolioRepository {
     _assets.removeWhere((asset) => asset.id == assetId);
     _assetHistories.remove(assetId);
     _recalculateAllocations();
+
+    if (_assets.isNotEmpty) {
+      final lastUpdatedAt = _assets
+          .map((asset) => asset.lastUpdatedAt)
+          .reduce((latest, next) => latest.isAfter(next) ? latest : next);
+      _replacePortfolioSnapshot(lastUpdatedAt);
+      _monthlyChangePercentage = _calculateMonthlyChange(_portfolioHistory);
+    }
   }
 
   @override
@@ -270,6 +278,15 @@ class MockPortfolioRepository implements PortfolioRepository {
   Future<List<AssetSnapshot>> getPortfolioHistory() async {
     await _wait();
     return _portfolioHistory.toList(growable: false);
+  }
+
+  @override
+  Future<void> deleteSnapshot(String snapshotId) async {
+    await _wait();
+    _portfolioHistory.removeWhere((snapshot) => snapshot.id == snapshotId);
+    for (final history in _assetHistories.values) {
+      history.removeWhere((snapshot) => snapshot.id == snapshotId);
+    }
   }
 
   @override
@@ -312,7 +329,7 @@ class MockPortfolioRepository implements PortfolioRepository {
     _replaceSnapshot(
       history,
       AssetSnapshot(
-        id: '$assetId-${recordedAt.microsecondsSinceEpoch}',
+        id: '$assetId-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}',
         assetId: assetId,
         totalValue: totalValue,
         recordedAt: recordedAt,
@@ -394,7 +411,8 @@ class MockPortfolioRepository implements PortfolioRepository {
     snapshots.removeWhere(
       (item) =>
           item.assetId == snapshot.assetId &&
-          item.recordedAt == snapshot.recordedAt,
+          item.recordedAt.year == snapshot.recordedAt.year &&
+          item.recordedAt.month == snapshot.recordedAt.month,
     );
     snapshots.add(snapshot);
     snapshots.sort(
@@ -406,13 +424,35 @@ class MockPortfolioRepository implements PortfolioRepository {
     _replaceSnapshot(
       _portfolioHistory,
       AssetSnapshot(
-        id: 'portfolio-${recordedAt.microsecondsSinceEpoch}',
+        id: 'portfolio-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}',
         assetId: 'portfolio',
-        totalValue: _currentTotalValue,
+        totalValue: _historicalPortfolioTotal(recordedAt),
         recordedAt: recordedAt,
         note: note,
       ),
     );
+  }
+
+  /// Sums each asset's most recent recorded value at or before [asOf],
+  /// falling back to its current value when no snapshot exists yet.
+  double _historicalPortfolioTotal(DateTime asOf) {
+    var total = 0.0;
+
+    for (final asset in _assets) {
+      final history = _assetHistories[asset.id] ?? const <AssetSnapshot>[];
+      final atOrBefore = history.where(
+        (snapshot) => !snapshot.recordedAt.isAfter(asOf),
+      );
+      final latest = atOrBefore.isEmpty
+          ? null
+          : atOrBefore.reduce(
+              (a, b) => a.recordedAt.isAfter(b.recordedAt) ? a : b,
+            );
+
+      total += latest?.totalValue ?? asset.currentValue;
+    }
+
+    return total;
   }
 
   double _calculateMonthlyChange(List<AssetSnapshot> history) {

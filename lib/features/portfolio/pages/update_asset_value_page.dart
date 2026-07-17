@@ -26,6 +26,7 @@ class UpdateAssetValuePage extends ConsumerStatefulWidget {
 class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
+  final _noteController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedAssetId;
 
@@ -40,6 +41,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   @override
   void dispose() {
     _valueController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -49,7 +51,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     final submitState = ref.watch(updateAssetValueControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Update Nilai Aset')),
+      appBar: AppBar(title: const Text('Update nilai aset')),
       body: AsyncValueView(
         value: assetsValue,
         onRetry: () => ref.invalidate(assetListProvider),
@@ -64,11 +66,6 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
-                Text(
-                  'Catat total nilai aset hari ini.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: AppSpacing.xl),
                 DropdownButtonFormField<String>(
                   key: ValueKey(_selectedAssetId),
                   initialValue: _selectedAssetId,
@@ -110,7 +107,6 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                       onTap: submitState.isLoading
                           ? null
                           : () => _selectDate(context, field),
-                      borderRadius: BorderRadius.circular(16),
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Tanggal pencatatan',
@@ -135,14 +131,21 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                   },
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                AppTextField(
+                  label: 'Catatan (opsional)',
+                  controller: _noteController,
+                  maxLines: 2,
+                  maxLength: 200,
+                  validator: validateNote,
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Preview',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _PreviewRow(
@@ -205,6 +208,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             assetId: selectedAssetId,
             totalValue: parsedValue,
             recordedAt: selectedDate,
+            note: _noteController.text,
           );
 
       if (!mounted) {
@@ -265,12 +269,7 @@ class _PreviewRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(label)),
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-        ),
+        Text(value, style: Theme.of(context).textTheme.bodyLarge),
       ],
     );
   }

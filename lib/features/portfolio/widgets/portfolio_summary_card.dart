@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_radius.dart';
 import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/models/portfolio_summary.dart';
@@ -19,9 +18,6 @@ class PortfolioSummaryCard extends StatelessWidget {
     return Card(
       color: colorScheme.primaryContainer,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-      ),
       child: SizedBox(
         width: double.infinity,
         child: Padding(
@@ -40,7 +36,6 @@ class PortfolioSummaryCard extends StatelessWidget {
                 formatCurrency(summary.totalValue),
                 style: textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -56,7 +51,6 @@ class PortfolioSummaryCard extends StatelessWidget {
                     _changeLabel(change),
                     style: textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],

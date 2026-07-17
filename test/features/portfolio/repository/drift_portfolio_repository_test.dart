@@ -112,6 +112,69 @@ void main() {
       },
     );
 
+    test(
+      'backdated updates use each asset historical value, not its current value',
+      () async {
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.createAsset(
+          Asset(
+            id: 'btc',
+            name: 'Bitcoin',
+            code: 'BTC',
+            category: AssetCategory.crypto,
+            currentValue: 10000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 5, 1),
+          ),
+        );
+        await repository.createAsset(
+          Asset(
+            id: 'cash',
+            name: 'Kas',
+            code: 'CASH',
+            category: AssetCategory.cash,
+            currentValue: 5000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 5, 1),
+          ),
+        );
+
+        // Bring btc up to date across two more months.
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 12000000,
+          recordedAt: DateTime(2026, 6, 1),
+        );
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 15000000,
+          recordedAt: DateTime(2026, 7, 1),
+        );
+
+        final history = await repository.getPortfolioHistory();
+        final mayEntry = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 5, 1),
+        );
+        final juneEntry = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 6, 1),
+        );
+        final julyEntry = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 7, 1),
+        );
+
+        // Cash never changes, so each month's total should reflect btc's
+        // value at that point in time, not its final (July) value.
+        expect(mayEntry.totalValue, 15000000);
+        expect(juneEntry.totalValue, 17000000);
+        expect(julyEntry.totalValue, 20000000);
+      },
+    );
+
     test('creates, edits, and deletes assets', () async {
       final database = AppDatabase.forTesting(
         NativeDatabase.createInBackground(databaseFile),

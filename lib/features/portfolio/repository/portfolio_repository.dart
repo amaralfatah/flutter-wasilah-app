@@ -20,6 +20,8 @@ abstract interface class PortfolioRepository {
 
   Future<List<AssetSnapshot>> getAssetHistory(String assetId);
 
+  Future<void> deleteSnapshot(String snapshotId);
+
   Future<void> updateAssetValue({
     required String assetId,
     required double totalValue,

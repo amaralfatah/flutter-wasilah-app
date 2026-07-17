@@ -38,7 +38,7 @@ class AppErrorView extends StatelessWidget {
             if (onRetry != null) ...[
               const SizedBox(height: AppSpacing.lg),
               AppPrimaryButton(
-                label: 'Coba Lagi',
+                label: 'Coba lagi',
                 onPressed: onRetry,
                 isFullWidth: false,
               ),

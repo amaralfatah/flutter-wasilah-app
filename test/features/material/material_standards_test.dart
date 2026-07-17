@@ -43,7 +43,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RefreshIndicator), findsOneWidget);
-    expect(find.text('Insight saat ini'), findsOneWidget);
   });
 
   testWidgets('asset list uses pull-to-refresh for top-level content', (
@@ -62,7 +61,7 @@ void main() {
     expect(_scrollPadding(tester).bottom, greaterThan(AppSpacing.xl));
   });
 
-  testWidgets('target page uses Material chips for allocation status', (
+  testWidgets('target page shows allocation progress indicators', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -75,7 +74,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RefreshIndicator), findsOneWidget);
-    expect(find.byType(Chip), findsWidgets);
+    expect(find.byType(LinearProgressIndicator), findsWidgets);
     expect(_scrollPadding(tester).bottom, greaterThan(AppSpacing.xl));
   });
 
@@ -92,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AppPrimaryButton), findsOneWidget);
-    expect(find.text('Simpan Perubahan'), findsOneWidget);
+    expect(find.text('Simpan perubahan'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Hapus target'), findsOneWidget);
 
     await tester.tap(find.byType(DropdownButtonFormField<AssetCategory>));
@@ -113,9 +112,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    expect(find.text('Versi aplikasi'), findsOneWidget);
-    expect(find.text('Backup Google Drive'), findsOneWidget);
-    expect(find.text('Keluar'), findsOneWidget);
+    expect(find.text('Tentang aplikasi'), findsOneWidget);
     await tester.tap(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
 

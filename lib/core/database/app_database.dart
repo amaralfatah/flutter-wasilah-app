@@ -13,7 +13,7 @@ class AppDatabase extends GeneratedDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
@@ -61,6 +61,18 @@ class AppDatabase extends GeneratedDatabase {
         await customStatement('DELETE FROM asset_snapshots');
         await customStatement('DELETE FROM assets');
         await customStatement('DELETE FROM allocation_targets');
+      }
+      if (from < 3) {
+        // Keep only the latest snapshot per asset per month, dropping
+        // duplicates created before history was deduplicated by month.
+        await customStatement('''
+          DELETE FROM asset_snapshots
+          WHERE rowid NOT IN (
+            SELECT MAX(rowid)
+            FROM asset_snapshots
+            GROUP BY asset_id, strftime('%Y-%m', recorded_at, 'unixepoch')
+          );
+        ''');
       }
     },
   );

@@ -51,7 +51,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
 
           _populateFromTarget(target);
           return _TargetFormScaffold(
-            title: 'Edit Target',
+            title: 'Edit target',
             child: _buildForm(context, target),
           );
         },
@@ -61,7 +61,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
     }
 
     return _TargetFormScaffold(
-      title: 'Tambah Target',
+      title: 'Tambah target',
       child: _buildForm(context, null),
     );
   }
@@ -109,7 +109,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
           ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
-            label: _isEditing ? 'Simpan Perubahan' : 'Tambah Target',
+            label: _isEditing ? 'Simpan perubahan' : 'Tambah target',
             isLoading: submitState.isLoading,
             onPressed: () => _submit(editingTarget),
           ),
@@ -119,6 +119,9 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
               onPressed: submitState.isLoading
                   ? null
                   : () => _deleteTarget(editingTarget),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: const Text('Hapus target'),
             ),
           ],
@@ -209,7 +212,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Batal'),
           ),
-          FilledButton(
+          TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Hapus'),
           ),

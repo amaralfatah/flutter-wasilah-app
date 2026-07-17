@@ -128,6 +128,14 @@ class DriftPortfolioRepository implements PortfolioRepository {
         assetId,
       ]);
       await _recalculateAllocations();
+
+      final remainingAssets = await getAssets();
+      if (remainingAssets.isNotEmpty) {
+        final lastUpdatedAt = remainingAssets
+            .map((asset) => asset.lastUpdatedAt)
+            .reduce((latest, next) => latest.isAfter(next) ? latest : next);
+        await _savePortfolioSnapshot(lastUpdatedAt);
+      }
     });
   }
 
@@ -147,6 +155,15 @@ class DriftPortfolioRepository implements PortfolioRepository {
         .get();
 
     return rows.map(_mapSnapshot).toList(growable: false);
+  }
+
+  @override
+  Future<void> deleteSnapshot(String snapshotId) async {
+    await _ensureInitialized();
+    await _database.customStatement(
+      'DELETE FROM asset_snapshots WHERE id = ?',
+      [snapshotId],
+    );
   }
 
   @override
@@ -214,14 +231,9 @@ class DriftPortfolioRepository implements PortfolioRepository {
         note: note,
       );
 
-      final assets = await getAssets();
-      final portfolioTotal = assets.fold<double>(
-        0,
-        (sum, asset) => sum + asset.currentValue,
-      );
-
       await _recalculateAllocations();
 
+      final portfolioTotal = await _historicalPortfolioTotal(recordedAt);
       await _saveSnapshot(
         assetId: _portfolioAssetId,
         totalValue: portfolioTotal,
@@ -281,17 +293,42 @@ class DriftPortfolioRepository implements PortfolioRepository {
   }
 
   Future<void> _savePortfolioSnapshot(DateTime recordedAt) async {
-    final assets = await getAssets();
-    final portfolioTotal = assets.fold<double>(
-      0,
-      (sum, asset) => sum + asset.currentValue,
-    );
+    final portfolioTotal = await _historicalPortfolioTotal(recordedAt);
 
     await _saveSnapshot(
       assetId: _portfolioAssetId,
       totalValue: portfolioTotal,
       recordedAt: recordedAt,
     );
+  }
+
+  /// Sums each asset's most recent recorded value at or before [asOf],
+  /// falling back to its current value when no snapshot exists yet.
+  Future<double> _historicalPortfolioTotal(DateTime asOf) async {
+    final assets = await getAssets();
+    var total = 0.0;
+
+    for (final asset in assets) {
+      final row = await _database
+          .customSelect(
+            '''
+        SELECT total_value
+        FROM asset_snapshots
+        WHERE asset_id = ? AND recorded_at <= ?
+        ORDER BY recorded_at DESC
+        LIMIT 1
+        ''',
+            variables: [
+              Variable.withString(asset.id),
+              Variable.withInt(_dateToSql(asOf)),
+            ],
+          )
+          .getSingleOrNull();
+
+      total += row?.read<double>('total_value') ?? asset.currentValue;
+    }
+
+    return total;
   }
 
   double _calculateMonthlyChange(List<AssetSnapshot> history) {
@@ -368,7 +405,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     await _database.customStatement(
       '''
       DELETE FROM asset_snapshots
-      WHERE asset_id = ? AND recorded_at = ?
+      WHERE asset_id = ?
+        AND strftime('%Y-%m', recorded_at, 'unixepoch') = strftime('%Y-%m', ?, 'unixepoch')
       ''',
       [assetId, recordedAtSql],
     );
@@ -390,7 +428,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
 }
 
 String _buildSnapshotId(String assetId, DateTime recordedAt) {
-  return '$assetId-${recordedAt.microsecondsSinceEpoch}';
+  return '$assetId-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}';
 }
 
 int _dateToSql(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;

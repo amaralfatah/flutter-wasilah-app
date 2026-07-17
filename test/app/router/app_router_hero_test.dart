@@ -34,7 +34,7 @@ void main() {
     await tester.tap(find.text('Bitcoin'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Detail Aset'), findsOneWidget);
+    expect(find.text('Detail aset'), findsOneWidget);
     expect(find.byTooltip('Edit aset'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -28,10 +28,7 @@ class AssetListItem extends StatelessWidget {
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
       leading: AssetCategoryIcon(category: asset.category),
-      title: Text(
-        asset.name,
-        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-      ),
+      title: Text(asset.name, style: textTheme.titleMedium),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: AppSpacing.xs),
         child: Column(
@@ -43,25 +40,17 @@ class AssetListItem extends StatelessWidget {
           ],
         ),
       ),
-      trailing: Wrap(
-        spacing: AppSpacing.sm,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      trailing: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                formatCurrency(asset.currentValue),
-                style: textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              AllocationBadge(percentage: asset.allocationPercentage),
-            ],
+          Text(
+            formatCurrency(asset.currentValue),
+            style: textTheme.bodyLarge,
           ),
-          const Icon(Icons.chevron_right),
+          const SizedBox(height: AppSpacing.xs),
+          AllocationBadge(percentage: asset.allocationPercentage),
         ],
       ),
     );

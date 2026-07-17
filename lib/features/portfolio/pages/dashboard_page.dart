@@ -20,42 +20,9 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryValue = ref.watch(portfolioSummaryProvider);
     final targetsValue = ref.watch(allocationTargetProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Wasilah'),
-            Text(
-              'Selamat datang kembali',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
-            child: IconButton.filledTonal(
-              tooltip: 'Profil',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Halaman profil akan hadir pada pembaruan berikutnya.',
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.person_outline),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Wasilah')),
       body: AsyncValueView(
         value: summaryValue,
         onRetry: () => ref.invalidate(portfolioSummaryProvider),
@@ -75,24 +42,19 @@ class DashboardPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Pantau nilai portofolio, progres target, dan aset utama dalam satu tampilan.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: AppSpacing.lg),
                 PortfolioSummaryCard(summary: summary),
                 const SizedBox(height: AppSpacing.lg),
                 targetsValue.maybeWhen(
                   data: (targets) {
                     if (targets.isEmpty) {
                       return AppCard(
+                        onTap: () => context.go(RouteNames.target),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Belum ada target alokasi',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
@@ -106,10 +68,12 @@ class DashboardPage extends ConsumerWidget {
 
                     return TargetProgressCard(
                       percentage: summary.targetProgressPercentage,
+                      onTap: () => context.go(RouteNames.target),
                     );
                   },
                   orElse: () => TargetProgressCard(
                     percentage: summary.targetProgressPercentage,
+                    onTap: () => context.go(RouteNames.target),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),

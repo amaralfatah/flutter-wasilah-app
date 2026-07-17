@@ -9,11 +9,9 @@ import 'package:flutter_wasilah_app/core/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/core/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/core/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/core/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/core/widgets/section_header.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+import 'package:flutter_wasilah_app/features/portfolio/widgets/history_line_chart.dart';
 
 class PortfolioHistoryPage extends ConsumerStatefulWidget {
   const PortfolioHistoryPage({super.key});
@@ -29,7 +27,6 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final historyValue = ref.watch(portfolioHistoryProvider);
-    final targetItems = ref.watch(targetAllocationItemsProvider).asData?.value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Histori')),
@@ -62,51 +59,32 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Lihat perubahan total portofolio dari waktu ke waktu dan fokuskan ke tahun tertentu bila diperlukan.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                HistoryLineChart(history: filteredHistory.reversed.toList()),
+                if (filteredHistory.length > 1)
+                  const SizedBox(height: AppSpacing.xl),
+                if (years.length > 1) ...[
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
                     children: [
-                      Text(
-                        'Filter tahun',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ChoiceChip(
+                        label: const Text('Semua'),
+                        selected: _selectedYear == null,
+                        onSelected: (_) =>
+                            setState(() => _selectedYear = null),
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      Wrap(
-                        spacing: AppSpacing.sm,
-                        runSpacing: AppSpacing.sm,
-                        children: [
-                          ChoiceChip(
-                            label: const Text('Semua'),
-                            selected: _selectedYear == null,
-                            onSelected: (_) =>
-                                setState(() => _selectedYear = null),
-                          ),
-                          ...years.map(
-                            (year) => ChoiceChip(
-                              label: Text('$year'),
-                              selected: _selectedYear == year,
-                              onSelected: (_) =>
-                                  setState(() => _selectedYear = year),
-                            ),
-                          ),
-                        ],
+                      ...years.map(
+                        (year) => ChoiceChip(
+                          label: Text('$year'),
+                          selected: _selectedYear == year,
+                          onSelected: (_) =>
+                              setState(() => _selectedYear = year),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                if (targetItems != null) ...[
-                  _HistoryInsightCard(items: targetItems),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
                 ],
-                const SectionHeader(title: 'Pergerakan nilai'),
-                const SizedBox(height: AppSpacing.md),
                 if (filteredHistory.isEmpty)
                   const AppEmptyState(
                     title: 'Tidak ada data pada filter ini',
@@ -116,41 +94,64 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                   ...filteredHistory.map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: AppCard(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.sm,
-                        ),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            formatMonthYear(item.recordedAt),
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                      child: Dismissible(
+                        key: ValueKey(item.id),
+                        direction: DismissDirection.endToStart,
+                        background: const _DeleteBackground(),
+                        confirmDismiss: (_) => _confirmDelete(context),
+                        onDismissed: (_) => _deleteSnapshot(item.id),
+                        child: AppCard(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.sm,
                           ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: AppSpacing.xs),
-                            child: Text(
-                              _formatChange(
-                                changeMap[item.id],
-                                isFirstSnapshot: item.id == firstSnapshotId,
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              formatMonthYear(item.recordedAt),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.xs,
                               ),
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: _changeColor(
-                                      context,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _formatChange(
                                       changeMap[item.id],
                                       isFirstSnapshot:
                                           item.id == firstSnapshotId,
                                     ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: _changeColor(
+                                            context,
+                                            changeMap[item.id],
+                                            isFirstSnapshot:
+                                                item.id == firstSnapshotId,
+                                          ),
+                                        ),
                                   ),
+                                  if (item.note != null)
+                                    Text(
+                                      item.note!,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                          trailing: Text(
-                            formatCurrency(item.totalValue),
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                            textAlign: TextAlign.end,
+                            trailing: Text(
+                              formatCurrency(item.totalValue),
+                              style: Theme.of(context).textTheme.titleMedium,
+                              textAlign: TextAlign.end,
+                            ),
                           ),
                         ),
                       ),
@@ -166,6 +167,34 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
         ),
       ),
     );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus histori?'),
+        content: const Text('Entri histori bulan ini akan dihapus.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
+
+  Future<void> _deleteSnapshot(String snapshotId) async {
+    await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
+    ref.invalidate(portfolioHistoryProvider);
+    ref.invalidate(portfolioSummaryProvider);
   }
 
   Map<String, double> _buildChangeMap(List<AssetSnapshot> history) {
@@ -204,104 +233,34 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     }
 
     if (value > 0) {
-      return AppColors.positive;
+      return AppColors.positiveOf(context);
     }
     if (value < 0) {
-      return AppColors.negative;
+      return AppColors.negativeOf(context);
     }
 
     return Theme.of(context).colorScheme.onSurfaceVariant;
   }
 }
 
-class _HistoryInsightCard extends StatelessWidget {
-  const _HistoryInsightCard({required this.items});
-
-  final List<TargetAllocationData> items;
+class _DeleteBackground extends StatelessWidget {
+  const _DeleteBackground();
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final insight = _buildInsight();
-
-    return AppCard(
-      backgroundColor: colorScheme.secondaryContainer,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(insight.icon, color: colorScheme.onSecondaryContainer),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Insight saat ini',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  insight.message,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSecondaryContainer,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.centerRight,
+      child: Icon(
+        Icons.delete_outline,
+        color: Theme.of(context).colorScheme.onErrorContainer,
       ),
     );
   }
-
-  _HistoryInsight _buildInsight() {
-    if (items.isEmpty) {
-      return const _HistoryInsight(
-        icon: Icons.insights_outlined,
-        message: 'Belum ada data target untuk disorot pada histori portofolio.',
-      );
-    }
-
-    final sortedItems = [...items]
-      ..sort(
-        (left, right) => right.differencePercentage.abs().compareTo(
-          left.differencePercentage.abs(),
-        ),
-      );
-
-    final topItem = sortedItems.first;
-    final difference = topItem.differencePercentage.abs().toStringAsFixed(0);
-
-    switch (topItem.status) {
-      case TargetStatus.onTrack:
-        return const _HistoryInsight(
-          icon: Icons.check_circle_outline,
-          message:
-              'Komposisi portofolio saat ini sudah paling dekat dengan target. Lanjutkan pencatatan rutin untuk memantau perubahan berikutnya.',
-        );
-      case TargetStatus.below:
-        return _HistoryInsight(
-          icon: Icons.trending_up,
-          message:
-              '${topItem.category.label} masih $difference% di bawah target. Pertimbangkan penambahan pada kategori ini agar alokasi kembali seimbang.',
-        );
-      case TargetStatus.above:
-        return _HistoryInsight(
-          icon: Icons.balance_outlined,
-          message:
-              '${topItem.category.label} berada $difference% di atas target. Pertimbangkan penambahan pada kategori lain agar komposisi kembali seimbang.',
-        );
-    }
-  }
 }
 
-class _HistoryInsight {
-  const _HistoryInsight({required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-}

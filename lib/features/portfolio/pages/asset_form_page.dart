@@ -64,7 +64,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
 
           _populateFromAsset(asset);
           return _AssetFormScaffold(
-            title: 'Edit Aset',
+            title: 'Edit aset',
             child: _buildForm(context, asset),
           );
         },
@@ -74,7 +74,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     }
 
     return _AssetFormScaffold(
-      title: 'Tambah Aset',
+      title: 'Tambah aset',
       child: _buildForm(context, null),
     );
   }
@@ -136,7 +136,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
             const SizedBox(height: AppSpacing.lg),
             InkWell(
               onTap: submitState.isLoading ? null : _selectDate,
-              borderRadius: BorderRadius.circular(16),
               child: InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Tanggal pencatatan',
@@ -148,7 +147,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
           ],
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
-            label: _isEditing ? 'Simpan Perubahan' : 'Tambah Aset',
+            label: _isEditing ? 'Simpan perubahan' : 'Tambah aset',
             isLoading: submitState.isLoading,
             onPressed: () => _submit(editingAsset),
           ),
@@ -158,6 +157,9 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               onPressed: submitState.isLoading
                   ? null
                   : () => _deleteAsset(editingAsset),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: const Text('Hapus aset'),
             ),
           ],
@@ -250,7 +252,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Batal'),
           ),
-          FilledButton(
+          TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Hapus'),
           ),

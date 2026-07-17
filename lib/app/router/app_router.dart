@@ -8,6 +8,7 @@ import 'package:flutter_wasilah_app/features/portfolio/pages/dashboard_page.dart
 import 'package:flutter_wasilah_app/features/portfolio/pages/portfolio_history_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/pages/update_asset_value_page.dart';
 import 'package:flutter_wasilah_app/features/settings/pages/settings_page.dart';
+import 'package:flutter_wasilah_app/features/target/pages/target_detail_page.dart';
 import 'package:flutter_wasilah_app/features/target/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/pages/target_page.dart';
 import 'package:go_router/go_router.dart';
@@ -99,11 +100,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TargetFormPage(),
       ),
       GoRoute(
-        path: '${RouteNames.target}/:id/edit',
+        path: '${RouteNames.target}/:id',
         builder: (context, state) {
           final targetId = state.pathParameters['id']!;
-          return TargetFormPage(targetId: targetId);
+          return TargetDetailPage(targetId: targetId);
         },
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (context, state) {
+              final targetId = state.pathParameters['id']!;
+              return TargetFormPage(targetId: targetId);
+            },
+          ),
+        ],
       ),
     ],
   );

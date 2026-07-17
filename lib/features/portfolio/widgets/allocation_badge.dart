@@ -19,7 +19,6 @@ class AllocationBadge extends StatelessWidget {
         '${percentage.toStringAsFixed(0)}%',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: colorScheme.onSecondaryContainer,
-              fontWeight: FontWeight.w700,
             ),
       ),
     );

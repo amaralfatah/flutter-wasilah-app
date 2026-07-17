@@ -22,25 +22,14 @@ class TargetAllocationData {
   final TargetStatus status;
   double get differencePercentage => actualPercentage - targetPercentage;
 
-  String get statusLabel {
+  Color statusColor(BuildContext context) {
     switch (status) {
       case TargetStatus.onTrack:
-        return 'Sesuai target';
+        return AppColors.positiveOf(context);
       case TargetStatus.below:
-        return 'Di bawah target';
+        return AppColors.warningOf(context);
       case TargetStatus.above:
-        return 'Di atas target';
-    }
-  }
-
-  Color get statusColor {
-    switch (status) {
-      case TargetStatus.onTrack:
-        return AppColors.positive;
-      case TargetStatus.below:
-        return AppColors.warning;
-      case TargetStatus.above:
-        return AppColors.negative;
+        return AppColors.negativeOf(context);
     }
   }
 }

@@ -39,23 +39,23 @@ void main() {
   );
 
   test(
-    'updateAssetValue replaces same-day history with the latest value',
+    'updateAssetValue replaces same-month history with the latest value',
     () async {
       final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
-      final recordedAt = DateTime(2026, 7, 16);
+      final beforeHistory = await repository.getAssetHistory('btc');
 
       await repository.updateAssetValue(
         assetId: 'btc',
         totalValue: 20000000,
-        recordedAt: recordedAt,
-        note: 'Update pagi',
+        recordedAt: DateTime(2026, 7, 10),
+        note: 'Update awal bulan',
       );
 
       await repository.updateAssetValue(
         assetId: 'btc',
         totalValue: 21000000,
-        recordedAt: recordedAt,
-        note: 'Update sore',
+        recordedAt: DateTime(2026, 7, 16),
+        note: 'Update pertengahan bulan',
       );
 
       final asset = await repository.getAssetById('btc');
@@ -63,11 +63,11 @@ void main() {
 
       expect(asset, isNotNull);
       expect(asset!.currentValue, 21000000);
-      expect(asset.lastUpdatedAt, recordedAt);
-      expect(history, hasLength(3));
-      expect(history.first.recordedAt, recordedAt);
+      expect(asset.lastUpdatedAt, DateTime(2026, 7, 16));
+      expect(history, hasLength(beforeHistory.length));
+      expect(history.first.recordedAt, DateTime(2026, 7, 16));
       expect(history.first.totalValue, 21000000);
-      expect(history.first.note, 'Update sore');
+      expect(history.first.note, 'Update pertengahan bulan');
     },
   );
 }
