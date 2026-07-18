@@ -60,7 +60,7 @@ class BackupSection extends ConsumerWidget {
                 ? 'Sedang memulihkan data...'
                 : state.lastBackupAt == null
                 ? 'Belum pernah backup.'
-                : 'Backup terakhir: ${formatFullDate(state.lastBackupAt!)}',
+                : 'Backup terakhir: ${formatFullDateTime(state.lastBackupAt!)}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),

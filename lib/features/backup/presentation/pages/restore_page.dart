@@ -44,7 +44,7 @@ class RestorePage extends ConsumerWidget {
               final backup = backups[index];
               return ListTile(
                 leading: const Icon(Icons.description_outlined),
-                title: Text(formatFullDate(backup.createdAt)),
+                title: Text(formatFullDateTime(backup.createdAt)),
                 subtitle: Text(_formatFileSize(backup.sizeBytes)),
                 onTap: () => _confirmRestore(context, ref, backup),
               );
@@ -65,8 +65,8 @@ class RestorePage extends ConsumerWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Pulihkan data ini?'),
         content: Text(
-          'Data portofolio saat ini akan diganti dengan backup tanggal '
-          '${formatFullDate(backup.createdAt)}. Tindakan ini tidak dapat '
+          'Data portofolio saat ini akan diganti dengan backup '
+          '${formatFullDateTime(backup.createdAt)}. Tindakan ini tidak dapat '
           'dibatalkan.',
         ),
         actions: [
