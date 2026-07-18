@@ -21,7 +21,7 @@ class GoogleAuthService {
   Future<void> ensureInitialized() {
     return _initialization ??= _signIn
         .initialize(serverClientId: _serverClientId)
-        .catchError((error) {
+        .catchError((Object error) {
           _initialization = null;
           throw error;
         });

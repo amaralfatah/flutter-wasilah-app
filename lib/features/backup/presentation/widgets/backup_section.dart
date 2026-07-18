@@ -72,12 +72,17 @@ class BackupSection extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
           AppPrimaryButton(
             label: 'Pulihkan dari backup',
-            isFullWidth: true,
             onPressed: state.isBusy
                 ? null
                 : () => context.push(RouteNames.backupRestore),
           ),
         ],
+        const SizedBox(height: AppSpacing.sm),
+        AppPrimaryButton(
+          label: 'Bagikan file backup',
+          isLoading: state.isBackingUp,
+          onPressed: state.isBusy ? null : controller.shareBackup,
+        ),
         if (state.errorMessage != null) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(

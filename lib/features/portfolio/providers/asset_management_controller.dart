@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:uuid/uuid.dart';
 
 final assetManagementControllerProvider =
     AsyncNotifierProvider<AssetManagementController, void>(
@@ -121,12 +122,14 @@ class AssetManagementController extends AsyncNotifier<void> {
   }
 }
 
+const _uuid = Uuid();
+
 String _buildAssetId(String value) {
   final normalized = value
       .trim()
       .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp('[^a-z0-9]+'), '-')
       .replaceAll(RegExp(r'^-+|-+$'), '');
   final prefix = normalized.isEmpty ? 'asset' : normalized;
-  return '$prefix-${DateTime.now().microsecondsSinceEpoch}';
+  return '$prefix-${_uuid.v4()}';
 }

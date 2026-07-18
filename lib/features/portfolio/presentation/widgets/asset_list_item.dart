@@ -8,8 +8,8 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asse
 
 class AssetListItem extends StatelessWidget {
   const AssetListItem({
-    super.key,
     required this.asset,
+    super.key,
     this.onTap,
     this.showCategory = true,
     this.showUpdatedAt = true,
@@ -36,7 +36,8 @@ class AssetListItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showCategory) Text(asset.category.label),
-            if (showUpdatedAt) Text('Diperbarui ${formatFullDate(asset.lastUpdatedAt)}'),
+            if (showUpdatedAt)
+              Text('Diperbarui ${formatFullDate(asset.lastUpdatedAt)}'),
           ],
         ),
       ),

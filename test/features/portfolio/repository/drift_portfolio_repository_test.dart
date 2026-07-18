@@ -129,7 +129,7 @@ void main() {
             category: AssetCategory.crypto,
             currentValue: 10000000,
             allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 5, 1),
+            lastUpdatedAt: DateTime(2026, 5),
           ),
         );
         await repository.createAsset(
@@ -140,7 +140,7 @@ void main() {
             category: AssetCategory.cash,
             currentValue: 5000000,
             allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 5, 1),
+            lastUpdatedAt: DateTime(2026, 5),
           ),
         );
 
@@ -148,23 +148,23 @@ void main() {
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 12000000,
-          recordedAt: DateTime(2026, 6, 1),
+          recordedAt: DateTime(2026, 6),
         );
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 15000000,
-          recordedAt: DateTime(2026, 7, 1),
+          recordedAt: DateTime(2026, 7),
         );
 
         final history = await repository.getPortfolioHistory();
         final mayEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 5, 1),
+          (item) => item.recordedAt == DateTime(2026, 5),
         );
         final juneEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 6, 1),
+          (item) => item.recordedAt == DateTime(2026, 6),
         );
         final julyEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7, 1),
+          (item) => item.recordedAt == DateTime(2026, 7),
         );
 
         // Cash never changes, so each month's total should reflect btc's
@@ -192,7 +192,7 @@ void main() {
             category: AssetCategory.crypto,
             currentValue: 10000000,
             allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7, 1),
+            lastUpdatedAt: DateTime(2026, 7),
           ),
         );
 
@@ -207,7 +207,7 @@ void main() {
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 5000000,
-          recordedAt: DateTime(2026, 5, 1),
+          recordedAt: DateTime(2026, 5),
         );
 
         final asset = await repository.getAssetById('btc');
@@ -243,7 +243,7 @@ void main() {
       );
 
       var asset = await repository.getAssetById('gold');
-      var history = await repository.getAssetHistory('gold');
+      final history = await repository.getAssetHistory('gold');
 
       expect(asset, isNotNull);
       expect(asset!.name, 'Emas');
@@ -293,7 +293,7 @@ void main() {
             category: AssetCategory.crypto,
             currentValue: 20000000,
             allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7, 1),
+            lastUpdatedAt: DateTime(2026, 7),
           ),
         );
 
@@ -308,18 +308,18 @@ void main() {
             category: AssetCategory.preciousMetal,
             currentValue: 5000000,
             allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7, 1),
+            lastUpdatedAt: DateTime(2026, 7),
           ),
         );
         await repository.updateAssetValue(
           assetId: 'gold',
           totalValue: 3000000,
-          recordedAt: DateTime(2026, 6, 1),
+          recordedAt: DateTime(2026, 6),
         );
 
         final history = await repository.getPortfolioHistory();
         final juneEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 6, 1),
+          (item) => item.recordedAt == DateTime(2026, 6),
         );
 
         // June's total should be just gold's backfilled value (3M) --
@@ -346,25 +346,25 @@ void main() {
             category: AssetCategory.crypto,
             currentValue: 10000000,
             allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 6, 1),
+            lastUpdatedAt: DateTime(2026, 6),
           ),
         );
 
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 15000000,
-          recordedAt: DateTime(2026, 7, 1),
+          recordedAt: DateTime(2026, 7),
         );
 
         var history = await repository.getPortfolioHistory();
         final julyEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7, 1),
+          (item) => item.recordedAt == DateTime(2026, 7),
         );
         expect(julyEntry.totalValue, 15000000);
 
         final assetHistory = await repository.getAssetHistory('btc');
         final julySnapshot = assetHistory.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7, 1),
+          (item) => item.recordedAt == DateTime(2026, 7),
         );
         await repository.deleteSnapshot(julySnapshot.id);
 
@@ -372,7 +372,7 @@ void main() {
         final summary = await repository.getPortfolioSummary();
         history = await repository.getPortfolioHistory();
         final updatedJulyEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7, 1),
+          (item) => item.recordedAt == DateTime(2026, 7),
         );
 
         // With July's value deleted, btc (and thus the portfolio) should

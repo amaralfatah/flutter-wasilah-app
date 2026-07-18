@@ -3,8 +3,8 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({
-    super.key,
     required this.child,
+    super.key,
     this.padding,
     this.backgroundColor,
     this.onTap,

@@ -21,13 +21,14 @@ final assetListProvider = FutureProvider<List<Asset>>((ref) async {
   return repository.getAssets();
 });
 
-final assetDetailProvider = FutureProvider.family<Asset?, String>((
-  ref,
-  assetId,
-) async {
-  final repository = ref.watch(portfolioRepositoryProvider);
-  return repository.getAssetById(assetId);
-});
+final FutureProviderFamily<Asset?, String> assetDetailProvider =
+    FutureProvider.family<Asset?, String>((
+      ref,
+      assetId,
+    ) async {
+      final repository = ref.watch(portfolioRepositoryProvider);
+      return repository.getAssetById(assetId);
+    });
 
 final portfolioHistoryProvider = FutureProvider<List<AssetSnapshot>>((
   ref,
@@ -36,12 +37,13 @@ final portfolioHistoryProvider = FutureProvider<List<AssetSnapshot>>((
   return repository.getPortfolioHistory();
 });
 
-final assetHistoryProvider = FutureProvider.family<List<AssetSnapshot>, String>(
-  (ref, assetId) async {
-    final repository = ref.watch(portfolioRepositoryProvider);
-    return repository.getAssetHistory(assetId);
-  },
-);
+final FutureProviderFamily<List<AssetSnapshot>, String> assetHistoryProvider =
+    FutureProvider.family<List<AssetSnapshot>, String>(
+      (ref, assetId) async {
+        final repository = ref.watch(portfolioRepositoryProvider);
+        return repository.getAssetHistory(assetId);
+      },
+    );
 
 final allocationTargetProvider = FutureProvider<List<AllocationTarget>>((
   ref,

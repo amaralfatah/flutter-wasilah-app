@@ -8,19 +8,19 @@ void main() {
         DriveBackupFile(
           id: 'oldest',
           name: 'a',
-          createdAt: DateTime(2026, 1, 1),
+          createdAt: DateTime(2026),
           sizeBytes: 10,
         ),
         DriveBackupFile(
           id: 'newest',
           name: 'b',
-          createdAt: DateTime(2026, 3, 1),
+          createdAt: DateTime(2026, 3),
           sizeBytes: 10,
         ),
         DriveBackupFile(
           id: 'middle',
           name: 'c',
-          createdAt: DateTime(2026, 2, 1),
+          createdAt: DateTime(2026, 2),
           sizeBytes: 10,
         ),
       ];
@@ -35,7 +35,7 @@ void main() {
         DriveBackupFile(
           id: 'only',
           name: 'a',
-          createdAt: DateTime(2026, 1, 1),
+          createdAt: DateTime(2026),
           sizeBytes: 10,
         ),
       ];

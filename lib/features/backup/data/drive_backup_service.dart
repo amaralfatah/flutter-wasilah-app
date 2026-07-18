@@ -51,9 +51,7 @@ class DriveBackupService {
       $fields: 'files($_fileFields)',
     );
 
-    return (result.files ?? const <drive.File>[])
-        .map(_toBackupFile)
-        .toList();
+    return (result.files ?? const <drive.File>[]).map(_toBackupFile).toList();
   }
 
   Future<void> deleteBackup(String fileId) {

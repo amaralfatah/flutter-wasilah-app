@@ -1,47 +1,26 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@immutable
-class PortfolioSummary {
-  const PortfolioSummary({
-    required this.totalValue,
-    required this.monthlyChangePercentage,
-    required this.targetProgressPercentage,
-    required this.assets,
-    required this.lastUpdatedAt,
-  });
+part 'portfolio_summary.freezed.dart';
 
-  final double totalValue;
-  final double monthlyChangePercentage;
-  final double targetProgressPercentage;
-  final List<Asset> assets;
-  final DateTime lastUpdatedAt;
-
-  PortfolioSummary copyWith({
-    double? totalValue,
-    double? monthlyChangePercentage,
-    double? targetProgressPercentage,
-    List<Asset>? assets,
-    DateTime? lastUpdatedAt,
-  }) {
-    return PortfolioSummary(
-      totalValue: totalValue ?? this.totalValue,
-      monthlyChangePercentage:
-          monthlyChangePercentage ?? this.monthlyChangePercentage,
-      targetProgressPercentage:
-          targetProgressPercentage ?? this.targetProgressPercentage,
-      assets: assets ?? this.assets,
-      lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
-    );
-  }
+@freezed
+abstract class PortfolioSummary with _$PortfolioSummary {
+  const factory PortfolioSummary({
+    required double totalValue,
+    required double monthlyChangePercentage,
+    required double targetProgressPercentage,
+    required List<Asset> assets,
+    required DateTime lastUpdatedAt,
+  }) = _PortfolioSummary;
+  const PortfolioSummary._();
 
   factory PortfolioSummary.fromJson(Map<String, dynamic> json) {
     return PortfolioSummary(
       totalValue: (json['totalValue'] as num).toDouble(),
-      monthlyChangePercentage:
-          (json['monthlyChangePercentage'] as num).toDouble(),
-      targetProgressPercentage:
-          (json['targetProgressPercentage'] as num).toDouble(),
+      monthlyChangePercentage: (json['monthlyChangePercentage'] as num)
+          .toDouble(),
+      targetProgressPercentage: (json['targetProgressPercentage'] as num)
+          .toDouble(),
       assets: (json['assets'] as List<dynamic>)
           .map((item) => Asset.fromJson(item as Map<String, dynamic>))
           .toList(growable: false),
@@ -58,25 +37,4 @@ class PortfolioSummary {
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
     };
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is PortfolioSummary &&
-            runtimeType == other.runtimeType &&
-            totalValue == other.totalValue &&
-            monthlyChangePercentage == other.monthlyChangePercentage &&
-            targetProgressPercentage == other.targetProgressPercentage &&
-            listEquals(assets, other.assets) &&
-            lastUpdatedAt == other.lastUpdatedAt;
-  }
-
-  @override
-  int get hashCode => Object.hash(
-        totalValue,
-        monthlyChangePercentage,
-        targetProgressPercentage,
-        Object.hashAll(assets),
-        lastUpdatedAt,
-      );
 }

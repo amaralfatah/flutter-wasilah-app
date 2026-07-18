@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
-    super.key,
     required this.title,
+    super.key,
     this.actionLabel,
     this.onAction,
     this.onInfoTap,

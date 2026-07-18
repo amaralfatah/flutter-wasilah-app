@@ -16,9 +16,9 @@ class TargetManagementController extends AsyncNotifier<void> {
   FutureOr<void> build() {}
 
   Future<void> saveTarget({
-    String? id,
     required AssetCategory category,
     required double targetPercentage,
+    String? id,
   }) async {
     if (targetPercentage < 0 || targetPercentage > 100) {
       throw ArgumentError('Target alokasi harus di antara 0 sampai 100%.');

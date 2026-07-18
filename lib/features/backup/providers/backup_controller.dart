@@ -12,6 +12,7 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 enum BackupConnectionStatus { disconnected, connecting, connected }
 
@@ -200,6 +201,36 @@ class BackupController extends Notifier<BackupState> {
     }
   }
 
+  Future<void> shareBackup() async {
+    if (state.isBusy) {
+      return;
+    }
+    state = state.copyWith(isBackingUp: true, clearError: true);
+    try {
+      final snapshotService = ref.read(backupSnapshotServiceProvider);
+      final database = ref.read(appDatabaseProvider);
+      final snapshotFile = await snapshotService.createSnapshot(database);
+      try {
+        if (!snapshotService.isValidSqliteFile(snapshotFile)) {
+          throw StateError('Snapshot database tidak valid.');
+        }
+        await SharePlus.instance.share(
+          ShareParams(files: [XFile(snapshotFile.path)]),
+        );
+      } finally {
+        if (snapshotFile.existsSync()) {
+          await snapshotFile.delete();
+        }
+      }
+      state = state.copyWith(isBackingUp: false);
+    } catch (_) {
+      state = state.copyWith(
+        isBackingUp: false,
+        errorMessage: 'Gagal membagikan file backup.',
+      );
+    }
+  }
+
   Future<List<DriveBackupFile>> listBackups() async {
     final authorized = await _authorizedDriveService(promptIfNecessary: true);
     try {
@@ -284,7 +315,10 @@ class BackupController extends Notifier<BackupState> {
     if (client == null) {
       throw StateError('Otorisasi Google Drive dibutuhkan.');
     }
-    return (service: DriveBackupService(drive.DriveApi(client)), client: client);
+    return (
+      service: DriveBackupService(drive.DriveApi(client)),
+      client: client,
+    );
   }
 
   Future<void> _performBackup({required bool promptIfNecessary}) async {

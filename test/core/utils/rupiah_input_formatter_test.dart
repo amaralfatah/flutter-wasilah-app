@@ -7,7 +7,7 @@ void main() {
     const formatter = RupiahInputFormatter();
 
     final result = formatter.formatEditUpdate(
-      const TextEditingValue(text: ''),
+      TextEditingValue.empty,
       const TextEditingValue(text: '1000000'),
     );
 
@@ -19,7 +19,7 @@ void main() {
     const formatter = RupiahInputFormatter();
 
     final result = formatter.formatEditUpdate(
-      const TextEditingValue(text: ''),
+      TextEditingValue.empty,
       const TextEditingValue(text: 'abc'),
     );
 

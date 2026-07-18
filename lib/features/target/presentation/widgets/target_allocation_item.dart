@@ -4,7 +4,7 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 
 class TargetAllocationItem extends StatelessWidget {
-  const TargetAllocationItem({super.key, required this.item});
+  const TargetAllocationItem({required this.item, super.key});
 
   final TargetAllocationData item;
 

@@ -7,11 +7,12 @@ import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 
-final _backupListProvider = FutureProvider.autoDispose<List<DriveBackupFile>>((
-  ref,
-) {
-  return ref.read(backupControllerProvider.notifier).listBackups();
-});
+final AutoDisposeFutureProvider<List<DriveBackupFile>> _backupListProvider =
+    FutureProvider.autoDispose<List<DriveBackupFile>>((
+      ref,
+    ) {
+      return ref.read(backupControllerProvider.notifier).listBackups();
+    });
 
 class RestorePage extends ConsumerWidget {
   const RestorePage({super.key});

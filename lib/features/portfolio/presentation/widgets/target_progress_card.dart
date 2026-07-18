@@ -4,8 +4,8 @@ import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class TargetProgressCard extends StatelessWidget {
   const TargetProgressCard({
-    super.key,
     required this.percentage,
+    super.key,
     this.label = 'Target Alokasi',
     this.subtitle = 'Alokasi portofolio ideal',
     this.onTap,

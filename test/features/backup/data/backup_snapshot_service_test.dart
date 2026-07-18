@@ -27,8 +27,8 @@ void main() {
       );
       addTearDown(database.close);
       await database.customStatement(
-        "INSERT INTO assets (id, name, code, category, current_value, "
-        "allocation_percentage, last_updated_at) "
+        'INSERT INTO assets (id, name, code, category, current_value, '
+        'allocation_percentage, last_updated_at) '
         "VALUES ('btc', 'Bitcoin', 'BTC', 'crypto', 100, 100, 0)",
       );
 

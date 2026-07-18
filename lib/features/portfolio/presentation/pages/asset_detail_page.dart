@@ -4,21 +4,21 @@ import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
+import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:go_router/go_router.dart';
 
 class AssetDetailPage extends ConsumerStatefulWidget {
-  const AssetDetailPage({super.key, required this.assetId});
+  const AssetDetailPage({required this.assetId, super.key});
 
   final String assetId;
 
@@ -259,7 +259,6 @@ class _AssetHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         AssetCategoryIcon(category: asset.category),
         const SizedBox(width: AppSpacing.md),

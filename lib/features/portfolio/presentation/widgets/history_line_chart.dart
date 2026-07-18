@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class HistoryLineChart extends StatelessWidget {
-  const HistoryLineChart({super.key, required this.history});
+  const HistoryLineChart({required this.history, super.key});
 
   /// Snapshots ordered oldest to newest.
   final List<AssetSnapshot> history;
@@ -74,8 +74,7 @@ class _LineChartPainter extends CustomPainter {
     }
 
     final points = [
-      for (var i = 0; i < values.length; i++)
-        Offset(stepX * i, yOf(values[i])),
+      for (var i = 0; i < values.length; i++) Offset(stepX * i, yOf(values[i])),
     ];
 
     final linePath = Path()..moveTo(points.first.dx, points.first.dy);

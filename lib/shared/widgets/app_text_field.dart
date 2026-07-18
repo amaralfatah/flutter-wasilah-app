@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 
 class AppTextField extends StatelessWidget {
   const AppTextField({
-    super.key,
     required this.label,
     required this.controller,
+    super.key,
     this.hint,
     this.keyboardType,
     this.suffixIcon,

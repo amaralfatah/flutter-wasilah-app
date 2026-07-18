@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AllocationBadge extends StatelessWidget {
-  const AllocationBadge({super.key, required this.percentage});
+  const AllocationBadge({required this.percentage, super.key});
 
   final double percentage;
 
@@ -18,8 +18,8 @@ class AllocationBadge extends StatelessWidget {
       child: Text(
         '${percentage.toStringAsFixed(0)}%',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSecondaryContainer,
-            ),
+          color: colorScheme.onSecondaryContainer,
+        ),
       ),
     );
   }

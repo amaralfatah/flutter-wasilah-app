@@ -1,29 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@immutable
-class AllocationTarget {
-  const AllocationTarget({
-    required this.id,
-    required this.category,
-    required this.targetPercentage,
-  });
+part 'allocation_target.freezed.dart';
 
-  final String id;
-  final AssetCategory category;
-  final double targetPercentage;
-
-  AllocationTarget copyWith({
-    String? id,
-    AssetCategory? category,
-    double? targetPercentage,
-  }) {
-    return AllocationTarget(
-      id: id ?? this.id,
-      category: category ?? this.category,
-      targetPercentage: targetPercentage ?? this.targetPercentage,
-    );
-  }
+@freezed
+abstract class AllocationTarget with _$AllocationTarget {
+  const factory AllocationTarget({
+    required String id,
+    required AssetCategory category,
+    required double targetPercentage,
+  }) = _AllocationTarget;
+  const AllocationTarget._();
 
   factory AllocationTarget.fromJson(Map<String, dynamic> json) {
     return AllocationTarget(
@@ -40,17 +27,4 @@ class AllocationTarget {
       'targetPercentage': targetPercentage,
     };
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is AllocationTarget &&
-            runtimeType == other.runtimeType &&
-            id == other.id &&
-            category == other.category &&
-            targetPercentage == other.targetPercentage;
-  }
-
-  @override
-  int get hashCode => Object.hash(id, category, targetPercentage);
 }

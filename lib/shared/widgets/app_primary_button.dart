@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppPrimaryButton extends StatelessWidget {
   const AppPrimaryButton({
-    super.key,
     required this.label,
+    super.key,
     this.onPressed,
     this.isLoading = false,
     this.isFullWidth = true,

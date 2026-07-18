@@ -5,9 +5,9 @@ import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 
 class AsyncValueView<T> extends StatelessWidget {
   const AsyncValueView({
-    super.key,
     required this.value,
     required this.data,
+    super.key,
     this.onRetry,
   });
 

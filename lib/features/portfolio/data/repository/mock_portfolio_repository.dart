@@ -163,22 +163,22 @@ class MockPortfolioRepository implements PortfolioRepository {
   ];
 
   final List<AllocationTarget> _targets = [
-    AllocationTarget(
+    const AllocationTarget(
       id: 'target-crypto',
       category: AssetCategory.crypto,
       targetPercentage: 35,
     ),
-    AllocationTarget(
+    const AllocationTarget(
       id: 'target-stock',
       category: AssetCategory.stock,
       targetPercentage: 40,
     ),
-    AllocationTarget(
+    const AllocationTarget(
       id: 'target-mutual-fund',
       category: AssetCategory.mutualFund,
       targetPercentage: 15,
     ),
-    AllocationTarget(
+    const AllocationTarget(
       id: 'target-cash',
       category: AssetCategory.cash,
       targetPercentage: 10,

@@ -51,7 +51,7 @@ String? validateNote(String? value, {int maxLength = 200}) {
 }
 
 double? parseCurrencyInput(String input) {
-  final digits = input.replaceAll(RegExp(r'[^0-9]'), '');
+  final digits = input.replaceAll(RegExp('[^0-9]'), '');
   if (digits.isEmpty) {
     return null;
   }

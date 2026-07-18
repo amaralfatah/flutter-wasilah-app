@@ -201,7 +201,9 @@ class DriftPortfolioRepository implements PortfolioRepository {
             variables: [Variable.withString(deleted.assetId)],
           )
           .getSingleOrNull();
-      final remaining = remainingRow == null ? null : _mapSnapshot(remainingRow);
+      final remaining = remainingRow == null
+          ? null
+          : _mapSnapshot(remainingRow);
 
       await _database.customUpdate(
         '''

@@ -5,10 +5,10 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_ta
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 
 void main() {
   testWidgets('dashboard shows total portfolio summary', (tester) async {

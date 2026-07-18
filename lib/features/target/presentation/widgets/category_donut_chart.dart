@@ -3,12 +3,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class CategoryDonutChart extends StatelessWidget {
-  const CategoryDonutChart({super.key, required this.items});
+  const CategoryDonutChart({required this.items, super.key});
 
   final List<TargetAllocationData> items;
 
@@ -29,7 +29,6 @@ class CategoryDonutChart extends StatelessWidget {
 
     return AppCard(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             height: 96,
@@ -40,7 +39,9 @@ class CategoryDonutChart extends StatelessWidget {
                   for (final item in segments) item.actualPercentage,
                 ],
                 colors: colors,
-                trackColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                trackColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
               ),
             ),
           ),
@@ -125,7 +126,7 @@ class _DonutPainter extends CustomPainter {
     if (total <= 0) {
       return;
     }
-    final wholeCircle = math.max(total, 100.0);
+    final wholeCircle = math.max(total, 100);
 
     var startAngle = -math.pi / 2;
     for (var i = 0; i < values.length; i++) {

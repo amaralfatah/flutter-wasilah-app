@@ -31,17 +31,19 @@ void main() {
       expect(preferences.readAutoBackupEnabled(), isFalse);
     });
 
-    test('persists backup connected flag across connect and disconnect',
-        () async {
-      final preferences = SharedPreferencesService(
-        await SharedPreferences.getInstance(),
-      );
+    test(
+      'persists backup connected flag across connect and disconnect',
+      () async {
+        final preferences = SharedPreferencesService(
+          await SharedPreferences.getInstance(),
+        );
 
-      await preferences.writeBackupConnected(true);
-      expect(preferences.readBackupConnected(), isTrue);
+        await preferences.writeBackupConnected(true);
+        expect(preferences.readBackupConnected(), isTrue);
 
-      await preferences.writeBackupConnected(false);
-      expect(preferences.readBackupConnected(), isFalse);
-    });
+        await preferences.writeBackupConnected(false);
+        expect(preferences.readBackupConnected(), isFalse);
+      },
+    );
   });
 }

@@ -9,7 +9,7 @@ class RupiahInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final digits = newValue.text.replaceAll(RegExp('[^0-9]'), '');
     if (digits.isEmpty) {
       return const TextEditingValue(
         selection: TextSelection.collapsed(offset: 0),

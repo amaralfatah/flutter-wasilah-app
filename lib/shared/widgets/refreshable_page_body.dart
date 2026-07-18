@@ -3,9 +3,9 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 
 class RefreshablePageBody extends StatelessWidget {
   const RefreshablePageBody({
-    super.key,
     required this.onRefresh,
     required this.child,
+    super.key,
     this.padding = const EdgeInsets.all(AppSpacing.xl),
   });
 

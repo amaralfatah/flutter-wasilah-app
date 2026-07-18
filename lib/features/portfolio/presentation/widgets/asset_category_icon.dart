@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 
 class AssetCategoryIcon extends StatelessWidget {
-  const AssetCategoryIcon({super.key, required this.category});
+  const AssetCategoryIcon({required this.category, super.key});
 
   final AssetCategory category;
 

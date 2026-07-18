@@ -4,14 +4,14 @@ import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
+import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 
 class PortfolioHistoryPage extends ConsumerStatefulWidget {
   const PortfolioHistoryPage({super.key});
@@ -74,8 +74,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                       ChoiceChip(
                         label: const Text('Semua'),
                         selected: _selectedYear == null,
-                        onSelected: (_) =>
-                            setState(() => _selectedYear = null),
+                        onSelected: (_) => setState(() => _selectedYear = null),
                       ),
                       ...years.map(
                         (year) => ChoiceChip(
@@ -278,4 +277,3 @@ class _DeleteBackground extends StatelessWidget {
     );
   }
 }
-

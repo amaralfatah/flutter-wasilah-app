@@ -1,36 +1,17 @@
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@immutable
-class AssetSnapshot {
-  const AssetSnapshot({
-    required this.id,
-    required this.assetId,
-    required this.totalValue,
-    required this.recordedAt,
-    this.note,
-  });
+part 'asset_snapshot.freezed.dart';
 
-  final String id;
-  final String assetId;
-  final double totalValue;
-  final DateTime recordedAt;
-  final String? note;
-
-  AssetSnapshot copyWith({
-    String? id,
-    String? assetId,
-    double? totalValue,
-    DateTime? recordedAt,
+@freezed
+abstract class AssetSnapshot with _$AssetSnapshot {
+  const factory AssetSnapshot({
+    required String id,
+    required String assetId,
+    required double totalValue,
+    required DateTime recordedAt,
     String? note,
-  }) {
-    return AssetSnapshot(
-      id: id ?? this.id,
-      assetId: assetId ?? this.assetId,
-      totalValue: totalValue ?? this.totalValue,
-      recordedAt: recordedAt ?? this.recordedAt,
-      note: note ?? this.note,
-    );
-  }
+  }) = _AssetSnapshot;
+  const AssetSnapshot._();
 
   factory AssetSnapshot.fromJson(Map<String, dynamic> json) {
     return AssetSnapshot(
@@ -51,19 +32,4 @@ class AssetSnapshot {
       'note': note,
     };
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        other is AssetSnapshot &&
-            runtimeType == other.runtimeType &&
-            id == other.id &&
-            assetId == other.assetId &&
-            totalValue == other.totalValue &&
-            recordedAt == other.recordedAt &&
-            note == other.note;
-  }
-
-  @override
-  int get hashCode => Object.hash(id, assetId, totalValue, recordedAt, note);
 }

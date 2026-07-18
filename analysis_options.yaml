@@ -5,13 +5,7 @@
 # IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
 # invoked from the command line by running `flutter analyze`.
 
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
-#
-# `very_good_analysis` is also installed (see pubspec.yaml) for when the
-# project is ready to adopt its stricter rule set; switch the include above
-# to `package:very_good_analysis/analysis_options.yaml` at that point.
-include: package:flutter_lints/flutter.yaml
+include: package:very_good_analysis/analysis_options.yaml
 
 linter:
   # The lint rules applied to this project can be customized in the
@@ -25,8 +19,12 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # This is an app, not a published package — public API docs aren't
+    # relevant here.
+    public_member_api_docs: false
+    # Conflicts with the standard Flutter convention of keeping
+    # `flutter: sdk: flutter` as the first dependency entry.
+    sort_pub_dependencies: false
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/backup/presentation/widgets/backup_section.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -52,10 +52,10 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppCard(
+          const AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 _SettingsSectionHeader('Backup'),
                 SizedBox(height: AppSpacing.md),
                 BackupSection(),
@@ -63,17 +63,17 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppCard(
+          const AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SettingsSectionHeader('Aplikasi'),
-                const SizedBox(height: AppSpacing.sm),
+                _SettingsSectionHeader('Aplikasi'),
+                SizedBox(height: AppSpacing.sm),
                 ListTileTheme(
-                  data: const ListTileThemeData(
+                  data: ListTileThemeData(
                     contentPadding: EdgeInsets.zero,
                   ),
-                  child: const AboutListTile(
+                  child: AboutListTile(
                     icon: Icon(Icons.info_outline),
                     applicationName: 'Wasilah',
                     applicationVersion: _appVersion,
