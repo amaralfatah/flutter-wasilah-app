@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 
 void main() {
   test('precious metals have their own asset category label', () {

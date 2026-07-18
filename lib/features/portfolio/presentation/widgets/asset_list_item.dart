@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/allocation_badge.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/asset_category_icon.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/allocation_badge.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 
 class AssetListItem extends StatelessWidget {
   const AssetListItem({

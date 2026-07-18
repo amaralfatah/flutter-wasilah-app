@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_colors.dart';
+import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 
 abstract final class AppTheme {
   static ThemeData light() => _theme(Brightness.light);

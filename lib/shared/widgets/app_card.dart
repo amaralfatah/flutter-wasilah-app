@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/app/router/route_names.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/router/route_names.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_card.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_empty_state.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_error_view.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_loading.dart';
-import 'package:flutter_wasilah_app/core/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/core/widgets/section_header.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
+import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/asset_category_icon.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/history_line_chart.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:go_router/go_router.dart';
 
 class AssetDetailPage extends ConsumerWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_card.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
 
 class SettingsPage extends ConsumerWidget {

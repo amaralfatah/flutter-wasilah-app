@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_primary_button.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/asset_list_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/dashboard_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/portfolio_history_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_list_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_history_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/mock_portfolio_repository.dart';
-import 'package:flutter_wasilah_app/features/settings/pages/settings_page.dart';
-import 'package:flutter_wasilah_app/features/target/pages/target_form_page.dart';
-import 'package:flutter_wasilah_app/features/target/pages/target_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/settings/presentation/pages/settings_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/pages/target_form_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
 
 void main() {
   testWidgets('dashboard uses pull-to-refresh for top-level content', (

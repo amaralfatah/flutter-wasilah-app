@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 
 class TargetAllocationItem extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_error_view.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 
 class AsyncValueView<T> extends StatelessWidget {
   const AsyncValueView({

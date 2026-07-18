@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/update_asset_value_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/mock_portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 
 void main() {
   testWidgets('update asset value form validates required fields', (

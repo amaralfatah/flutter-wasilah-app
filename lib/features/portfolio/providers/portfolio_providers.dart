@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/allocation_target.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/portfolio_summary.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/drift_portfolio_repository.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 
 final portfolioRepositoryProvider = Provider<PortfolioRepository>((ref) {
   return DriftPortfolioRepository(ref.watch(appDatabaseProvider));

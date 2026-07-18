@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/allocation_target.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/portfolio_summary.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/dashboard_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/portfolio_repository.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/mock_portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 
 void main() {
   testWidgets('dashboard shows total portfolio summary', (tester) async {

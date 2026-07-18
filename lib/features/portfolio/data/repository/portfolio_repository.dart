@@ -1,7 +1,7 @@
-import 'package:flutter_wasilah_app/features/portfolio/models/allocation_target.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
 
 abstract interface class PortfolioRepository {
   Future<PortfolioSummary> getPortfolioSummary();

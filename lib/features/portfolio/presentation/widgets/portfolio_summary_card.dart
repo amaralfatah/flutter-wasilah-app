@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
 
 class PortfolioSummaryCard extends StatelessWidget {
   const PortfolioSummaryCard({super.key, required this.summary});

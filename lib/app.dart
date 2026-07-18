@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/app/router/app_router.dart';
-import 'package:flutter_wasilah_app/app/theme/app_theme.dart';
+import 'package:flutter_wasilah_app/core/router/app_router.dart';
+import 'package:flutter_wasilah_app/core/theme/app_theme.dart';
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
 
 class App extends ConsumerWidget {

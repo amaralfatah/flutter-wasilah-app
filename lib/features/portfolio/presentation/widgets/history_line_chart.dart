@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_card.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 
 class HistoryLineChart extends StatelessWidget {
   const HistoryLineChart({super.key, required this.history});

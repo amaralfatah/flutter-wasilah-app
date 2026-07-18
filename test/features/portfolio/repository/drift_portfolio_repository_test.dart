@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/allocation_target.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/repository/drift_portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_portfolio_repository.dart';
 
 void main() {
   group('DriftPortfolioRepository', () {

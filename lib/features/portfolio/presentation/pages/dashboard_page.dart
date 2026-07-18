@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/app/router/route_names.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_card.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_empty_state.dart';
-import 'package:flutter_wasilah_app/core/widgets/async_value_view.dart';
-import 'package:flutter_wasilah_app/core/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/core/widgets/section_header.dart';
+import 'package:flutter_wasilah_app/core/router/route_names.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
+import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
+import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/asset_list_item.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/portfolio_summary_card.dart';
-import 'package:flutter_wasilah_app/features/portfolio/widgets/target_progress_card.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/portfolio_summary_card.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/target_progress_card.dart';
 import 'package:go_router/go_router.dart';
 
 class DashboardPage extends ConsumerWidget {

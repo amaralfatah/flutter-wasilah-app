@@ -3,7 +3,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/app/app.dart';
+import 'package:flutter_wasilah_app/app.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

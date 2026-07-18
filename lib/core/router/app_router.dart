@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/app/router/route_names.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/asset_detail_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/asset_form_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/asset_list_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/dashboard_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/portfolio_history_page.dart';
-import 'package:flutter_wasilah_app/features/portfolio/pages/update_asset_value_page.dart';
-import 'package:flutter_wasilah_app/features/settings/pages/settings_page.dart';
-import 'package:flutter_wasilah_app/features/target/pages/target_detail_page.dart';
-import 'package:flutter_wasilah_app/features/target/pages/target_form_page.dart';
-import 'package:flutter_wasilah_app/features/target/pages/target_page.dart';
+import 'package:flutter_wasilah_app/core/router/route_names.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_detail_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_list_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_history_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
+import 'package:flutter_wasilah_app/features/settings/presentation/pages/settings_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/pages/target_detail_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/pages/target_form_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
 import 'package:go_router/go_router.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {

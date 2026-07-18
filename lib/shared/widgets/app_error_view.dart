@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/app/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 
 class AppErrorView extends StatelessWidget {
   const AppErrorView({

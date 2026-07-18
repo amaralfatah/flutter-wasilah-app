@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_wasilah_app/features/portfolio/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 
 @immutable
 class PortfolioSummary {
