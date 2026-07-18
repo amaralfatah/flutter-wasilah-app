@@ -909,10 +909,13 @@ class BackupController extends Notifier<BackupState> {
     if (!due) {
       return;
     }
+    state = state.copyWith(isBackingUp: true);
     try {
       await _performBackup(promptIfNecessary: false);
     } catch (_) {
       // Diam: dicoba lagi otomatis pada resume/launch berikutnya.
+    } finally {
+      state = state.copyWith(isBackingUp: false);
     }
   }
 
