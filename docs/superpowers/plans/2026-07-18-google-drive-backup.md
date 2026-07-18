@@ -839,9 +839,12 @@ class BackupController extends Notifier<BackupState> {
     try {
       final authService = ref.read(googleAuthServiceProvider);
       account = await authService.attemptSilentSignIn();
-    } catch (_) {
+    } catch (error) {
       // Diam: sign-in tersimpan tidak tersedia (mis. Play Services
       // tidak ada), tetap tampil sebagai belum terhubung.
+      if (kDebugMode) {
+        debugPrint('Silent Google sign-in restore skipped: $error');
+      }
       return;
     }
     if (account == null) {
