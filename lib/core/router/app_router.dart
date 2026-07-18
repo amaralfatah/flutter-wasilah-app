@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
+import 'package:flutter_wasilah_app/features/backup/presentation/pages/restore_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_detail_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_list_page.dart';
@@ -98,6 +99,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.targetCreate,
         builder: (context, state) => const TargetFormPage(),
+      ),
+      GoRoute(
+        path: RouteNames.backupRestore,
+        builder: (context, state) => const RestorePage(),
       ),
       GoRoute(
         path: '${RouteNames.target}/:id',
