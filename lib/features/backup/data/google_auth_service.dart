@@ -6,6 +6,12 @@ class GoogleAuthService {
     'https://www.googleapis.com/auth/drive.appdata',
   ];
 
+  // OAuth client ID tipe "Web application" dari Google Cloud Console.
+  // Wajib di Android (google_sign_in v7) sebagai serverClientId.
+  static const String _serverClientId =
+      '407290386438-du0aleupabs17sup5hf3prldjkjer988'
+      '.apps.googleusercontent.com';
+
   final GoogleSignIn _signIn = GoogleSignIn.instance;
   Future<void>? _initialization;
 
@@ -13,10 +19,12 @@ class GoogleAuthService {
       _signIn.authenticationEvents;
 
   Future<void> ensureInitialized() {
-    return _initialization ??= _signIn.initialize().catchError((error) {
-      _initialization = null;
-      throw error;
-    });
+    return _initialization ??= _signIn
+        .initialize(serverClientId: _serverClientId)
+        .catchError((error) {
+          _initialization = null;
+          throw error;
+        });
   }
 
   Future<GoogleSignInAccount?> attemptSilentSignIn() async {

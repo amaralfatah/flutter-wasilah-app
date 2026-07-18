@@ -125,7 +125,10 @@ class BackupController extends Notifier<BackupState> {
         accountEmail: account.email,
         autoBackupEnabled: true,
       );
-    } catch (_) {
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Google sign-in connect failed: $error');
+      }
       state = state.copyWith(
         connectionStatus: BackupConnectionStatus.disconnected,
         errorMessage: 'Gagal menghubungkan akun Google.',
