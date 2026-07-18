@@ -7,17 +7,16 @@ class GoogleAuthService {
   ];
 
   final GoogleSignIn _signIn = GoogleSignIn.instance;
-  bool _initialized = false;
+  Future<void>? _initialization;
 
   Stream<GoogleSignInAuthenticationEvent> get authenticationEvents =>
       _signIn.authenticationEvents;
 
-  Future<void> ensureInitialized() async {
-    if (_initialized) {
-      return;
-    }
-    await _signIn.initialize();
-    _initialized = true;
+  Future<void> ensureInitialized() {
+    return _initialization ??= _signIn.initialize().catchError((error) {
+      _initialization = null;
+      throw error;
+    });
   }
 
   Future<GoogleSignInAccount?> attemptSilentSignIn() async {
@@ -61,5 +60,11 @@ class _BearerTokenClient extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     request.headers['Authorization'] = 'Bearer $_accessToken';
     return _inner.send(request);
+  }
+
+  @override
+  void close() {
+    _inner.close();
+    super.close();
   }
 }
