@@ -175,6 +175,53 @@ void main() {
       },
     );
 
+    test(
+      'a backdated update does not overwrite the asset current value',
+      () async {
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.createAsset(
+          Asset(
+            id: 'btc',
+            name: 'Bitcoin',
+            code: 'BTC',
+            category: AssetCategory.crypto,
+            currentValue: 10000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 7, 1),
+          ),
+        );
+
+        // The latest known value is set in July...
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 20000000,
+          recordedAt: DateTime(2026, 7, 15),
+        );
+
+        // ...then the user fills in a missed entry for an earlier month.
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 5000000,
+          recordedAt: DateTime(2026, 5, 1),
+        );
+
+        final asset = await repository.getAssetById('btc');
+        final summary = await repository.getPortfolioSummary();
+
+        // current_value must stay pinned to the latest chronological entry
+        // (July), not the value that happened to be entered last (May).
+        expect(asset, isNotNull);
+        expect(asset!.currentValue, 20000000);
+        expect(asset.lastUpdatedAt, DateTime(2026, 7, 15));
+        expect(summary.totalValue, 20000000);
+      },
+    );
+
     test('creates, edits, and deletes assets', () async {
       final database = AppDatabase.forTesting(
         NativeDatabase.createInBackground(databaseFile),
@@ -226,6 +273,115 @@ void main() {
       expect(await repository.getAssetHistory('gold'), isEmpty);
       expect(await repository.getAssets(), isEmpty);
     });
+
+    test(
+      'backfilling one asset for a past month excludes assets not yet '
+      'tracked back then, instead of using their current value',
+      () async {
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        // btc is created this month (July) with no prior history.
+        await repository.createAsset(
+          Asset(
+            id: 'btc',
+            name: 'Bitcoin',
+            code: 'BTC',
+            category: AssetCategory.crypto,
+            currentValue: 20000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 7, 1),
+          ),
+        );
+
+        // gold is a second asset the user just started tracking, and
+        // they backfill its value for last month (June), which btc has
+        // no record of.
+        await repository.createAsset(
+          Asset(
+            id: 'gold',
+            name: 'Emas',
+            code: 'XAU',
+            category: AssetCategory.preciousMetal,
+            currentValue: 5000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 7, 1),
+          ),
+        );
+        await repository.updateAssetValue(
+          assetId: 'gold',
+          totalValue: 3000000,
+          recordedAt: DateTime(2026, 6, 1),
+        );
+
+        final history = await repository.getPortfolioHistory();
+        final juneEntry = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 6, 1),
+        );
+
+        // June's total should be just gold's backfilled value (3M) --
+        // btc didn't exist back then and must not be padded in at its
+        // current (July) value of 20M.
+        expect(juneEntry.totalValue, 3000000);
+      },
+    );
+
+    test(
+      'deleting last month value updates the monthly portfolio history',
+      () async {
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.createAsset(
+          Asset(
+            id: 'btc',
+            name: 'Bitcoin',
+            code: 'BTC',
+            category: AssetCategory.crypto,
+            currentValue: 10000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 6, 1),
+          ),
+        );
+
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 15000000,
+          recordedAt: DateTime(2026, 7, 1),
+        );
+
+        var history = await repository.getPortfolioHistory();
+        final julyEntry = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 7, 1),
+        );
+        expect(julyEntry.totalValue, 15000000);
+
+        final assetHistory = await repository.getAssetHistory('btc');
+        final julySnapshot = assetHistory.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 7, 1),
+        );
+        await repository.deleteSnapshot(julySnapshot.id);
+
+        final asset = await repository.getAssetById('btc');
+        final summary = await repository.getPortfolioSummary();
+        history = await repository.getPortfolioHistory();
+        final updatedJulyEntry = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 7, 1),
+        );
+
+        // With July's value deleted, btc (and thus the portfolio) should
+        // fall back to June's value everywhere, not stay stuck at 15M.
+        expect(asset!.currentValue, 10000000);
+        expect(summary.totalValue, 10000000);
+        expect(updatedJulyEntry.totalValue, 10000000);
+      },
+    );
 
     test('saves and deletes allocation targets', () async {
       final database = AppDatabase.forTesting(
