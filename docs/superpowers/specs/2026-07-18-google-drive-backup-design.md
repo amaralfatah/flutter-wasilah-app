@@ -25,7 +25,7 @@ Dependencies baru:
 
 - `google_sign_in` ^7.x — autentikasi (`GoogleSignIn.instance.authenticate()`) dan otorisasi scope (`authorizationClient.authorizeScopes` / `authorizationForScopes`)
 - `googleapis` — Drive API v3
-- `extension_google_sign_in_as_googleapis_auth` — jembatan auth google_sign_in → client `googleapis` (verifikasi kompatibilitas versi dengan google_sign_in v7 saat implementasi)
+- `http` — client HTTP dasar untuk `GoogleAuthService._BearerTokenClient`, sebuah `http.BaseClient` custom yang menyisipkan header `Authorization: Bearer <token>` dari `google_sign_in`. **Implementasi final tidak memakai `extension_google_sign_in_as_googleapis_auth`** (dipertimbangkan di awal) karena package tersebut dibangun untuk API `google_sign_in` v6 (`GoogleSignInAccount.authHeaders`) yang sudah tidak ada di v7; client custom di atas lebih sederhana dan langsung kompatibel dengan `authorizationClient` v7.
 
 Scope OAuth: hanya `https://www.googleapis.com/auth/drive.appdata`.
 
