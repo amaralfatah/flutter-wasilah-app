@@ -49,7 +49,7 @@ dependencies:
   flutter_hooks: ^0.21.3+1
   share_plus: ^13.2.1
   uuid: ^4.6.0
-  sentry_flutter: ^8.14.2
+  sentry_flutter: ^9.24.0
   talker_flutter: ^5.1.19
   talker_riverpod_logger: ^5.0.1
 
