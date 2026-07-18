@@ -84,10 +84,16 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   return database;
 });
 
+const String databaseFileName = 'wasilah.sqlite';
+
+Future<File> resolveDatabaseFile() async {
+  final dbFolder = await getApplicationDocumentsDirectory();
+  return File(p.join(dbFolder.path, databaseFileName));
+}
+
 QueryExecutor openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'wasilah.sqlite'));
+    final file = await resolveDatabaseFile();
     final tempDirectory = await getTemporaryDirectory();
     sqlite3.sqlite3.tempDirectory = tempDirectory.path;
     return NativeDatabase.createInBackground(file);
