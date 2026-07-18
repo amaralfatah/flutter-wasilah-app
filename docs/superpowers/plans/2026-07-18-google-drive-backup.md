@@ -767,6 +767,7 @@ class BackupState {
     this.autoBackupEnabled = true,
     this.lastBackupAt,
     this.isBackingUp = false,
+    this.isRestoring = false,
     this.errorMessage,
   });
 
@@ -775,9 +776,12 @@ class BackupState {
   final bool autoBackupEnabled;
   final DateTime? lastBackupAt;
   final bool isBackingUp;
+  final bool isRestoring;
   final String? errorMessage;
 
   bool get isConnected => connectionStatus == BackupConnectionStatus.connected;
+
+  bool get isBusy => isBackingUp || isRestoring;
 
   BackupState copyWith({
     BackupConnectionStatus? connectionStatus,
@@ -785,6 +789,7 @@ class BackupState {
     bool? autoBackupEnabled,
     DateTime? lastBackupAt,
     bool? isBackingUp,
+    bool? isRestoring,
     String? errorMessage,
     bool clearError = false,
     bool clearAccountEmail = false,
@@ -797,6 +802,7 @@ class BackupState {
       autoBackupEnabled: autoBackupEnabled ?? this.autoBackupEnabled,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       isBackingUp: isBackingUp ?? this.isBackingUp,
+      isRestoring: isRestoring ?? this.isRestoring,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -876,7 +882,7 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<void> backupNow() async {
-    if (state.isBackingUp) {
+    if (state.isBusy) {
       return;
     }
     state = state.copyWith(isBackingUp: true, clearError: true);
@@ -892,7 +898,7 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<void> maybeAutoBackup() async {
-    if (!state.isConnected || !state.autoBackupEnabled || state.isBackingUp) {
+    if (!state.isConnected || !state.autoBackupEnabled || state.isBusy) {
       return;
     }
     final due = shouldAutoBackup(
@@ -920,6 +926,18 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<void> restore(String fileId) async {
+    if (state.isBusy) {
+      throw StateError('Proses backup/restore lain sedang berjalan.');
+    }
+    state = state.copyWith(isRestoring: true, clearError: true);
+    try {
+      await _performRestore(fileId);
+    } finally {
+      state = state.copyWith(isRestoring: false);
+    }
+  }
+
+  Future<void> _performRestore(String fileId) async {
     final authorized = await _authorizedDriveService(promptIfNecessary: true);
     final File downloadFile;
     try {
