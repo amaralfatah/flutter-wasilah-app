@@ -603,17 +603,16 @@ class GoogleAuthService {
   ];
 
   final GoogleSignIn _signIn = GoogleSignIn.instance;
-  bool _initialized = false;
+  Future<void>? _initialization;
 
   Stream<GoogleSignInAuthenticationEvent> get authenticationEvents =>
       _signIn.authenticationEvents;
 
-  Future<void> ensureInitialized() async {
-    if (_initialized) {
-      return;
-    }
-    await _signIn.initialize();
-    _initialized = true;
+  Future<void> ensureInitialized() {
+    return _initialization ??= _signIn.initialize().catchError((error) {
+      _initialization = null;
+      throw error;
+    });
   }
 
   Future<GoogleSignInAccount?> attemptSilentSignIn() async {
@@ -657,6 +656,12 @@ class _BearerTokenClient extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     request.headers['Authorization'] = 'Bearer $_accessToken';
     return _inner.send(request);
+  }
+
+  @override
+  void close() {
+    _inner.close();
+    super.close();
   }
 }
 ```
@@ -748,6 +753,7 @@ import 'package:flutter_wasilah_app/features/backup/data/backup_snapshot.dart';
 import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.dart';
 import 'package:flutter_wasilah_app/features/backup/data/google_auth_service.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -905,21 +911,29 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<List<DriveBackupFile>> listBackups() async {
-    final driveService = await _authorizedDriveService(promptIfNecessary: true);
-    return driveService.listBackups();
+    final authorized = await _authorizedDriveService(promptIfNecessary: true);
+    try {
+      return await authorized.service.listBackups();
+    } finally {
+      authorized.client.close();
+    }
   }
 
   Future<void> restore(String fileId) async {
-    final driveService = await _authorizedDriveService(promptIfNecessary: true);
-
-    final tempDir = await getTemporaryDirectory();
-    final downloadFile = File(
-      p.join(
-        tempDir.path,
-        'wasilah_restore_${DateTime.now().millisecondsSinceEpoch}.sqlite',
-      ),
-    );
-    await driveService.download(fileId, downloadFile);
+    final authorized = await _authorizedDriveService(promptIfNecessary: true);
+    final File downloadFile;
+    try {
+      final tempDir = await getTemporaryDirectory();
+      downloadFile = File(
+        p.join(
+          tempDir.path,
+          'wasilah_restore_${DateTime.now().millisecondsSinceEpoch}.sqlite',
+        ),
+      );
+      await authorized.service.download(fileId, downloadFile);
+    } finally {
+      authorized.client.close();
+    }
 
     final snapshotService = ref.read(backupSnapshotServiceProvider);
     if (!snapshotService.isValidSqliteFile(downloadFile)) {
@@ -954,9 +968,8 @@ class BackupController extends Notifier<BackupState> {
     }
   }
 
-  Future<DriveBackupService> _authorizedDriveService({
-    required bool promptIfNecessary,
-  }) async {
+  Future<({DriveBackupService service, http.Client client})>
+  _authorizedDriveService({required bool promptIfNecessary}) async {
     final authService = ref.read(googleAuthServiceProvider);
     final account = await authService.attemptSilentSignIn();
     if (account == null) {
@@ -969,11 +982,11 @@ class BackupController extends Notifier<BackupState> {
     if (client == null) {
       throw StateError('Otorisasi Google Drive dibutuhkan.');
     }
-    return DriveBackupService(drive.DriveApi(client));
+    return (service: DriveBackupService(drive.DriveApi(client)), client: client);
   }
 
   Future<void> _performBackup({required bool promptIfNecessary}) async {
-    final driveService = await _authorizedDriveService(
+    final authorized = await _authorizedDriveService(
       promptIfNecessary: promptIfNecessary,
     );
     final snapshotService = ref.read(backupSnapshotServiceProvider);
@@ -984,9 +997,10 @@ class BackupController extends Notifier<BackupState> {
       if (!snapshotService.isValidSqliteFile(snapshotFile)) {
         throw StateError('Snapshot database tidak valid.');
       }
-      await driveService.upload(snapshotFile);
-      await driveService.pruneOldBackups();
+      await authorized.service.upload(snapshotFile);
+      await authorized.service.pruneOldBackups();
     } finally {
+      authorized.client.close();
       if (snapshotFile.existsSync()) {
         await snapshotFile.delete();
       }
