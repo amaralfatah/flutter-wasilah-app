@@ -17,13 +17,22 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asse
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:go_router/go_router.dart';
 
-class AssetDetailPage extends ConsumerWidget {
+class AssetDetailPage extends ConsumerStatefulWidget {
   const AssetDetailPage({super.key, required this.assetId});
 
   final String assetId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AssetDetailPage> createState() => _AssetDetailPageState();
+}
+
+class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
+  final Set<String> _removedIds = {};
+
+  String get assetId => widget.assetId;
+
+  @override
+  Widget build(BuildContext context) {
     final assetValue = ref.watch(assetDetailProvider(assetId));
     final historyValue = ref.watch(assetHistoryProvider(assetId));
 
@@ -83,7 +92,11 @@ class AssetDetailPage extends ConsumerWidget {
                 const SectionHeader(title: 'Histori nilai'),
                 const SizedBox(height: AppSpacing.md),
                 historyValue.when(
-                  data: (history) {
+                  data: (fullHistory) {
+                    final history = fullHistory
+                        .where((item) => !_removedIds.contains(item.id))
+                        .toList();
+
                     if (history.isEmpty) {
                       return const AppEmptyState(
                         title: 'Belum ada histori',
@@ -112,11 +125,13 @@ class AssetDetailPage extends ConsumerWidget {
                                   background: const _DeleteBackground(),
                                   confirmDismiss: (_) =>
                                       _confirmDeleteSnapshot(context),
-                                  onDismissed: (_) => _deleteSnapshot(
-                                    ref,
-                                    assetId,
-                                    history[index].id,
-                                  ),
+                                  onDismissed: (_) {
+                                    final snapshotId = history[index].id;
+                                    setState(
+                                      () => _removedIds.add(snapshotId),
+                                    );
+                                    _deleteSnapshot(assetId, snapshotId);
+                                  },
                                   child: _HistoryTile(
                                     snapshot: history[index],
                                   ),
@@ -148,6 +163,22 @@ class AssetDetailPage extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _deleteSnapshot(String assetId, String snapshotId) async {
+    try {
+      await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
+      ref.invalidate(assetHistoryProvider(assetId));
+      ref.invalidate(assetDetailProvider(assetId));
+      ref.invalidate(portfolioSummaryProvider);
+      ref.invalidate(portfolioHistoryProvider);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _removedIds.remove(snapshotId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus histori.')),
+      );
+    }
+  }
 }
 
 Future<bool> _confirmDeleteSnapshot(BuildContext context) async {
@@ -170,15 +201,6 @@ Future<bool> _confirmDeleteSnapshot(BuildContext context) async {
   );
 
   return confirmed ?? false;
-}
-
-Future<void> _deleteSnapshot(
-  WidgetRef ref,
-  String assetId,
-  String snapshotId,
-) async {
-  await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
-  ref.invalidate(assetHistoryProvider(assetId));
 }
 
 class _DeleteBackground extends StatelessWidget {

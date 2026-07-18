@@ -23,6 +23,7 @@ class PortfolioHistoryPage extends ConsumerStatefulWidget {
 
 class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
   int? _selectedYear;
+  final Set<String> _removedIds = {};
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +47,12 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
           final years =
               history.map((item) => item.recordedAt.year).toSet().toList()
                 ..sort((a, b) => b.compareTo(a));
+          final visibleHistory = history
+              .where((item) => !_removedIds.contains(item.id))
+              .toList();
           final filteredHistory = _selectedYear == null
-              ? history
-              : history
+              ? visibleHistory
+              : visibleHistory
                     .where((item) => item.recordedAt.year == _selectedYear)
                     .toList();
           final changeMap = _buildChangeMap(history);
@@ -99,7 +103,10 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                         direction: DismissDirection.endToStart,
                         background: const _DeleteBackground(),
                         confirmDismiss: (_) => _confirmDelete(context),
-                        onDismissed: (_) => _deleteSnapshot(item.id),
+                        onDismissed: (_) {
+                          setState(() => _removedIds.add(item.id));
+                          _deleteSnapshot(item.id);
+                        },
                         child: AppCard(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg,
@@ -192,9 +199,17 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
   }
 
   Future<void> _deleteSnapshot(String snapshotId) async {
-    await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
-    ref.invalidate(portfolioHistoryProvider);
-    ref.invalidate(portfolioSummaryProvider);
+    try {
+      await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
+      ref.invalidate(portfolioHistoryProvider);
+      ref.invalidate(portfolioSummaryProvider);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _removedIds.remove(snapshotId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus histori.')),
+      );
+    }
   }
 
   Map<String, double> _buildChangeMap(List<AssetSnapshot> history) {
