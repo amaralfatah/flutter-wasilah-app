@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/features/backup/presentation/widgets/backup_section.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
 
@@ -47,6 +48,17 @@ class SettingsPage extends ConsumerWidget {
                     },
                   ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _SettingsSectionHeader('Backup'),
+                SizedBox(height: AppSpacing.md),
+                BackupSection(),
               ],
             ),
           ),
