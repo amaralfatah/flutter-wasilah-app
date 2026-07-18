@@ -7,6 +7,7 @@ import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
 import 'package:flutter_wasilah_app/features/backup/data/backup_snapshot.dart';
 import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.dart';
 import 'package:flutter_wasilah_app/features/backup/data/google_auth_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
@@ -89,8 +90,15 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<void> _restoreSession() async {
-    final authService = ref.read(googleAuthServiceProvider);
-    final account = await authService.attemptSilentSignIn();
+    final GoogleSignInAccount? account;
+    try {
+      final authService = ref.read(googleAuthServiceProvider);
+      account = await authService.attemptSilentSignIn();
+    } catch (_) {
+      // Diam: sign-in tersimpan tidak tersedia (mis. Play Services
+      // tidak ada), tetap tampil sebagai belum terhubung.
+      return;
+    }
     if (account == null) {
       return;
     }
