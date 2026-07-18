@@ -14,6 +14,10 @@ abstract interface class PreferencesService {
   bool readAutoBackupEnabled();
 
   Future<void> writeAutoBackupEnabled(bool enabled);
+
+  bool readBackupConnected();
+
+  Future<void> writeBackupConnected(bool connected);
 }
 
 class SharedPreferencesService implements PreferencesService {
@@ -22,6 +26,7 @@ class SharedPreferencesService implements PreferencesService {
   static const _themeModeKey = 'theme_mode';
   static const _lastBackupAtKey = 'last_backup_at_millis';
   static const _autoBackupEnabledKey = 'auto_backup_enabled';
+  static const _backupConnectedKey = 'backup_account_connected';
 
   final SharedPreferences _preferences;
 
@@ -65,6 +70,16 @@ class SharedPreferencesService implements PreferencesService {
   @override
   Future<void> writeAutoBackupEnabled(bool enabled) {
     return _preferences.setBool(_autoBackupEnabledKey, enabled);
+  }
+
+  @override
+  bool readBackupConnected() {
+    return _preferences.getBool(_backupConnectedKey) ?? false;
+  }
+
+  @override
+  Future<void> writeBackupConnected(bool connected) {
+    return _preferences.setBool(_backupConnectedKey, connected);
   }
 }
 

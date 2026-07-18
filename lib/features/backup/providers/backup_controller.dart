@@ -85,7 +85,13 @@ class BackupController extends Notifier<BackupState> {
       autoBackupEnabled: preferences.readAutoBackupEnabled(),
       lastBackupAt: preferences.readLastBackupAt(),
     );
-    _restoreSession();
+    // Hanya coba pulihkan sesi jika user pernah menghubungkan akun.
+    // attemptLightweightAuthentication di Android (Credential Manager)
+    // bisa memunculkan bottom sheet pilih akun jika dipanggil tanpa
+    // sesi tersimpan — jangan sampai muncul sebelum user opt-in.
+    if (preferences.readBackupConnected()) {
+      _restoreSession();
+    }
     return initial;
   }
 
@@ -119,7 +125,9 @@ class BackupController extends Notifier<BackupState> {
     try {
       final authService = ref.read(googleAuthServiceProvider);
       final account = await authService.signIn();
-      await ref.read(preferencesServiceProvider).writeAutoBackupEnabled(true);
+      final preferences = ref.read(preferencesServiceProvider);
+      await preferences.writeAutoBackupEnabled(true);
+      await preferences.writeBackupConnected(true);
       state = state.copyWith(
         connectionStatus: BackupConnectionStatus.connected,
         accountEmail: account.email,
@@ -142,6 +150,7 @@ class BackupController extends Notifier<BackupState> {
     }
     final authService = ref.read(googleAuthServiceProvider);
     await authService.disconnect();
+    await ref.read(preferencesServiceProvider).writeBackupConnected(false);
     state = state.copyWith(
       connectionStatus: BackupConnectionStatus.disconnected,
       clearAccountEmail: true,

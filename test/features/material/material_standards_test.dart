@@ -138,6 +138,7 @@ class _FakePreferencesService implements PreferencesService {
   ThemeMode _themeMode = ThemeMode.system;
   DateTime? _lastBackupAt;
   bool _autoBackupEnabled = true;
+  bool _backupConnected = false;
 
   @override
   ThemeMode readThemeMode() => _themeMode;
@@ -161,6 +162,14 @@ class _FakePreferencesService implements PreferencesService {
   @override
   Future<void> writeAutoBackupEnabled(bool enabled) async {
     _autoBackupEnabled = enabled;
+  }
+
+  @override
+  bool readBackupConnected() => _backupConnected;
+
+  @override
+  Future<void> writeBackupConnected(bool connected) async {
+    _backupConnected = connected;
   }
 }
 

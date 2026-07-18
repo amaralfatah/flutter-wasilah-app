@@ -15,6 +15,7 @@ void main() {
 
       expect(preferences.readLastBackupAt(), isNull);
       expect(preferences.readAutoBackupEnabled(), isTrue);
+      expect(preferences.readBackupConnected(), isFalse);
     });
 
     test('persists last backup time and auto backup toggle', () async {
@@ -28,6 +29,19 @@ void main() {
 
       expect(preferences.readLastBackupAt(), backupTime);
       expect(preferences.readAutoBackupEnabled(), isFalse);
+    });
+
+    test('persists backup connected flag across connect and disconnect',
+        () async {
+      final preferences = SharedPreferencesService(
+        await SharedPreferences.getInstance(),
+      );
+
+      await preferences.writeBackupConnected(true);
+      expect(preferences.readBackupConnected(), isTrue);
+
+      await preferences.writeBackupConnected(false);
+      expect(preferences.readBackupConnected(), isFalse);
     });
   });
 }
