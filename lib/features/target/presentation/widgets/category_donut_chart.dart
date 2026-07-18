@@ -133,13 +133,12 @@ class _DonutPainter extends CustomPainter {
       canvas.drawArc(
         rect,
         startAngle,
-        sweepAngle * 0.96,
+        sweepAngle,
         false,
         Paint()
           ..color = colors[i]
           ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth
-          ..strokeCap = StrokeCap.round,
+          ..strokeWidth = strokeWidth,
       );
       startAngle += sweepAngle;
     }
