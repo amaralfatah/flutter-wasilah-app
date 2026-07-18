@@ -868,6 +868,9 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<void> disconnect() async {
+    if (state.isBusy) {
+      return;
+    }
     final authService = ref.read(googleAuthServiceProvider);
     await authService.disconnect();
     state = state.copyWith(
@@ -1230,7 +1233,7 @@ class BackupSection extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: controller.disconnect,
+                onPressed: state.isBusy ? null : controller.disconnect,
                 child: const Text('Putuskan'),
               ),
             ],
@@ -1243,7 +1246,9 @@ class BackupSection extends ConsumerWidget {
             onChanged: controller.setAutoBackupEnabled,
           ),
           Text(
-            state.lastBackupAt == null
+            state.isRestoring
+                ? 'Sedang memulihkan data...'
+                : state.lastBackupAt == null
                 ? 'Belum pernah backup.'
                 : 'Backup terakhir: ${formatFullDate(state.lastBackupAt!)}',
             style: Theme.of(context).textTheme.bodySmall,
@@ -1252,13 +1257,15 @@ class BackupSection extends ConsumerWidget {
           AppPrimaryButton(
             label: 'Backup sekarang',
             isLoading: state.isBackingUp,
-            onPressed: controller.backupNow,
+            onPressed: state.isBusy ? null : controller.backupNow,
           ),
           const SizedBox(height: AppSpacing.sm),
           AppPrimaryButton(
             label: 'Pulihkan dari backup',
             isFullWidth: true,
-            onPressed: () => context.push(RouteNames.backupRestore),
+            onPressed: state.isBusy
+                ? null
+                : () => context.push(RouteNames.backupRestore),
           ),
         ],
         if (state.errorMessage != null) ...[

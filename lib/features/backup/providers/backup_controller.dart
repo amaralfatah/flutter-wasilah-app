@@ -123,6 +123,9 @@ class BackupController extends Notifier<BackupState> {
   }
 
   Future<void> disconnect() async {
+    if (state.isBusy) {
+      return;
+    }
     final authService = ref.read(googleAuthServiceProvider);
     await authService.disconnect();
     state = state.copyWith(
