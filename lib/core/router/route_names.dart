@@ -7,4 +7,5 @@ abstract final class RouteNames {
   static const String target = '/target';
   static const String targetCreate = '/target/new';
   static const String settings = '/settings';
+  static const String backupRestore = '/settings/backup/restore';
 }
