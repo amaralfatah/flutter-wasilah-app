@@ -136,6 +136,8 @@ Widget _buildApp({
 
 class _FakePreferencesService implements PreferencesService {
   ThemeMode _themeMode = ThemeMode.system;
+  DateTime? _lastBackupAt;
+  bool _autoBackupEnabled = true;
 
   @override
   ThemeMode readThemeMode() => _themeMode;
@@ -143,6 +145,22 @@ class _FakePreferencesService implements PreferencesService {
   @override
   Future<void> writeThemeMode(ThemeMode mode) async {
     _themeMode = mode;
+  }
+
+  @override
+  DateTime? readLastBackupAt() => _lastBackupAt;
+
+  @override
+  Future<void> writeLastBackupAt(DateTime value) async {
+    _lastBackupAt = value;
+  }
+
+  @override
+  bool readAutoBackupEnabled() => _autoBackupEnabled;
+
+  @override
+  Future<void> writeAutoBackupEnabled(bool enabled) async {
+    _autoBackupEnabled = enabled;
   }
 }
 
