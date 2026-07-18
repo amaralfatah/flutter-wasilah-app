@@ -30,6 +30,14 @@ variant once a release keystore exists.
    - SHA-1 certificate fingerprint: paste the debug SHA-1 from step 1.
    - Repeat this step for the release SHA-1 once available (each
      certificate needs its own OAuth client entry).
+5. **Create a second OAuth client ID of type Web application** (name is
+   arbitrary, no redirect URIs needed). Copy its Client ID — `google_sign_in`
+   v7 on Android requires it as `serverClientId`, wired in
+   `lib/features/backup/data/google_auth_service.dart`
+   (`GoogleAuthService._serverClientId`). Without it, sign-in fails with
+   `GoogleSignInException(clientConfigurationError, serverClientId must be
+   provided on Android)`. The client *secret* of this web client is not
+   used anywhere — never embed it in the app.
 
 No changes to `google-services.json` are needed for sign-in itself — that
 file is currently only used for Firebase Crashlytics.
