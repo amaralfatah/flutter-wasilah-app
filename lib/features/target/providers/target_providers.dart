@@ -21,6 +21,8 @@ class TargetAllocationData {
     required this.category,
     required this.targetPercentage,
     required this.actualPercentage,
+    required this.targetValue,
+    required this.actualValue,
     required this.status,
   });
 
@@ -28,6 +30,8 @@ class TargetAllocationData {
   final AssetCategory category;
   final double targetPercentage;
   final double actualPercentage;
+  final double targetValue;
+  final double actualValue;
   final TargetStatus status;
   double get differencePercentage => actualPercentage - targetPercentage;
 
@@ -52,6 +56,7 @@ final targetAllocationItemsProvider =
       final targets = await ref.watch(allocationTargetProvider.future);
       final summary = await ref.watch(portfolioSummaryProvider.future);
       final actualByCategory = <AssetCategory, double>{};
+      final actualValueByCategory = <AssetCategory, double>{};
 
       for (final asset in summary.assets) {
         actualByCategory.update(
@@ -59,11 +64,19 @@ final targetAllocationItemsProvider =
           (value) => value + asset.allocationPercentage,
           ifAbsent: () => asset.allocationPercentage,
         );
+        actualValueByCategory.update(
+          asset.category,
+          (value) => value + asset.currentValue,
+          ifAbsent: () => asset.currentValue,
+        );
       }
 
       return targets
           .map((target) {
             final actual = actualByCategory[target.category] ?? 0;
+            final actualValue = actualValueByCategory[target.category] ?? 0;
+            final targetValue =
+                summary.totalValue * (target.targetPercentage / 100);
             final difference = actual - target.targetPercentage;
 
             return TargetAllocationData(
@@ -71,6 +84,8 @@ final targetAllocationItemsProvider =
               category: target.category,
               targetPercentage: target.targetPercentage,
               actualPercentage: actual,
+              targetValue: targetValue,
+              actualValue: actualValue,
               status:
                   difference.abs() <=
                       _rebalanceTolerance(target.targetPercentage)

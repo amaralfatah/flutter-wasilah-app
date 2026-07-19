@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -48,12 +49,10 @@ class TargetDetailPage extends ConsumerWidget {
             );
           }
 
-          final categoryAssets =
-              assetsValue.asData?.value
-                  .where((asset) => asset.category == item.category)
-                  .toList(growable: false) ??
-              [];
-
+          final assets = assetsValue.asData?.value ?? const <Asset>[];
+          final categoryAssets = assets
+              .where((asset) => asset.category == item.category)
+              .toList(growable: false);
           return RefreshablePageBody(
             onRefresh: () {
               ref.invalidate(assetListProvider);
@@ -63,6 +62,23 @@ class TargetDetailPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppCard(child: TargetAllocationItem(item: item)),
+                const SizedBox(height: AppSpacing.md),
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _TargetValueTile(
+                        label: 'Nilai aktual',
+                        value: formatCurrency(item.actualValue),
+                      ),
+                      const Divider(height: 1),
+                      _TargetValueTile(
+                        label: 'Nilai target',
+                        value: formatCurrency(item.targetValue),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 SectionHeader(
                   title: 'Aset ${item.category.label}',
@@ -105,8 +121,36 @@ class TargetDetailPage extends ConsumerWidget {
   }
 }
 
+class _TargetValueTile extends StatelessWidget {
+  const _TargetValueTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xs,
+      ),
+      title: Text(label),
+      trailing: Text(
+        value,
+        style: Theme.of(context).textTheme.titleMedium,
+        textAlign: TextAlign.end,
+      ),
+    );
+  }
+}
+
 String _formatPercent(double value) {
-  return '${value.toStringAsFixed(1).replaceAll('.0', '').replaceAll('.', ',')}%';
+  final text = value
+      .toStringAsFixed(1)
+      .replaceAll('.0', '')
+      .replaceAll('.', ',');
+
+  return '$text%';
 }
 
 Future<void> _showToleranceInfo(
@@ -130,7 +174,8 @@ Future<void> _showToleranceInfo(
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Mengikuti aturan 5/25: penyesuaian baru diperlukan saat alokasi '
-            'melewati 5 poin persen atau 25% dari target, mana yang lebih kecil.',
+            'melewati 5 poin persen atau 25% dari target, mana yang lebih '
+            'kecil.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],

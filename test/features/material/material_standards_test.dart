@@ -10,6 +10,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashbo
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_history_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/settings/presentation/pages/settings_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/pages/target_detail_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
@@ -76,6 +77,24 @@ void main() {
     expect(find.byType(RefreshIndicator), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsWidgets);
     expect(_scrollPadding(tester).bottom, greaterThan(AppSpacing.xl));
+  });
+
+  testWidgets('target detail shows values derived from target percentages', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        child: const TargetDetailPage(targetId: 'target-crypto'),
+        repository: MockPortfolioRepository(simulatedDelay: Duration.zero),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nilai target'), findsOneWidget);
+    expect(find.text('Rp19.250.000'), findsOneWidget);
+    expect(find.text('Nilai aktual'), findsOneWidget);
+    expect(find.text('Rp18.200.000'), findsWidgets);
   });
 
   testWidgets('target form follows the same Material pattern as asset form', (
