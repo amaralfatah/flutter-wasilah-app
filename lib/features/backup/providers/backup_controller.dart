@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -12,7 +13,6 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 enum BackupConnectionStatus { disconnected, connecting, connected }
 
@@ -78,6 +78,19 @@ final backupControllerProvider =
 
 class BackupController extends Notifier<BackupState> {
   static const _autoBackupInterval = Duration(hours: 24);
+  // Setelah satu percobaan auto-backup (berhasil atau gagal), jangan coba
+  // lagi dalam rentang ini. Tanpa jeda ini setiap resume akan mengulang
+  // percobaan yang gagal — dan tiap percobaan berpotensi memunculkan UI
+  // Credential Manager.
+  static const _autoBackupRetryCooldown = Duration(hours: 1);
+
+  /// Akun aktif, disinkronkan dari [GoogleAuthService.authenticationEvents].
+  ///
+  /// Di-cache di sini supaya operasi Drive tidak perlu memanggil ulang
+  /// `attemptLightweightAuthentication()` — di Android panggilan itu lewat
+  /// Credential Manager dan bisa memunculkan bottom sheet pilih akun.
+  GoogleSignInAccount? _account;
+  DateTime? _lastAutoBackupAttemptAt;
 
   @override
   BackupState build() {
@@ -86,36 +99,66 @@ class BackupController extends Notifier<BackupState> {
       autoBackupEnabled: preferences.readAutoBackupEnabled(),
       lastBackupAt: preferences.readLastBackupAt(),
     );
-    // Hanya coba pulihkan sesi jika user pernah menghubungkan akun.
-    // attemptLightweightAuthentication di Android (Credential Manager)
-    // bisa memunculkan bottom sheet pilih akun jika dipanggil tanpa
-    // sesi tersimpan — jangan sampai muncul sebelum user opt-in.
-    if (preferences.readBackupConnected()) {
-      _restoreSession();
-    }
+    unawaited(
+      _startSession(restorePreviousSession: preferences.readBackupConnected()),
+    );
     return initial;
   }
 
-  Future<void> _restoreSession() async {
-    final GoogleSignInAccount? account;
+  Future<void> _startSession({required bool restorePreviousSession}) async {
+    final authService = ref.read(googleAuthServiceProvider);
     try {
-      final authService = ref.read(googleAuthServiceProvider);
-      account = await authService.attemptSilentSignIn();
+      await authService.ensureInitialized();
     } catch (error) {
-      // Diam: sign-in tersimpan tidak tersedia (mis. Play Services
-      // tidak ada), tetap tampil sebagai belum terhubung.
+      // Diam: Google Sign-In tidak tersedia (mis. tanpa Play Services),
+      // tetap tampil sebagai belum terhubung.
       if (kDebugMode) {
-        debugPrint('Silent Google sign-in restore skipped: $error');
+        debugPrint('Google sign-in initialize skipped: $error');
       }
       return;
     }
-    if (account == null) {
+
+    // Sumber kebenaran tunggal untuk akun aktif. Berlangganan saja tidak
+    // memunculkan UI apa pun.
+    final subscription = authService.authenticationEvents.listen(
+      _handleAuthenticationEvent,
+      onError: (Object error) {
+        if (kDebugMode) {
+          debugPrint('Google sign-in event error: $error');
+        }
+      },
+    );
+    ref.onDispose(subscription.cancel);
+
+    // Satu-satunya pemanggilan silent sign-in di seluruh siklus hidup app,
+    // dan hanya jika user pernah opt-in menghubungkan akun.
+    if (!restorePreviousSession) {
       return;
     }
-    state = state.copyWith(
-      connectionStatus: BackupConnectionStatus.connected,
-      accountEmail: account.email,
-    );
+    try {
+      await authService.attemptSilentSignIn();
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Silent Google sign-in restore skipped: $error');
+      }
+    }
+  }
+
+  void _handleAuthenticationEvent(GoogleSignInAuthenticationEvent event) {
+    final account = switch (event) {
+      GoogleSignInAuthenticationEventSignIn() => event.user,
+      GoogleSignInAuthenticationEventSignOut() => null,
+    };
+    _account = account;
+    state = account == null
+        ? state.copyWith(
+            connectionStatus: BackupConnectionStatus.disconnected,
+            clearAccountEmail: true,
+          )
+        : state.copyWith(
+            connectionStatus: BackupConnectionStatus.connected,
+            accountEmail: account.email,
+          );
   }
 
   Future<void> connect() async {
@@ -126,6 +169,7 @@ class BackupController extends Notifier<BackupState> {
     try {
       final authService = ref.read(googleAuthServiceProvider);
       final account = await authService.signIn();
+      _account = account;
       final preferences = ref.read(preferencesServiceProvider);
       await preferences.writeAutoBackupEnabled(true);
       await preferences.writeBackupConnected(true);
@@ -151,6 +195,8 @@ class BackupController extends Notifier<BackupState> {
     }
     final authService = ref.read(googleAuthServiceProvider);
     await authService.disconnect();
+    _account = null;
+    _lastAutoBackupAttemptAt = null;
     await ref.read(preferencesServiceProvider).writeBackupConnected(false);
     state = state.copyWith(
       connectionStatus: BackupConnectionStatus.disconnected,
@@ -183,14 +229,18 @@ class BackupController extends Notifier<BackupState> {
     if (!state.isConnected || !state.autoBackupEnabled || state.isBusy) {
       return;
     }
-    final due = shouldAutoBackup(
-      now: DateTime.now(),
+    final now = DateTime.now();
+    final due = shouldAttemptAutoBackup(
+      now: now,
       lastBackupAt: state.lastBackupAt,
+      lastAttemptAt: _lastAutoBackupAttemptAt,
       interval: _autoBackupInterval,
+      retryCooldown: _autoBackupRetryCooldown,
     );
     if (!due) {
       return;
     }
+    _lastAutoBackupAttemptAt = now;
     state = state.copyWith(isBackingUp: true);
     try {
       await _performBackup(promptIfNecessary: false);
@@ -198,36 +248,6 @@ class BackupController extends Notifier<BackupState> {
       // Diam: dicoba lagi otomatis pada resume/launch berikutnya.
     } finally {
       state = state.copyWith(isBackingUp: false);
-    }
-  }
-
-  Future<void> shareBackup() async {
-    if (state.isBusy) {
-      return;
-    }
-    state = state.copyWith(isBackingUp: true, clearError: true);
-    try {
-      final snapshotService = ref.read(backupSnapshotServiceProvider);
-      final database = ref.read(appDatabaseProvider);
-      final snapshotFile = await snapshotService.createSnapshot(database);
-      try {
-        if (!snapshotService.isValidSqliteFile(snapshotFile)) {
-          throw StateError('Snapshot database tidak valid.');
-        }
-        await SharePlus.instance.share(
-          ShareParams(files: [XFile(snapshotFile.path)]),
-        );
-      } finally {
-        if (snapshotFile.existsSync()) {
-          await snapshotFile.delete();
-        }
-      }
-      state = state.copyWith(isBackingUp: false);
-    } catch (_) {
-      state = state.copyWith(
-        isBackingUp: false,
-        errorMessage: 'Gagal membagikan file backup.',
-      );
     }
   }
 
@@ -304,7 +324,10 @@ class BackupController extends Notifier<BackupState> {
   Future<({DriveBackupService service, http.Client client})>
   _authorizedDriveService({required bool promptIfNecessary}) async {
     final authService = ref.read(googleAuthServiceProvider);
-    final account = await authService.attemptSilentSignIn();
+    // Sengaja tidak memanggil silent sign-in di sini: akun sudah di-cache
+    // dari stream authenticationEvents. Kalau null, artinya user memang
+    // belum terhubung dan harus menekan tombol hubungkan akun.
+    final account = _account;
     if (account == null) {
       throw StateError('Akun Google belum terhubung.');
     }
@@ -357,4 +380,26 @@ bool shouldAutoBackup({
     return true;
   }
   return now.difference(lastBackupAt) >= interval;
+}
+
+/// [shouldAutoBackup] plus jeda antar percobaan.
+///
+/// Percobaan yang gagal atau dibatalkan tidak mengubah `lastBackupAt`, jadi
+/// tanpa [retryCooldown] backup akan dicoba ulang di setiap resume — dan tiap
+/// percobaan bisa memunculkan UI Google Sign-In.
+bool shouldAttemptAutoBackup({
+  required DateTime now,
+  required DateTime? lastBackupAt,
+  required DateTime? lastAttemptAt,
+  required Duration interval,
+  required Duration retryCooldown,
+}) {
+  if (lastAttemptAt != null && now.difference(lastAttemptAt) < retryCooldown) {
+    return false;
+  }
+  return shouldAutoBackup(
+    now: now,
+    lastBackupAt: lastBackupAt,
+    interval: interval,
+  );
 }

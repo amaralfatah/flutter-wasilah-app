@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/app_router.dart';
@@ -13,12 +15,17 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
+  // `resumed` juga terpicu saat kembali dari dialog sistem — termasuk bottom
+  // sheet Google Sign-In dan share sheet. Hanya perlakukan sebagai "buka
+  // aplikasi" kalau app benar-benar sempat masuk background.
+  bool _wasPaused = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(backupControllerProvider.notifier).maybeAutoBackup();
+      unawaited(ref.read(backupControllerProvider.notifier).maybeAutoBackup());
     });
   }
 
@@ -30,8 +37,15 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.read(backupControllerProvider.notifier).maybeAutoBackup();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      _wasPaused = true;
+      return;
+    }
+    if (state == AppLifecycleState.resumed && _wasPaused) {
+      _wasPaused = false;
+      unawaited(ref.read(backupControllerProvider.notifier).maybeAutoBackup());
     }
   }
 

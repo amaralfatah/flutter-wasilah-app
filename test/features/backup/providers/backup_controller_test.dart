@@ -35,4 +35,57 @@ void main() {
       expect(result, isTrue);
     });
   });
+
+  group('shouldAttemptAutoBackup', () {
+    const interval = Duration(hours: 24);
+    const cooldown = Duration(hours: 1);
+
+    test('returns true on the first attempt when a backup is due', () {
+      final result = shouldAttemptAutoBackup(
+        now: DateTime(2026, 7, 18, 9),
+        lastBackupAt: null,
+        lastAttemptAt: null,
+        interval: interval,
+        retryCooldown: cooldown,
+      );
+
+      expect(result, isTrue);
+    });
+
+    test('returns false while the retry cooldown is still active', () {
+      final result = shouldAttemptAutoBackup(
+        now: DateTime(2026, 7, 18, 9),
+        lastBackupAt: null,
+        lastAttemptAt: DateTime(2026, 7, 18, 8, 30),
+        interval: interval,
+        retryCooldown: cooldown,
+      );
+
+      expect(result, isFalse);
+    });
+
+    test('returns true again once the retry cooldown has elapsed', () {
+      final result = shouldAttemptAutoBackup(
+        now: DateTime(2026, 7, 18, 9),
+        lastBackupAt: null,
+        lastAttemptAt: DateTime(2026, 7, 18, 7, 30),
+        interval: interval,
+        retryCooldown: cooldown,
+      );
+
+      expect(result, isTrue);
+    });
+
+    test('still respects the backup interval after the cooldown', () {
+      final result = shouldAttemptAutoBackup(
+        now: DateTime(2026, 7, 18, 9),
+        lastBackupAt: DateTime(2026, 7, 18, 6),
+        lastAttemptAt: DateTime(2026, 7, 18, 6),
+        interval: interval,
+        retryCooldown: cooldown,
+      );
+
+      expect(result, isFalse);
+    });
+  });
 }

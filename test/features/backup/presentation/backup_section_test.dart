@@ -49,8 +49,55 @@ void main() {
       expect(find.text('user@gmail.com'), findsOneWidget);
       expect(find.text('Backup sekarang'), findsOneWidget);
       expect(find.textContaining('17 Juli 2026'), findsOneWidget);
+      expect(find.text('Bagikan file backup'), findsNothing);
+    });
+
+    testWidgets('asks for confirmation before backing up', (tester) async {
+      await tester.pumpWidget(_connectedSection());
+
+      await tester.tap(find.text('Backup sekarang'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Backup sekarang?'), findsOneWidget);
+
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Backup sekarang?'), findsNothing);
+    });
+
+    testWidgets('asks for confirmation before disconnecting', (tester) async {
+      await tester.pumpWidget(_connectedSection());
+
+      await tester.tap(find.text('Putuskan'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Putuskan akun Google?'), findsOneWidget);
+
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Putuskan akun Google?'), findsNothing);
     });
   });
+}
+
+Widget _connectedSection() {
+  return ProviderScope(
+    overrides: [
+      backupControllerProvider.overrideWith(
+        () => _FakeBackupController(
+          const BackupState(
+            connectionStatus: BackupConnectionStatus.connected,
+            accountEmail: 'user@gmail.com',
+          ),
+        ),
+      ),
+    ],
+    child: const MaterialApp(
+      home: Scaffold(body: BackupSection()),
+    ),
+  );
 }
 
 class _FakeBackupController extends BackupController {

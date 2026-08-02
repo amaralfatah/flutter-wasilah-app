@@ -43,7 +43,9 @@ class BackupSection extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: state.isBusy ? null : controller.disconnect,
+                onPressed: state.isBusy
+                    ? null
+                    : () => _confirmDisconnect(context, controller),
                 child: const Text('Putuskan'),
               ),
             ],
@@ -67,7 +69,9 @@ class BackupSection extends ConsumerWidget {
           AppPrimaryButton(
             label: 'Backup sekarang',
             isLoading: state.isBackingUp,
-            onPressed: state.isBusy ? null : controller.backupNow,
+            onPressed: state.isBusy
+                ? null
+                : () => _confirmBackup(context, controller),
           ),
           const SizedBox(height: AppSpacing.sm),
           AppPrimaryButton(
@@ -77,12 +81,6 @@ class BackupSection extends ConsumerWidget {
                 : () => context.push(RouteNames.backupRestore),
           ),
         ],
-        const SizedBox(height: AppSpacing.sm),
-        AppPrimaryButton(
-          label: 'Bagikan file backup',
-          isLoading: state.isBackingUp,
-          onPressed: state.isBusy ? null : controller.shareBackup,
-        ),
         if (state.errorMessage != null) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
@@ -92,5 +90,77 @@ class BackupSection extends ConsumerWidget {
         ],
       ],
     );
+  }
+
+  Future<void> _confirmBackup(
+    BuildContext context,
+    BackupController controller,
+  ) async {
+    final confirmed = await _confirm(
+      context,
+      title: 'Backup sekarang?',
+      message:
+          'Salinan data portofolio saat ini akan diunggah ke Google Drive '
+          'dan menghitung ulang jadwal backup otomatis berikutnya.',
+      confirmLabel: 'Backup',
+    );
+    if (confirmed) {
+      await controller.backupNow();
+    }
+  }
+
+  Future<void> _confirmDisconnect(
+    BuildContext context,
+    BackupController controller,
+  ) async {
+    final confirmed = await _confirm(
+      context,
+      title: 'Putuskan akun Google?',
+      message:
+          'Backup otomatis akan berhenti dan aplikasi tidak lagi punya akses '
+          'ke Google Drive. Data di perangkat dan backup yang sudah ada '
+          'tidak dihapus.',
+      confirmLabel: 'Putuskan',
+      isDestructive: true,
+    );
+    if (confirmed) {
+      await controller.disconnect();
+    }
+  }
+
+  Future<bool> _confirm(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmLabel,
+    bool isDestructive = false,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: isDestructive
+                  ? FilledButton.styleFrom(
+                      backgroundColor: colorScheme.error,
+                      foregroundColor: colorScheme.onError,
+                    )
+                  : null,
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(confirmLabel),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
   }
 }
