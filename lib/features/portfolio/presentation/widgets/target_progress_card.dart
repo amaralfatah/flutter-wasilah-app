@@ -22,20 +22,25 @@ class TargetProgressCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            '${percentage.toStringAsFixed(0)}%',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          LinearProgressIndicator(value: progressValue),
-          const SizedBox(height: AppSpacing.sm),
-          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-        ],
+      child: Semantics(
+        label: '$label ${percentage.toStringAsFixed(0)} persen. $subtitle',
+        excludeSemantics: true,
+        button: onTap != null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '${percentage.toStringAsFixed(0)}%',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            LinearProgressIndicator(value: progressValue),
+            const SizedBox(height: AppSpacing.sm),
+            Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        ),
       ),
     );
   }

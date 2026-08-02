@@ -27,21 +27,33 @@ class CategoryDonutChart extends StatelessWidget {
         AppColors.categoryColorOf(context, item.category.index),
     ];
 
+    final semanticsSummary = segments
+        .map(
+          (item) => '${item.category.label} '
+              '${item.actualPercentage.toStringAsFixed(0)} persen',
+        )
+        .join(', ');
+
     return AppCard(
       child: Row(
         children: [
-          SizedBox(
-            height: 96,
-            width: 96,
-            child: CustomPaint(
-              painter: _DonutPainter(
-                values: [
-                  for (final item in segments) item.actualPercentage,
-                ],
-                colors: colors,
-                trackColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
+          // Grafiknya murni visual; tanpa label ini screen reader hanya
+          // menemukan kotak kosong sebelum daftar legenda.
+          Semantics(
+            label: 'Grafik alokasi aktual per kategori: $semanticsSummary',
+            child: SizedBox(
+              height: 96,
+              width: 96,
+              child: CustomPaint(
+                painter: _DonutPainter(
+                  values: [
+                    for (final item in segments) item.actualPercentage,
+                  ],
+                  colors: colors,
+                  trackColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                ),
               ),
             ),
           ),

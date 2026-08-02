@@ -26,6 +26,34 @@ void main() {
     expect(find.text('Total Portofolio'), findsOneWidget);
     expect(find.text('Rp55.000.000'), findsOneWidget);
     expect(find.text('Naik 3,4% bulan ini'), findsOneWidget);
+    // basic_plan.md menyebut dashboard sebagai salah satu pintu masuk halaman
+    // update nilai aset, di samping daftar aset dan detail aset.
+    expect(find.text('Update nilai'), findsOneWidget);
+  });
+
+  testWidgets('dashboard hides the update action while there are no assets', (
+    tester,
+  ) async {
+    final repository = _DashboardNoTargetRepository(
+      summary: PortfolioSummary(
+        totalValue: 0,
+        monthlyChangePercentage: 0,
+        targetProgressPercentage: 0,
+        assets: const [],
+        lastUpdatedAt: DateTime(2026, 7, 16),
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+        child: const MaterialApp(home: DashboardPage()),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Belum ada aset'), findsOneWidget);
     expect(find.text('Update nilai'), findsNothing);
   });
 

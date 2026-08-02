@@ -6,7 +6,9 @@ class AppErrorView extends StatelessWidget {
   const AppErrorView({
     super.key,
     this.title = 'Data belum dapat dimuat.',
-    this.message = 'Periksa koneksi Anda dan coba kembali.',
+    // Datanya tersimpan lokal, jadi menyuruh user memeriksa koneksi hanya
+    // mengarahkan ke penyebab yang salah.
+    this.message = 'Terjadi kesalahan saat membaca data. Coba lagi.',
     this.onRetry,
   });
 
@@ -23,7 +25,7 @@ class AppErrorView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.cloud_off_outlined,
+              Icons.error_outline,
               size: 48,
               color: Theme.of(context).colorScheme.error,
             ),

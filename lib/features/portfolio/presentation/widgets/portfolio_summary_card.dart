@@ -22,40 +22,58 @@ class PortfolioSummaryCard extends StatelessWidget {
         width: double.infinity,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Total Portofolio',
-                style: textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                formatCurrency(summary.totalValue),
-                style: textTheme.headlineSmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  Icon(
-                    _changeIcon(change),
+          child: Semantics(
+            label:
+                'Total portofolio ${formatCurrency(summary.totalValue)}. '
+                '${_changeLabel(change)}.',
+            excludeSemantics: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total Portofolio',
+                  style: textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onPrimaryContainer,
-                    size: 20,
                   ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    _changeLabel(change),
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                // Angka terpenting di aplikasi; sebelumnya sebesar nominal
+                // per-aset di daftar sehingga hierarkinya hilang. FittedBox
+                // menjaga nominal panjang tetap muat dalam satu baris.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      formatCurrency(summary.totalValue),
+                      style: textTheme.displaySmall?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Icon(
+                      _changeIcon(change),
+                      color: colorScheme.onPrimaryContainer,
+                      size: 20,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      _changeLabel(change),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
