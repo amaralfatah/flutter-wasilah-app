@@ -17,10 +17,21 @@ class AsyncValueView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return value.when(
-      data: data,
-      loading: () => const AppLoading(),
-      error: (error, stackTrace) => AppErrorView(onRetry: onRetry),
+    // Beri transisi antar state supaya konten tidak berkedip muncul
+    // menggantikan spinner dalam satu frame.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: value.when(
+        data: (data) => KeyedSubtree(
+          key: const ValueKey('data'),
+          child: this.data(data),
+        ),
+        loading: () => const AppLoading(key: ValueKey('loading')),
+        error: (error, stackTrace) => AppErrorView(
+          key: const ValueKey('error'),
+          onRetry: onRetry,
+        ),
+      ),
     );
   }
 }

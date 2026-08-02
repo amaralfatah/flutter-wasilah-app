@@ -4,8 +4,8 @@ import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
@@ -40,9 +40,11 @@ class AssetListPage extends ConsumerWidget {
             return RefreshablePageBody(
               onRefresh: () => ref.refresh(assetListProvider.future),
               padding: _assetListPagePadding,
-              child: const AppEmptyState(
+              child: AppEmptyState(
                 title: 'Belum ada aset',
                 message: 'Tambahkan aset pertama untuk mulai mencatat nilai.',
+                actionLabel: 'Tambah aset',
+                onAction: () => context.push(RouteNames.assetCreate),
               ),
             );
           }
@@ -50,26 +52,16 @@ class AssetListPage extends ConsumerWidget {
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(assetListProvider.future),
             padding: _assetListPagePadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppCard(
-                  child: Column(
-                    children: _assetItems(
-                      assets
-                          .map(
-                            (asset) => AssetListItem(
-                              asset: asset,
-                              onTap: () => context.push(
-                                '${RouteNames.assets}/${asset.id}',
-                              ),
-                            ),
-                          )
-                          .toList(growable: false),
+            child: AppListCard(
+              children: assets
+                  .map(
+                    (asset) => AssetListItem(
+                      asset: asset,
+                      onTap: () =>
+                          context.push('${RouteNames.assets}/${asset.id}'),
                     ),
-                  ),
-                ),
-              ],
+                  )
+                  .toList(growable: false),
             ),
           );
         },
@@ -77,16 +69,4 @@ class AssetListPage extends ConsumerWidget {
     );
   }
 
-  List<Widget> _assetItems(List<Widget> items) {
-    final widgets = <Widget>[];
-
-    for (var index = 0; index < items.length; index++) {
-      widgets.add(items[index]);
-      if (index < items.length - 1) {
-        widgets.add(const Divider(height: AppSpacing.xl));
-      }
-    }
-
-    return widgets;
-  }
 }

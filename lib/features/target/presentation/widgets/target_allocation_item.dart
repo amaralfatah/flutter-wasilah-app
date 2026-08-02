@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 
@@ -29,7 +30,8 @@ class TargetAllocationItem extends StatelessWidget {
                   Text(item.category.label, style: textTheme.titleMedium),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Aktual ${_formatPercentage(item.actualPercentage)} dari target ${_formatPercentage(item.targetPercentage)}',
+                    'Aktual ${formatPercentage(item.actualPercentage)} '
+                    'dari target ${formatPercentage(item.targetPercentage)}',
                     style: textTheme.bodyMedium,
                   ),
                 ],
@@ -37,7 +39,7 @@ class TargetAllocationItem extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.md),
             Text(
-              _formatDifference(item.differencePercentage),
+              formatSignedPercentage(item.differencePercentage),
               style: textTheme.titleMedium?.copyWith(color: statusColor),
             ),
           ],
@@ -46,7 +48,8 @@ class TargetAllocationItem extends StatelessWidget {
         Semantics(
           label: 'Progres alokasi ${item.category.label}',
           value:
-              'Aktual ${_formatPercentage(item.actualPercentage)} dari target ${_formatPercentage(item.targetPercentage)}',
+              'Aktual ${formatPercentage(item.actualPercentage)} '
+              'dari target ${formatPercentage(item.targetPercentage)}',
           child: LinearProgressIndicator(
             value: progressValue,
             color: statusColor,
@@ -54,18 +57,5 @@ class TargetAllocationItem extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatPercentage(double value) {
-    return '${value.toStringAsFixed(0)}%';
-  }
-
-  String _formatDifference(double value) {
-    if (value == 0) {
-      return '0%';
-    }
-
-    final prefix = value > 0 ? '+' : '-';
-    return '$prefix${value.abs().toStringAsFixed(0)}%';
   }
 }

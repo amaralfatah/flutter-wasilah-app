@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 
 class AllocationBadge extends StatelessWidget {
   const AllocationBadge({required this.percentage, super.key});
@@ -16,7 +17,7 @@ class AllocationBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        '${percentage.toStringAsFixed(0)}%',
+        formatPercentage(percentage),
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: colorScheme.onSecondaryContainer,
         ),

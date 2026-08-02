@@ -7,9 +7,9 @@ import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 
@@ -63,9 +63,8 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                HistoryLineChart(history: filteredHistory.reversed.toList()),
-                if (filteredHistory.length > 1)
-                  const SizedBox(height: AppSpacing.xl),
+                // Filter diletakkan di atas grafik: kalau di bawah, hasil
+                // penekanan chip berubah di luar pandangan user.
                 if (years.length > 1) ...[
                   Wrap(
                     spacing: AppSpacing.sm,
@@ -88,80 +87,82 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                 ],
+                if (filteredHistory.isNotEmpty) ...[
+                  HistoryLineChart(history: filteredHistory.reversed.toList()),
+                  const SizedBox(height: AppSpacing.xl),
+                ],
                 if (filteredHistory.isEmpty)
                   const AppEmptyState(
                     title: 'Tidak ada data pada filter ini',
                     message: 'Pilih tahun lain.',
                   )
                 else
-                  ...filteredHistory.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Dismissible(
-                        key: ValueKey(item.id),
-                        direction: DismissDirection.endToStart,
-                        background: const _DeleteBackground(),
-                        confirmDismiss: (_) => _confirmDelete(context),
-                        onDismissed: (_) {
-                          setState(() => _removedIds.add(item.id));
-                          _deleteSnapshot(item.id);
-                        },
-                        child: AppCard(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                            vertical: AppSpacing.sm,
-                          ),
-                          child: ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              formatMonthYear(item.recordedAt),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(
-                                top: AppSpacing.xs,
+                  AppListCard(
+                    children: filteredHistory
+                        .map(
+                          (item) => Dismissible(
+                            key: ValueKey(item.id),
+                            direction: DismissDirection.endToStart,
+                            background: const _DeleteBackground(),
+                            confirmDismiss: (_) => _confirmDelete(context),
+                            onDismissed: (_) {
+                              setState(() => _removedIds.add(item.id));
+                              _deleteSnapshot(item.id);
+                            },
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.lg,
+                                vertical: AppSpacing.sm,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _formatChange(
-                                      changeMap[item.id],
-                                      isFirstSnapshot:
-                                          item.id == firstSnapshotId,
-                                    ),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: _changeColor(
-                                            context,
-                                            changeMap[item.id],
-                                            isFirstSnapshot:
-                                                item.id == firstSnapshotId,
-                                          ),
-                                        ),
-                                  ),
-                                  if (item.note != null)
+                              title: Text(
+                                formatMonthYear(item.recordedAt),
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSpacing.xs,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
                                     Text(
-                                      item.note!,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
+                                      _formatChange(
+                                        changeMap[item.id],
+                                        isFirstSnapshot:
+                                            item.id == firstSnapshotId,
+                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: _changeColor(
+                                              context,
+                                              changeMap[item.id],
+                                              isFirstSnapshot:
+                                                  item.id == firstSnapshotId,
+                                            ),
+                                          ),
                                     ),
-                                ],
+                                    if (item.note != null)
+                                      Text(
+                                        item.note!,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              trailing: Text(
+                                formatCurrency(item.totalValue),
+                                style: Theme.of(context).textTheme.titleMedium,
+                                textAlign: TextAlign.end,
                               ),
                             ),
-                            trailing: Text(
-                              formatCurrency(item.totalValue),
-                              style: Theme.of(context).textTheme.titleMedium,
-                              textAlign: TextAlign.end,
-                            ),
                           ),
-                        ),
-                      ),
-                    ),
+                        )
+                        .toList(growable: false),
                   ),
               ],
             ),
@@ -202,6 +203,10 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
       await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
       ref.invalidate(portfolioHistoryProvider);
       ref.invalidate(portfolioSummaryProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Histori dihapus.')),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _removedIds.remove(snapshotId));
@@ -263,12 +268,8 @@ class _DeleteBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      color: Theme.of(context).colorScheme.errorContainer,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
       alignment: Alignment.centerRight,
       child: Icon(
         Icons.delete_outline,

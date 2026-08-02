@@ -23,36 +23,87 @@ class AssetListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return ListTile(
+    final captionStyle = textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
+
+    // Sengaja tidak memakai ListTile: `trailing`-nya mengambil lebar sesuka
+    // hati, sehingga nominal panjang menyisakan ruang nyaris nol untuk nama
+    // aset dan teks membungkus per huruf ke bawah.
+    return InkWell(
       onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-      leading: AssetCategoryIcon(category: asset.category),
-      title: Text(asset.name, style: textTheme.titleMedium),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.xs),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
           children: [
-            if (showCategory) Text(asset.category.label),
-            if (showUpdatedAt)
-              Text('Diperbarui ${formatFullDate(asset.lastUpdatedAt)}'),
+            AssetCategoryIcon(category: asset.category),
+            const SizedBox(width: AppSpacing.md),
+            // Nama dijamin dapat 3/5 ruang sisa; nominal maksimal 2/5 dan
+            // boleh lebih sempit. Tanpa pembagian tegas ini, nominal besar
+            // menggencet nama sampai tak terbaca.
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    asset.name,
+                    style: textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (showCategory) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      asset.category.label,
+                      style: captionStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (showUpdatedAt) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Diperbarui ${formatShortDate(asset.lastUpdatedAt)}',
+                      style: captionStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Flexible(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Pengaman untuk nominal ekstrem / skala teks besar:
+                  // mengecil seperlunya, tidak pernah meluber.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      formatCurrency(asset.currentValue),
+                      style: textTheme.titleMedium,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  AllocationBadge(percentage: asset.allocationPercentage),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            formatCurrency(asset.currentValue),
-            style: textTheme.bodyLarge,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          AllocationBadge(percentage: asset.allocationPercentage),
-        ],
       ),
     );
   }

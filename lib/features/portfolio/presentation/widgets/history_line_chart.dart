@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
@@ -12,8 +13,15 @@ class HistoryLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (history.length < 2) {
+    if (history.isEmpty) {
       return const SizedBox.shrink();
+    }
+
+    // Satu titik tidak bisa digambar sebagai garis. Tampilkan penjelasan,
+    // jangan menghilang begitu saja — kalau tidak, grafik akan lenyap tanpa
+    // sebab saat user memfilter tahun yang hanya punya satu pencatatan.
+    if (history.length < 2) {
+      return const _ChartPlaceholder();
     }
 
     final colorScheme = Theme.of(context).colorScheme;
@@ -22,11 +30,15 @@ class HistoryLineChart extends StatelessWidget {
     final maxValue = values.reduce((a, b) => a > b ? a : b);
     final minValue = values.reduce((a, b) => a < b ? a : b);
 
+    final axisStyle = textTheme.bodySmall?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(formatCurrency(maxValue), style: textTheme.bodySmall),
+          Text(formatCurrency(maxValue), style: axisStyle),
           const SizedBox(height: AppSpacing.sm),
           SizedBox(
             height: 120,
@@ -40,7 +52,45 @@ class HistoryLineChart extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(formatCurrency(minValue), style: textTheme.bodySmall),
+          Text(formatCurrency(minValue), style: axisStyle),
+          const SizedBox(height: AppSpacing.xs),
+          Divider(height: AppSpacing.lg, color: colorScheme.outlineVariant),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(formatMonthYear(history.first.recordedAt), style: axisStyle),
+              Text(formatMonthYear(history.last.recordedAt), style: axisStyle),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChartPlaceholder extends StatelessWidget {
+  const _ChartPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AppCard(
+      child: Row(
+        children: [
+          Icon(
+            Icons.show_chart_outlined,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              'Grafik muncul setelah ada minimal dua pencatatan nilai.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         ],
       ),
     );

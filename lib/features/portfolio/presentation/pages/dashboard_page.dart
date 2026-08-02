@@ -8,6 +8,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/targ
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
@@ -30,9 +31,11 @@ class DashboardPage extends ConsumerWidget {
           if (summary.assets.isEmpty) {
             return RefreshablePageBody(
               onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
-              child: const AppEmptyState(
+              child: AppEmptyState(
                 title: 'Belum ada aset',
                 message: 'Catat aset pertama untuk melihat ringkasan.',
+                actionLabel: 'Tambah aset',
+                onAction: () => context.push(RouteNames.assetCreate),
               ),
             );
           }
@@ -58,7 +61,8 @@ class DashboardPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              'Buat target alokasi dulu agar progres portofolio bisa dihitung dengan benar.',
+                              'Buat target alokasi dulu agar progres '
+                              'portofolio bisa dihitung dengan benar.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -83,23 +87,18 @@ class DashboardPage extends ConsumerWidget {
                   onAction: () => context.go(RouteNames.assets),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppCard(
-                  child: Column(
-                    children: _assetPreviewItems(
-                      summary.assets
-                          .take(4)
-                          .map((asset) {
-                            return AssetListItem(
-                              asset: asset,
-                              showUpdatedAt: false,
-                              onTap: () => context.push(
-                                '${RouteNames.assets}/${asset.id}',
-                              ),
-                            );
-                          })
-                          .toList(growable: false),
-                    ),
-                  ),
+                AppListCard(
+                  children: summary.assets
+                      .take(4)
+                      .map(
+                        (asset) => AssetListItem(
+                          asset: asset,
+                          showUpdatedAt: false,
+                          onTap: () =>
+                              context.push('${RouteNames.assets}/${asset.id}'),
+                        ),
+                      )
+                      .toList(growable: false),
                 ),
               ],
             ),
@@ -109,16 +108,4 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  List<Widget> _assetPreviewItems(List<Widget> items) {
-    final widgets = <Widget>[];
-
-    for (var index = 0; index < items.length; index++) {
-      widgets.add(items[index]);
-      if (index < items.length - 1) {
-        widgets.add(const Divider(height: AppSpacing.xl));
-      }
-    }
-
-    return widgets;
-  }
 }

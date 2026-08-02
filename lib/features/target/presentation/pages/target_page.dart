@@ -5,8 +5,8 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/category_donut_chart.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
@@ -42,9 +42,13 @@ class TargetPage extends ConsumerWidget {
               onRefresh: () =>
                   ref.refresh(targetAllocationItemsProvider.future),
               padding: _targetPagePadding,
-              child: const AppEmptyState(
+              child: AppEmptyState(
                 title: 'Belum ada target alokasi',
-                message: 'Target kategori akan tampil di sini.',
+                message:
+                    'Tentukan porsi ideal tiap kategori aset supaya progres '
+                    'portofolio bisa dihitung.',
+                actionLabel: 'Tambah target',
+                onAction: () => context.push(RouteNames.targetCreate),
               ),
             );
           }
@@ -57,15 +61,22 @@ class TargetPage extends ConsumerWidget {
               children: [
                 CategoryDonutChart(items: items),
                 const SizedBox(height: AppSpacing.xl),
-                ...items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: AppCard(
-                      onTap: () =>
-                          context.push('${RouteNames.target}/${item.id}'),
-                      child: TargetAllocationItem(item: item),
-                    ),
-                  ),
+                AppListCard(
+                  children: items
+                      .map(
+                        (item) => InkWell(
+                          onTap: () =>
+                              context.push('${RouteNames.target}/${item.id}'),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                              vertical: AppSpacing.lg,
+                            ),
+                            child: TargetAllocationItem(item: item),
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
                 ),
               ],
             ),

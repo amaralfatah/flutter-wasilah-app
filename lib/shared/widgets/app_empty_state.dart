@@ -7,11 +7,18 @@ class AppEmptyState extends StatelessWidget {
     required this.message,
     super.key,
     this.icon = Icons.inbox_outlined,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String title;
   final String message;
   final IconData icon;
+
+  /// Tombol aksi opsional. Layar kosong tanpa jalan keluar memaksa user
+  /// menebak sendiri langkah berikutnya.
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +41,14 @@ class AppEmptyState extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: AppSpacing.xl),
+              FilledButton.icon(
+                onPressed: onAction,
+                icon: const Icon(Icons.add),
+                label: Text(actionLabel!),
+              ),
+            ],
           ],
         ),
       ),

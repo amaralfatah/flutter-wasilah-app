@@ -4,14 +4,15 @@ import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
@@ -60,27 +61,21 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
               children: [
                 _AssetHeader(asset: asset),
                 const SizedBox(height: AppSpacing.xl),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _MetricTile(
-                        label: 'Nilai saat ini',
-                        value: formatCurrency(asset.currentValue),
-                      ),
-                      const Divider(height: 1),
-                      _MetricTile(
-                        label: 'Alokasi portofolio',
-                        value:
-                            '${asset.allocationPercentage.toStringAsFixed(0)}%',
-                      ),
-                      const Divider(height: 1),
-                      _MetricTile(
-                        label: 'Terakhir diperbarui',
-                        value: formatFullDate(asset.lastUpdatedAt),
-                      ),
-                    ],
-                  ),
+                AppListCard(
+                  children: [
+                    _MetricTile(
+                      label: 'Nilai saat ini',
+                      value: formatCurrency(asset.currentValue),
+                    ),
+                    _MetricTile(
+                      label: 'Alokasi portofolio',
+                      value: formatPercentage(asset.allocationPercentage),
+                    ),
+                    _MetricTile(
+                      label: 'Terakhir diperbarui',
+                      value: formatFullDate(asset.lastUpdatedAt),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 FilledButton(
@@ -108,39 +103,26 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     return Column(
                       children: [
                         HistoryLineChart(history: history.reversed.toList()),
-                        if (history.length > 1)
-                          const SizedBox(height: AppSpacing.lg),
-                        AppCard(
-                          padding: EdgeInsets.zero,
-                          child: Column(
-                            children: [
-                              for (
-                                var index = 0;
-                                index < history.length;
-                                index++
-                              ) ...[
-                                Dismissible(
-                                  key: ValueKey(history[index].id),
+                        const SizedBox(height: AppSpacing.lg),
+                        AppListCard(
+                          children: history
+                              .map(
+                                (snapshot) => Dismissible(
+                                  key: ValueKey(snapshot.id),
                                   direction: DismissDirection.endToStart,
                                   background: const _DeleteBackground(),
                                   confirmDismiss: (_) =>
                                       _confirmDeleteSnapshot(context),
                                   onDismissed: (_) {
-                                    final snapshotId = history[index].id;
                                     setState(
-                                      () => _removedIds.add(snapshotId),
+                                      () => _removedIds.add(snapshot.id),
                                     );
-                                    _deleteSnapshot(assetId, snapshotId);
+                                    _deleteSnapshot(assetId, snapshot.id);
                                   },
-                                  child: _HistoryTile(
-                                    snapshot: history[index],
-                                  ),
+                                  child: _HistoryTile(snapshot: snapshot),
                                 ),
-                                if (index < history.length - 1)
-                                  const Divider(height: 1),
-                              ],
-                            ],
-                          ),
+                              )
+                              .toList(growable: false),
                         ),
                       ],
                     );
@@ -171,6 +153,10 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
       ref.invalidate(assetDetailProvider(assetId));
       ref.invalidate(portfolioSummaryProvider);
       ref.invalidate(portfolioHistoryProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Histori dihapus.')),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _removedIds.remove(snapshotId));
@@ -234,7 +220,12 @@ class _AssetDetailAppBar extends StatelessWidget
     final asset = this.asset;
 
     return AppBar(
-      title: const Text('Detail aset'),
+      // Pakai nama aset supaya konteks tidak hilang saat halaman di-scroll
+      // dan header di body sudah keluar dari layar.
+      title: Text(
+        asset?.name ?? 'Detail aset',
+        overflow: TextOverflow.ellipsis,
+      ),
       actions: [
         if (asset != null)
           IconButton(
@@ -298,7 +289,7 @@ class _MetricTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xs,
+        vertical: AppSpacing.sm,
       ),
       title: Text(label),
       trailing: Text(
@@ -318,6 +309,10 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       leading: Icon(
         Icons.event_note_outlined,
         color: Theme.of(context).colorScheme.onSurfaceVariant,

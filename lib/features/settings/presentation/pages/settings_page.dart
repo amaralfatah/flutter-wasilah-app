@@ -28,6 +28,10 @@ class SettingsPage extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<ThemeMode>(
+                    // Ikon centang bawaan M3 merebut ~30dp ruang label pada
+                    // segmen terpilih, membuat teksnya membungkus. Warna
+                    // segmen sudah cukup menandakan pilihan aktif.
+                    showSelectedIcon: false,
                     segments: const [
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.system,
