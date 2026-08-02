@@ -1,6 +1,6 @@
 # Wasilah App
 
-App portofolio pribadi, offline-first. Drift (SQLite) adalah satu-satunya penyimpanan; backup via Google Drive (appdata) + ekspor manual via share_plus.
+App portofolio pribadi, offline-first. Drift (SQLite) adalah satu-satunya penyimpanan; backup via Google Drive (appdata).
 
 ## Stack & dependencies
 
@@ -11,6 +11,9 @@ Rujukan kanonik: `C:\Users\AmarAlFatah\OneDrive - PT Perkebunan Nusantara III (P
 - Codegen: `dart run build_runner build --force-jit` (tanpa `--force-jit` gagal: konflik build hooks di Dart 3.10)
 - Lint: `flutter analyze` — memakai `very_good_analysis`; `public_member_api_docs` dan `sort_pub_dependencies` sengaja dimatikan
 - Test: `flutter test`
+- Ikon & splash (setelah logo di `assets/icon/logo-wasilah-light.png` berubah):
+  `dart run tool/prepare_icons.dart` → `dart run flutter_launcher_icons` →
+  `dart run flutter_native_splash:create --path=flutter_native_splash.yaml`
 
 ## Arsitektur
 

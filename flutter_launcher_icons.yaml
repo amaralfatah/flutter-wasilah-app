@@ -1,0 +1,15 @@
+# Aset dihasilkan oleh `dart run tool/prepare_icons.dart` dari
+# assets/icon/logo-wasilah-light.png. Jalankan skrip itu dulu bila logonya
+# berubah, baru `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+
+  android: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#0B57D0"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  # Ikon bertema Android 13+: sistem mewarnai ulang siluetnya.
+  adaptive_icon_monochrome: "assets/icon/icon_foreground.png"
+
+  ios: true
+  remove_alpha_ios: true

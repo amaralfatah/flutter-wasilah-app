@@ -1,0 +1,21 @@
+# Aset dihasilkan oleh `dart run tool/prepare_icons.dart`.
+# Setelah mengubah berkas ini: `dart run flutter_native_splash:create`.
+flutter_native_splash:
+  android: true
+  ios: true
+  # Aplikasi ini hanya menyasar ponsel; splash web cuma menambah 80+ baris
+  # di web/index.html tanpa dipakai.
+  web: false
+
+  color: "#FFFFFF"
+  image: assets/icon/splash_light.png
+
+  color_dark: "#101418"
+  image_dark: assets/icon/splash_dark.png
+
+  # Android 12+ memakai jalur splash tersendiri milik sistem.
+  android_12:
+    color: "#FFFFFF"
+    image: assets/icon/splash_light.png
+    color_dark: "#101418"
+    image_dark: assets/icon/splash_dark.png
