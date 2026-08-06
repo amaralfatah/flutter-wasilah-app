@@ -18,6 +18,10 @@ abstract interface class PreferencesService {
   bool readBackupConnected();
 
   Future<void> writeBackupConnected(bool connected);
+
+  String? readBackupAccountEmail();
+
+  Future<void> writeBackupAccountEmail(String? email);
 }
 
 class SharedPreferencesService implements PreferencesService {
@@ -27,6 +31,7 @@ class SharedPreferencesService implements PreferencesService {
   static const _lastBackupAtKey = 'last_backup_at_millis';
   static const _autoBackupEnabledKey = 'auto_backup_enabled';
   static const _backupConnectedKey = 'backup_account_connected';
+  static const _backupAccountEmailKey = 'backup_account_email';
 
   final SharedPreferences _preferences;
 
@@ -80,6 +85,23 @@ class SharedPreferencesService implements PreferencesService {
   @override
   Future<void> writeBackupConnected(bool connected) {
     return _preferences.setBool(_backupConnectedKey, connected);
+  }
+
+  @override
+  String? readBackupAccountEmail() {
+    final email = _preferences.getString(_backupAccountEmailKey);
+    if (email == null || email.isEmpty) {
+      return null;
+    }
+    return email;
+  }
+
+  @override
+  Future<void> writeBackupAccountEmail(String? email) {
+    if (email == null || email.isEmpty) {
+      return _preferences.remove(_backupAccountEmailKey);
+    }
+    return _preferences.setString(_backupAccountEmailKey, email);
   }
 }
 

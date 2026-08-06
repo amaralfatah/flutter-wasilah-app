@@ -84,28 +84,34 @@ class BackupController extends Notifier<BackupState> {
   // Credential Manager.
   static const _autoBackupRetryCooldown = Duration(hours: 1);
 
-  /// Akun aktif, disinkronkan dari [GoogleAuthService.authenticationEvents].
+  /// Akun aktif hasil sign-in interaktif di sesi ini, disinkronkan dari
+  /// [GoogleAuthService.authenticationEvents].
   ///
-  /// Di-cache di sini supaya operasi Drive tidak perlu memanggil ulang
-  /// `attemptLightweightAuthentication()` — di Android panggilan itu lewat
-  /// Credential Manager dan bisa memunculkan bottom sheet pilih akun.
+  /// Boleh null walau status terhubung: setelah app restart, identitas dibaca
+  /// dari preferences dan token Drive diambil lewat authorization client
+  /// tingkat instance — tanpa autentikasi ulang, jadi tanpa UI Credential
+  /// Manager.
   GoogleSignInAccount? _account;
   DateTime? _lastAutoBackupAttemptAt;
 
   @override
   BackupState build() {
     final preferences = ref.watch(preferencesServiceProvider);
+    // Status terhubung dipulihkan dari preferences, bukan dari sign-in ulang.
+    final wasConnected = preferences.readBackupConnected();
     final initial = BackupState(
       autoBackupEnabled: preferences.readAutoBackupEnabled(),
       lastBackupAt: preferences.readLastBackupAt(),
+      connectionStatus: wasConnected
+          ? BackupConnectionStatus.connected
+          : BackupConnectionStatus.disconnected,
+      accountEmail: wasConnected ? preferences.readBackupAccountEmail() : null,
     );
-    unawaited(
-      _startSession(restorePreviousSession: preferences.readBackupConnected()),
-    );
+    unawaited(_startSession());
     return initial;
   }
 
-  Future<void> _startSession({required bool restorePreviousSession}) async {
+  Future<void> _startSession() async {
     final authService = ref.read(googleAuthServiceProvider);
     try {
       await authService.ensureInitialized();
@@ -130,18 +136,10 @@ class BackupController extends Notifier<BackupState> {
     );
     ref.onDispose(subscription.cancel);
 
-    // Satu-satunya pemanggilan silent sign-in di seluruh siklus hidup app,
-    // dan hanya jika user pernah opt-in menghubungkan akun.
-    if (!restorePreviousSession) {
-      return;
-    }
-    try {
-      await authService.attemptSilentSignIn();
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('Silent Google sign-in restore skipped: $error');
-      }
-    }
+    // Tidak ada silent sign-in di sini. `attemptLightweightAuthentication()`
+    // di Android lewat Credential Manager dan tetap mengedipkan bottom sheet
+    // walau tidak butuh input user. Autentikasi hanya terjadi lewat
+    // [connect], yang dipicu user.
   }
 
   void _handleAuthenticationEvent(GoogleSignInAuthenticationEvent event) {
@@ -150,15 +148,22 @@ class BackupController extends Notifier<BackupState> {
       GoogleSignInAuthenticationEventSignOut() => null,
     };
     _account = account;
-    state = account == null
-        ? state.copyWith(
-            connectionStatus: BackupConnectionStatus.disconnected,
-            clearAccountEmail: true,
-          )
-        : state.copyWith(
-            connectionStatus: BackupConnectionStatus.connected,
-            accountEmail: account.email,
-          );
+    final preferences = ref.read(preferencesServiceProvider);
+    if (account == null) {
+      state = state.copyWith(
+        connectionStatus: BackupConnectionStatus.disconnected,
+        clearAccountEmail: true,
+      );
+      unawaited(preferences.writeBackupConnected(false));
+      unawaited(preferences.writeBackupAccountEmail(null));
+      return;
+    }
+    state = state.copyWith(
+      connectionStatus: BackupConnectionStatus.connected,
+      accountEmail: account.email,
+    );
+    unawaited(preferences.writeBackupConnected(true));
+    unawaited(preferences.writeBackupAccountEmail(account.email));
   }
 
   Future<void> connect() async {
@@ -173,6 +178,7 @@ class BackupController extends Notifier<BackupState> {
       final preferences = ref.read(preferencesServiceProvider);
       await preferences.writeAutoBackupEnabled(true);
       await preferences.writeBackupConnected(true);
+      await preferences.writeBackupAccountEmail(account.email);
       state = state.copyWith(
         connectionStatus: BackupConnectionStatus.connected,
         accountEmail: account.email,
@@ -197,7 +203,9 @@ class BackupController extends Notifier<BackupState> {
     await authService.disconnect();
     _account = null;
     _lastAutoBackupAttemptAt = null;
-    await ref.read(preferencesServiceProvider).writeBackupConnected(false);
+    final preferences = ref.read(preferencesServiceProvider);
+    await preferences.writeBackupConnected(false);
+    await preferences.writeBackupAccountEmail(null);
     state = state.copyWith(
       connectionStatus: BackupConnectionStatus.disconnected,
       clearAccountEmail: true,
@@ -324,15 +332,14 @@ class BackupController extends Notifier<BackupState> {
   Future<({DriveBackupService service, http.Client client})>
   _authorizedDriveService({required bool promptIfNecessary}) async {
     final authService = ref.read(googleAuthServiceProvider);
-    // Sengaja tidak memanggil silent sign-in di sini: akun sudah di-cache
-    // dari stream authenticationEvents. Kalau null, artinya user memang
-    // belum terhubung dan harus menekan tombol hubungkan akun.
-    final account = _account;
-    if (account == null) {
+    // Sengaja tidak memanggil silent sign-in di sini. Gerbangnya status
+    // terhubung (dari preferences), bukan keberadaan objek akun: token Drive
+    // diambil dari grant yang sudah di-cache platform.
+    if (!state.isConnected) {
       throw StateError('Akun Google belum terhubung.');
     }
     final client = await authService.authenticatedHttpClient(
-      account,
+      account: _account,
       promptIfNecessary: promptIfNecessary,
     );
     if (client == null) {

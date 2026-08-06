@@ -27,11 +27,6 @@ class GoogleAuthService {
         });
   }
 
-  Future<GoogleSignInAccount?> attemptSilentSignIn() async {
-    await ensureInitialized();
-    return _signIn.attemptLightweightAuthentication();
-  }
-
   Future<GoogleSignInAccount> signIn() async {
     await ensureInitialized();
     return _signIn.authenticate(scopeHint: scopes);
@@ -42,13 +37,27 @@ class GoogleAuthService {
     await _signIn.disconnect();
   }
 
-  Future<http.Client?> authenticatedHttpClient(
-    GoogleSignInAccount account, {
+  /// Klien HTTP ber-token untuk Drive.
+  ///
+  /// Otorisasi terpisah dari autentikasi: token scope diambil dari grant yang
+  /// sudah di-cache platform, jadi tidak perlu `GoogleSignInAccount` hasil
+  /// sign-in ulang dan tidak memunculkan UI Credential Manager. [account]
+  /// hanya dipakai bila kebetulan tersedia (tepat setelah sign-in interaktif);
+  /// selebihnya jatuh ke authorization client tingkat instance.
+  Future<http.Client?> authenticatedHttpClient({
+    GoogleSignInAccount? account,
     bool promptIfNecessary = false,
   }) async {
-    final authorization = promptIfNecessary
-        ? await account.authorizationClient.authorizeScopes(scopes)
-        : await account.authorizationClient.authorizationForScopes(scopes);
+    await ensureInitialized();
+    final authorizationClient =
+        account?.authorizationClient ?? _signIn.authorizationClient;
+
+    var authorization = await authorizationClient.authorizationForScopes(
+      scopes,
+    );
+    if (authorization == null && promptIfNecessary) {
+      authorization = await authorizationClient.authorizeScopes(scopes);
+    }
 
     if (authorization == null) {
       return null;
