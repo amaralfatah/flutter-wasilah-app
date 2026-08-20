@@ -31,7 +31,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Bitcoin'));
+    await tester.tap(find.text('BTC'));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(AppBar, 'Bitcoin'), findsOneWidget);

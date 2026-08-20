@@ -63,11 +63,14 @@ void main() {
       expect(heights.first, lessThan(100));
     });
 
-    testWidgets('nama aset tetap mendapat ruang baca', (tester) async {
+    testWidgets('kode aset tetap mendapat ruang baca', (tester) async {
       await _pumpRow(tester, value: 123456789, screenWidth: 360);
 
-      final titleWidth = tester.getRect(find.text('Bitcoin')).width;
-      expect(titleWidth, greaterThan(100));
+      // Kode aset pendek, jadi lebar teksnya tidak mewakili ruang yang
+      // tersedia. Ukur jarak judul ke kolom nominal sebagai proksi slot.
+      final titleLeft = tester.getRect(find.text('BTC')).left;
+      final valueLeft = tester.getRect(find.byType(FittedBox)).left;
+      expect(valueLeft - titleLeft, greaterThan(100));
     });
 
     testWidgets('tidak meluber di layar sempit dan skala teks besar', (
