@@ -14,6 +14,8 @@ import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
+import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
 import 'package:go_router/go_router.dart';
@@ -110,7 +112,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                                 (snapshot) => Dismissible(
                                   key: ValueKey(snapshot.id),
                                   direction: DismissDirection.endToStart,
-                                  background: const _DeleteBackground(),
+                                  background: const DeleteSwipeBackground(),
                                   confirmDismiss: (_) =>
                                       _confirmDeleteSnapshot(context),
                                   onDismissed: (_) {
@@ -167,43 +169,14 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
   }
 }
 
-Future<bool> _confirmDeleteSnapshot(BuildContext context) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Hapus histori?'),
-      content: const Text('Entri histori bulan ini akan dihapus.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Batal'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Hapus'),
-        ),
-      ],
-    ),
+Future<bool> _confirmDeleteSnapshot(BuildContext context) {
+  return showConfirmDialog(
+    context,
+    title: 'Hapus histori?',
+    message: 'Entri histori bulan ini akan dihapus.',
+    confirmLabel: 'Hapus',
+    isDestructive: true,
   );
-
-  return confirmed ?? false;
-}
-
-class _DeleteBackground extends StatelessWidget {
-  const _DeleteBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.errorContainer,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      alignment: Alignment.centerRight,
-      child: Icon(
-        Icons.delete_outline,
-        color: Theme.of(context).colorScheme.onErrorContainer,
-      ),
-    );
-  }
 }
 
 class _AssetDetailAppBar extends StatelessWidget

@@ -12,6 +12,7 @@ import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
+import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:go_router/go_router.dart';
 
 class AssetFormPage extends ConsumerStatefulWidget {
@@ -242,25 +243,15 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   }
 
   Future<void> _deleteAsset(Asset asset) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus aset?'),
-        content: Text('Aset ${asset.name} dan histori nilainya akan dihapus.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Hapus aset?',
+      message: 'Aset ${asset.name} dan histori nilainya akan dihapus.',
+      confirmLabel: 'Hapus',
+      isDestructive: true,
     );
 
-    if (confirmed != true) {
+    if (!confirmed) {
       return;
     }
 

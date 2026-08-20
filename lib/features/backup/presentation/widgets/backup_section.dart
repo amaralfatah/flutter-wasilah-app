@@ -5,6 +5,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:go_router/go_router.dart';
 
 class BackupSection extends ConsumerWidget {
@@ -37,7 +38,11 @@ class BackupSection extends ConsumerWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  state.accountEmail ?? '',
+                  // Status terhubung dipulihkan dari preferences tanpa
+                  // sign-in ulang, jadi email bisa kosong untuk sesi yang
+                  // tersambung sebelum email ikut disimpan. Baris kosong
+                  // terbaca seperti bug.
+                  state.accountEmail ?? 'Akun Google terhubung',
                   style: Theme.of(context).textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -85,7 +90,9 @@ class BackupSection extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             state.errorMessage!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
           ),
         ],
       ],
@@ -96,7 +103,7 @@ class BackupSection extends ConsumerWidget {
     BuildContext context,
     BackupController controller,
   ) async {
-    final confirmed = await _confirm(
+    final confirmed = await showConfirmDialog(
       context,
       title: 'Backup sekarang?',
       message:
@@ -113,7 +120,7 @@ class BackupSection extends ConsumerWidget {
     BuildContext context,
     BackupController controller,
   ) async {
-    final confirmed = await _confirm(
+    final confirmed = await showConfirmDialog(
       context,
       title: 'Putuskan akun Google?',
       message:
@@ -126,41 +133,5 @@ class BackupSection extends ConsumerWidget {
     if (confirmed) {
       await controller.disconnect();
     }
-  }
-
-  Future<bool> _confirm(
-    BuildContext context, {
-    required String title,
-    required String message,
-    required String confirmLabel,
-    bool isDestructive = false,
-  }) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        final colorScheme = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              style: isDestructive
-                  ? FilledButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.onError,
-                    )
-                  : null,
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(confirmLabel),
-            ),
-          ],
-        );
-      },
-    );
-    return confirmed ?? false;
   }
 }

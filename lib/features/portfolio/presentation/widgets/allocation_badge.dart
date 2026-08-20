@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 
 class AllocationBadge extends StatelessWidget {
@@ -16,10 +17,14 @@ class AllocationBadge extends StatelessWidget {
       label: 'Alokasi ${formatPercentage(percentage)} dari portofolio',
       excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: ShapeDecoration(
           color: colorScheme.secondaryContainer,
-          borderRadius: BorderRadius.circular(999),
+          // Sudut penuh: bentuk baku Material 3 untuk badge.
+          shape: const StadiumBorder(),
         ),
         child: Text(
           formatPercentage(percentage),

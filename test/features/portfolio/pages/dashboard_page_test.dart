@@ -26,9 +26,8 @@ void main() {
     expect(find.text('Total Portofolio'), findsOneWidget);
     expect(find.text('Rp55.000.000'), findsOneWidget);
     expect(find.text('Naik 3,4% bulan ini'), findsOneWidget);
-    // basic_plan.md menyebut dashboard sebagai salah satu pintu masuk halaman
-    // update nilai aset, di samping daftar aset dan detail aset.
-    expect(find.text('Update nilai'), findsOneWidget);
+    // Dashboard sengaja tanpa FAB: update nilai dicapai lewat tab Aset.
+    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   testWidgets('dashboard hides the update action while there are no assets', (

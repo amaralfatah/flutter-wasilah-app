@@ -10,6 +10,7 @@ import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
@@ -63,21 +64,17 @@ class TargetDetailPage extends ConsumerWidget {
               children: [
                 AppCard(child: TargetAllocationItem(item: item)),
                 const SizedBox(height: AppSpacing.md),
-                AppCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _TargetValueTile(
-                        label: 'Nilai aktual',
-                        value: formatCurrency(item.actualValue),
-                      ),
-                      const Divider(height: 1),
-                      _TargetValueTile(
-                        label: 'Nilai target',
-                        value: formatCurrency(item.targetValue),
-                      ),
-                    ],
-                  ),
+                AppListCard(
+                  children: [
+                    _TargetValueTile(
+                      label: 'Nilai aktual',
+                      value: formatCurrency(item.actualValue),
+                    ),
+                    _TargetValueTile(
+                      label: 'Nilai target',
+                      value: formatCurrency(item.targetValue),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 SectionHeader(
@@ -91,26 +88,17 @@ class TargetDetailPage extends ConsumerWidget {
                     message: 'Belum ada aset pada kategori ini.',
                   )
                 else
-                  AppCard(
-                    child: Column(
-                      children: [
-                        for (
-                          var index = 0;
-                          index < categoryAssets.length;
-                          index++
-                        ) ...[
-                          AssetListItem(
-                            asset: categoryAssets[index],
+                  AppListCard(
+                    children: categoryAssets
+                        .map(
+                          (asset) => AssetListItem(
+                            asset: asset,
                             showCategory: false,
-                            onTap: () => context.push(
-                              '${RouteNames.assets}/${categoryAssets[index].id}',
-                            ),
+                            onTap: () =>
+                                context.push('${RouteNames.assets}/${asset.id}'),
                           ),
-                          if (index < categoryAssets.length - 1)
-                            const Divider(height: AppSpacing.xl),
-                        ],
-                      ],
-                    ),
+                        )
+                        .toList(growable: false),
                   ),
               ],
             ),

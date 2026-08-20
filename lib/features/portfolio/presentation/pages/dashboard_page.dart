@@ -14,14 +14,6 @@ import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
 import 'package:go_router/go_router.dart';
 
-// Menyisakan ruang di bawah konten supaya kartu terakhir tidak tertutup FAB.
-const _dashboardPagePadding = EdgeInsets.fromLTRB(
-  AppSpacing.xl,
-  AppSpacing.xl,
-  AppSpacing.xl,
-  AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
-);
-
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -30,22 +22,8 @@ class DashboardPage extends ConsumerWidget {
     final summaryValue = ref.watch(portfolioSummaryProvider);
     final targetsValue = ref.watch(allocationTargetProvider);
 
-    // Tanpa aset, "update nilai" tidak punya sasaran — empty state sudah
-    // menyediakan CTA-nya sendiri.
-    final hasAssets = summaryValue.valueOrNull?.assets.isNotEmpty ?? false;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Wasilah')),
-      // Update nilai adalah aksi paling sering dilakukan, tapi sebelumnya
-      // hanya bisa dicapai lewat tab Aset -> detail aset.
-      floatingActionButton: hasAssets
-          ? FloatingActionButton.extended(
-              heroTag: 'dashboard_update_value_fab',
-              onPressed: () => context.push(RouteNames.assetUpdate),
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Update nilai'),
-            )
-          : null,
       body: AsyncValueView(
         value: summaryValue,
         onRetry: () => ref.invalidate(portfolioSummaryProvider),
@@ -64,7 +42,6 @@ class DashboardPage extends ConsumerWidget {
 
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
-            padding: _dashboardPagePadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

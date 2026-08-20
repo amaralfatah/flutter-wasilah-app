@@ -40,14 +40,24 @@ class HistoryLineChart extends StatelessWidget {
         children: [
           Text(formatCurrency(maxValue), style: axisStyle),
           const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _LineChartPainter(
-                values: values,
-                lineColor: colorScheme.primary,
-                fillColor: colorScheme.primary.withValues(alpha: 0.12),
+          // Kanvasnya kosong bagi pembaca layar: angka sumbu di atas dan
+          // bawah tidak menjelaskan bahwa keduanya batas sebuah grafik.
+          Semantics(
+            label:
+                'Grafik nilai portofolio '
+                '${formatMonthYear(history.first.recordedAt)} sampai '
+                '${formatMonthYear(history.last.recordedAt)}, '
+                'terendah ${formatCurrency(minValue)}, '
+                'tertinggi ${formatCurrency(maxValue)}',
+            child: SizedBox(
+              height: 120,
+              width: double.infinity,
+              child: CustomPaint(
+                painter: _LineChartPainter(
+                  values: values,
+                  lineColor: colorScheme.primary,
+                  fillColor: colorScheme.primary.withValues(alpha: 0.12),
+                ),
               ),
             ),
           ),

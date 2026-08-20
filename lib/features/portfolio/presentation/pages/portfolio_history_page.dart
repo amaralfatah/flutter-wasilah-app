@@ -11,6 +11,8 @@ import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
+import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 
 class PortfolioHistoryPage extends ConsumerStatefulWidget {
@@ -103,7 +105,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                           (item) => Dismissible(
                             key: ValueKey(item.id),
                             direction: DismissDirection.endToStart,
-                            background: const _DeleteBackground(),
+                            background: const DeleteSwipeBackground(),
                             confirmDismiss: (_) => _confirmDelete(context),
                             onDismissed: (_) {
                               setState(() => _removedIds.add(item.id));
@@ -176,26 +178,14 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     );
   }
 
-  Future<bool> _confirmDelete(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus histori?'),
-        content: const Text('Entri histori bulan ini akan dihapus.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
+  Future<bool> _confirmDelete(BuildContext context) {
+    return showConfirmDialog(
+      context,
+      title: 'Hapus histori?',
+      message: 'Entri histori bulan ini akan dihapus.',
+      confirmLabel: 'Hapus',
+      isDestructive: true,
     );
-
-    return confirmed ?? false;
   }
 
   Future<void> _deleteSnapshot(String snapshotId) async {
@@ -259,22 +249,5 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     }
 
     return Theme.of(context).colorScheme.onSurfaceVariant;
-  }
-}
-
-class _DeleteBackground extends StatelessWidget {
-  const _DeleteBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.errorContainer,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      alignment: Alignment.centerRight,
-      child: Icon(
-        Icons.delete_outline,
-        color: Theme.of(context).colorScheme.onErrorContainer,
-      ),
-    );
   }
 }

@@ -6,6 +6,8 @@ import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.da
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 
 final AutoDisposeFutureProvider<List<DriveBackupFile>> _backupListProvider =
     FutureProvider.autoDispose<List<DriveBackupFile>>((
@@ -24,7 +26,7 @@ class RestorePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Pulihkan dari backup')),
       body: backupsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppLoading(),
         error: (error, stackTrace) => AppErrorView(
           title: 'Daftar backup gagal dimuat',
           onRetry: () => ref.invalidate(_backupListProvider),
@@ -61,29 +63,18 @@ class RestorePage extends ConsumerWidget {
     WidgetRef ref,
     DriveBackupFile backup,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Pulihkan data ini?'),
-        content: Text(
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Pulihkan data ini?',
+      message:
           'Data portofolio saat ini akan diganti dengan backup '
           '${formatFullDateTime(backup.createdAt)}. Tindakan ini tidak dapat '
           'dibatalkan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Pulihkan'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Pulihkan',
+      isDestructive: true,
     );
 
-    if (confirmed != true || !context.mounted) {
+    if (!confirmed || !context.mounted) {
       return;
     }
 
