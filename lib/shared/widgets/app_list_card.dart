@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 
 /// Daftar baris dipisah divider tipis.
 ///
@@ -7,8 +6,8 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 /// jawab membuat area di sekitarnya tanpa jarak horizontal (lihat
 /// `RefreshablePageBody` dengan padding horizontal 0) supaya daftar
 /// menyentuh tepi layar. Baris (mis. AssetListItem) menyediakan padding
-/// horizontalnya sendiri agar teks tidak menempel tepi; divider diberi
-/// indent yang sama supaya awal garisnya sejajar dengan teks/tepi kartu.
+/// horizontalnya sendiri agar teks tidak menempel tepi; divider tanpa
+/// indent supaya garisnya sepanjang lebar page, bukan lebar konten.
 class AppListCard extends StatelessWidget {
   const AppListCard({
     required this.children,
@@ -32,8 +31,6 @@ class AppListCard extends StatelessWidget {
     const divider = Divider(
       height: 1,
       thickness: 0.2,
-      indent: AppSpacing.xl,
-      endIndent: AppSpacing.xl,
     );
 
     return Column(

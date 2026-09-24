@@ -176,10 +176,20 @@ class _AppShellScaffold extends StatelessWidget {
     if (MediaQuery.sizeOf(context).width < 600) {
       return Scaffold(
         body: navigationShell,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: _onDestinationSelected,
-          destinations: _destinations(context),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                width: 0.2,
+              ),
+            ),
+          ),
+          child: NavigationBar(
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: _onDestinationSelected,
+            destinations: _destinations(context),
+          ),
         ),
       );
     }

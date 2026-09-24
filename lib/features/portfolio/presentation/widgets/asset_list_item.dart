@@ -155,7 +155,6 @@ class AssetTableHeader extends StatelessWidget {
 
     return ExcludeSemantics(
       child: _AssetTableRow(
-        verticalPadding: AppSpacing.sm,
         code: cell(
           l10n.assetTableCodeHeader,
           l10n.assetTableNameHeader,
@@ -182,21 +181,19 @@ class _AssetTableRow extends StatelessWidget {
     required this.cost,
     required this.value,
     required this.profitLoss,
-    this.verticalPadding = AppSpacing.md,
   });
 
   final Widget code;
   final Widget cost;
   final Widget value;
   final Widget profitLoss;
-  final double verticalPadding;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
-        vertical: verticalPadding,
+        vertical: AppSpacing.sm,
       ),
       child: Row(
         children: [

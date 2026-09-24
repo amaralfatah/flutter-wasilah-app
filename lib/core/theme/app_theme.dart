@@ -14,18 +14,81 @@ abstract final class AppTheme {
 
     final base = ThemeData(
       colorScheme: colorScheme,
-      appBarTheme: const AppBarTheme(centerTitle: true),
+      visualDensity: VisualDensity.compact,
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        toolbarHeight: 52,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        height: 60,
+        labelTextStyle: WidgetStatePropertyAll(
+          _compactTextTheme(base: null).labelSmall,
+        ),
+      ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: colorScheme.surface,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
+      chipTheme: const ChipThemeData(
+        padding: EdgeInsets.symmetric(horizontal: 12),
+        labelPadding: EdgeInsets.zero,
+        shape: StadiumBorder(),
+      ),
+      listTileTheme: const ListTileThemeData(
+        dense: true,
+        minVerticalPadding: 8,
+      ),
     );
 
-    return base.copyWith(textTheme: _tabularFigures(base.textTheme));
+    return base.copyWith(
+      textTheme: _tabularFigures(_compactTextTheme(base: base.textTheme)),
+    );
+  }
+
+  /// Hierarki tipografi dipangkas ala Stockbit: kode/nominal harus terbaca
+  /// cepat tanpa memakan tinggi baris—lihat token size di app_theme.dart
+  /// bila perlu menambah level baru.
+  static TextTheme _compactTextTheme({required TextTheme? base}) {
+    final theme = base ?? Typography.material2021().black;
+    return theme.copyWith(
+      headlineSmall: theme.headlineSmall?.copyWith(
+        fontSize: 24,
+        height: 32 / 24,
+        fontWeight: FontWeight.w600,
+      ),
+      titleSmall: theme.titleSmall?.copyWith(
+        fontSize: 14,
+        height: 20 / 14,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyMedium: theme.bodyMedium?.copyWith(
+        fontSize: 14,
+        height: 20 / 14,
+      ),
+      labelMedium: theme.labelMedium?.copyWith(
+        fontSize: 12,
+        height: 16 / 12,
+      ),
+      bodySmall: theme.bodySmall?.copyWith(
+        fontSize: 12,
+        height: 16 / 12,
+      ),
+      labelSmall: theme.labelSmall?.copyWith(
+        fontSize: 11,
+        height: 14 / 11,
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 
   /// Angka rupiah muncul di hampir setiap layar, sering dalam kolom yang

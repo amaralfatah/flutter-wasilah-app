@@ -29,7 +29,7 @@ class HistoryRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
-        vertical: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
