@@ -27,8 +27,14 @@ class HistoryLineChart extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final values = history.map((item) => item.totalValue).toList();
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
-    final minValue = values.reduce((a, b) => a < b ? a : b);
+    final costs = history.map((item) => item.totalCost).toList();
+    final hasCost = costs.any((cost) => cost != null);
+    // Skala mencakup garis modal juga, supaya kedua garis bisa dibandingkan
+    // langsung: jarak antar garis = untung/rugi.
+    final scaleValues = [...values, ...costs.whereType<double>()];
+    final maxValue = scaleValues.reduce((a, b) => a > b ? a : b);
+    final minValue = scaleValues.reduce((a, b) => a < b ? a : b);
+    final costColor = colorScheme.tertiary;
 
     final axisStyle = textTheme.bodySmall?.copyWith(
       color: colorScheme.onSurfaceVariant,
@@ -44,7 +50,7 @@ class HistoryLineChart extends StatelessWidget {
           // bawah tidak menjelaskan bahwa keduanya batas sebuah grafik.
           Semantics(
             label:
-                'Grafik nilai portofolio '
+                'Grafik nilai${hasCost ? ' dan modal' : ''} '
                 '${formatMonthYear(history.first.recordedAt)} sampai '
                 '${formatMonthYear(history.last.recordedAt)}, '
                 'terendah ${formatCurrency(minValue)}, '
@@ -55,8 +61,12 @@ class HistoryLineChart extends StatelessWidget {
               child: CustomPaint(
                 painter: _LineChartPainter(
                   values: values,
+                  costs: costs,
+                  minValue: minValue,
+                  maxValue: maxValue,
                   lineColor: colorScheme.primary,
                   fillColor: colorScheme.primary.withValues(alpha: 0.12),
+                  costColor: costColor,
                 ),
               ),
             ),
@@ -72,8 +82,44 @@ class HistoryLineChart extends StatelessWidget {
               Text(formatMonthYear(history.last.recordedAt), style: axisStyle),
             ],
           ),
+          if (hasCost) ...[
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                _LegendItem(color: colorScheme.primary, label: 'Nilai'),
+                const SizedBox(width: AppSpacing.lg),
+                _LegendItem(color: costColor, label: 'Modal'),
+              ],
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 3,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
     );
   }
 }
@@ -110,18 +156,26 @@ class _ChartPlaceholder extends StatelessWidget {
 class _LineChartPainter extends CustomPainter {
   _LineChartPainter({
     required this.values,
+    required this.costs,
+    required this.minValue,
+    required this.maxValue,
     required this.lineColor,
     required this.fillColor,
+    required this.costColor,
   });
 
   final List<double> values;
+
+  /// Modal per titik; `null` di bulan yang belum punya modal.
+  final List<double?> costs;
+  final double minValue;
+  final double maxValue;
   final Color lineColor;
   final Color fillColor;
+  final Color costColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
-    final minValue = values.reduce((a, b) => a < b ? a : b);
     final range = (maxValue - minValue).abs();
     final stepX = values.length > 1 ? size.width / (values.length - 1) : 0.0;
 
@@ -162,12 +216,39 @@ class _LineChartPainter extends CustomPainter {
     for (final point in points) {
       canvas.drawCircle(point, 3, dotPaint);
     }
+
+    // Garis modal: tanpa isian, putus di bulan yang modalnya kosong.
+    final costPaint = Paint()
+      ..color = costColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final costDotPaint = Paint()..color = costColor;
+    Offset? previous;
+    for (var i = 0; i < costs.length; i++) {
+      final cost = costs[i];
+      if (cost == null) {
+        previous = null;
+        continue;
+      }
+      final point = Offset(stepX * i, yOf(cost));
+      if (previous != null) {
+        canvas.drawLine(previous, point, costPaint);
+      }
+      canvas.drawCircle(point, 2.5, costDotPaint);
+      previous = point;
+    }
   }
 
   @override
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) {
     return oldDelegate.values != values ||
+        oldDelegate.costs != costs ||
+        oldDelegate.minValue != minValue ||
+        oldDelegate.maxValue != maxValue ||
         oldDelegate.lineColor != lineColor ||
-        oldDelegate.fillColor != fillColor;
+        oldDelegate.fillColor != fillColor ||
+        oldDelegate.costColor != costColor;
   }
 }

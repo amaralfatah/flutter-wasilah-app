@@ -6,6 +6,7 @@ import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/profit_loss_caption.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
@@ -146,6 +147,11 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                                             ),
                                           ),
                                     ),
+                                    if (item.totalCost case final cost?)
+                                      ProfitLossCaption(
+                                        cost: cost,
+                                        profitLoss: item.totalValue - cost,
+                                      ),
                                     if (item.note != null)
                                       Text(
                                         item.note!,

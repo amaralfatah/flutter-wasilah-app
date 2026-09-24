@@ -21,8 +21,14 @@ class AssetManagementController extends AsyncNotifier<void> {
     required AssetCategory category,
     required double currentValue,
     required DateTime recordedAt,
+    double? totalCost,
   }) async {
-    _validateAssetFields(name: name, code: code, currentValue: currentValue);
+    _validateAssetFields(
+      name: name,
+      code: code,
+      currentValue: currentValue,
+      totalCost: totalCost,
+    );
     state = const AsyncLoading();
 
     try {
@@ -37,6 +43,7 @@ class AssetManagementController extends AsyncNotifier<void> {
               currentValue: currentValue,
               allocationPercentage: 0,
               lastUpdatedAt: recordedAt,
+              totalCost: totalCost,
             ),
           );
       _invalidateAssetReads();
@@ -52,6 +59,7 @@ class AssetManagementController extends AsyncNotifier<void> {
       name: asset.name,
       code: asset.code,
       currentValue: asset.currentValue,
+      totalCost: asset.totalCost,
     );
     state = const AsyncLoading();
 
@@ -89,6 +97,7 @@ class AssetManagementController extends AsyncNotifier<void> {
     required String name,
     required String code,
     required double currentValue,
+    double? totalCost,
   }) {
     final nameError = validateRequiredText(
       name,
@@ -108,6 +117,10 @@ class AssetManagementController extends AsyncNotifier<void> {
 
     if (currentValue < 0) {
       throw ArgumentError('Nilai aset tidak boleh kurang dari nol.');
+    }
+
+    if (totalCost != null && totalCost < 0) {
+      throw ArgumentError('Total modal tidak boleh kurang dari nol.');
     }
   }
 

@@ -226,6 +226,7 @@ class MockPortfolioRepository implements PortfolioRepository {
         assetId: asset.id,
         totalValue: asset.currentValue,
         recordedAt: asset.lastUpdatedAt,
+        totalCost: asset.totalCost,
       ),
     );
     _recalculateAllocations();
@@ -246,6 +247,7 @@ class MockPortfolioRepository implements PortfolioRepository {
       name: asset.name,
       code: asset.code,
       category: asset.category,
+      totalCost: asset.totalCost,
     );
   }
 
@@ -309,6 +311,7 @@ class MockPortfolioRepository implements PortfolioRepository {
     required double totalValue,
     required DateTime recordedAt,
     String? note,
+    double? totalCost,
   }) async {
     await _wait();
 
@@ -317,9 +320,11 @@ class MockPortfolioRepository implements PortfolioRepository {
       throw StateError('Asset tidak ditemukan.');
     }
 
+    final cost = totalCost ?? _assets[assetIndex].totalCost;
     _assets[assetIndex] = _assets[assetIndex].copyWith(
       currentValue: totalValue,
       lastUpdatedAt: recordedAt,
+      totalCost: cost,
     );
 
     final history = _assetHistories.putIfAbsent(
@@ -334,6 +339,7 @@ class MockPortfolioRepository implements PortfolioRepository {
         totalValue: totalValue,
         recordedAt: recordedAt,
         note: note,
+        totalCost: cost,
       ),
     );
 

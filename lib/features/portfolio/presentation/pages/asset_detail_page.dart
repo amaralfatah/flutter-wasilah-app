@@ -5,10 +5,12 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/profit_loss_caption.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
@@ -69,6 +71,13 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                       label: 'Nilai saat ini',
                       value: formatCurrency(asset.currentValue),
                     ),
+                    if (asset.totalCost case final totalCost?) ...[
+                      _MetricTile(
+                        label: 'Total modal',
+                        value: formatCurrency(totalCost),
+                      ),
+                      _ProfitLossTile(asset: asset),
+                    ],
                     _MetricTile(
                       label: 'Alokasi portofolio',
                       value: formatPercentage(asset.allocationPercentage),
@@ -274,6 +283,32 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
+class _ProfitLossTile extends StatelessWidget {
+  const _ProfitLossTile({required this.asset});
+
+  final Asset asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final profitLoss = asset.profitLoss ?? 0;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      title: const Text('Untung/rugi'),
+      trailing: Text(
+        formatProfitLoss(profitLoss, cost: asset.totalCost ?? 0),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: profitLossColorOf(context, profitLoss),
+        ),
+        textAlign: TextAlign.end,
+      ),
+    );
+  }
+}
+
 class _HistoryTile extends StatelessWidget {
   const _HistoryTile({required this.snapshot});
 
@@ -291,7 +326,20 @@ class _HistoryTile extends StatelessWidget {
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       title: Text(formatMonthYear(snapshot.recordedAt)),
-      subtitle: snapshot.note == null ? null : Text(snapshot.note!),
+      subtitle: snapshot.totalCost == null && snapshot.note == null
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (snapshot.totalCost case final cost?)
+                  ProfitLossCaption(
+                    cost: cost,
+                    profitLoss: snapshot.totalValue - cost,
+                  ),
+                if (snapshot.note case final note?) Text(note),
+              ],
+            ),
       trailing: Text(
         formatCurrency(snapshot.totalValue),
         style: Theme.of(context).textTheme.titleMedium,

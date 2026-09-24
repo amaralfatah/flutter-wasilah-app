@@ -239,10 +239,14 @@ void main() {
           currentValue: 12000000,
           allocationPercentage: 0,
           lastUpdatedAt: recordedAt,
+          totalCost: 10000000,
         ),
       );
 
       var asset = await repository.getAssetById('gold');
+      expect(asset?.totalCost, 10000000);
+      expect(asset?.profitLoss, 2000000);
+      expect(asset?.profitLossPercentage, 20);
       final history = await repository.getAssetHistory('gold');
 
       expect(asset, isNotNull);
@@ -256,10 +260,13 @@ void main() {
           name: 'Logam Mulia',
           code: 'LM',
           category: AssetCategory.preciousMetal,
+          totalCost: 15000000,
         ),
       );
 
       asset = await repository.getAssetById('gold');
+      expect(asset?.totalCost, 15000000);
+      expect(asset?.profitLoss, -3000000);
 
       expect(asset, isNotNull);
       expect(asset!.name, 'Logam Mulia');

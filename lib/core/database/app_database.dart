@@ -13,7 +13,7 @@ class AppDatabase extends GeneratedDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
@@ -29,7 +29,8 @@ class AppDatabase extends GeneratedDatabase {
           category TEXT NOT NULL,
           current_value REAL NOT NULL,
           allocation_percentage REAL NOT NULL,
-          last_updated_at INTEGER NOT NULL
+          last_updated_at INTEGER NOT NULL,
+          total_cost REAL
         );
       ''');
 
@@ -39,7 +40,8 @@ class AppDatabase extends GeneratedDatabase {
           asset_id TEXT NOT NULL,
           total_value REAL NOT NULL,
           recorded_at INTEGER NOT NULL,
-          note TEXT
+          note TEXT,
+          total_cost REAL
         );
       ''');
 
@@ -74,8 +76,27 @@ class AppDatabase extends GeneratedDatabase {
           );
         ''');
       }
+      if (from < 5) {
+        // NULL = modal belum diisi, sehingga PnL data lama tidak dihitung.
+        // Build v4 awal hanya menambah kolom di `assets`, jadi setiap kolom
+        // dicek dulu supaya database v4 itu tetap ikut dilengkapi.
+        await _addColumnIfMissing('assets', 'total_cost', 'REAL');
+        await _addColumnIfMissing('asset_snapshots', 'total_cost', 'REAL');
+      }
     },
   );
+
+  Future<void> _addColumnIfMissing(
+    String table,
+    String column,
+    String type,
+  ) async {
+    final columns = await customSelect('PRAGMA table_info($table)').get();
+    if (columns.any((row) => row.read<String>('name') == column)) {
+      return;
+    }
+    await customStatement('ALTER TABLE $table ADD COLUMN $column $type');
+  }
 }
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {

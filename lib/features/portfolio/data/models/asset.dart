@@ -43,6 +43,9 @@ abstract class Asset with _$Asset {
     required double currentValue,
     required double allocationPercentage,
     required DateTime lastUpdatedAt,
+
+    /// Total modal yang disetor ke aset ini; `null` bila belum diisi.
+    double? totalCost,
   }) = _Asset;
   const Asset._();
 
@@ -55,6 +58,7 @@ abstract class Asset with _$Asset {
       currentValue: (json['currentValue'] as num).toDouble(),
       allocationPercentage: (json['allocationPercentage'] as num).toDouble(),
       lastUpdatedAt: DateTime.parse(json['lastUpdatedAt'] as String),
+      totalCost: (json['totalCost'] as num?)?.toDouble(),
     );
   }
 
@@ -67,6 +71,22 @@ abstract class Asset with _$Asset {
       'currentValue': currentValue,
       'allocationPercentage': allocationPercentage,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
+      'totalCost': totalCost,
     };
+  }
+
+  /// Untung/rugi terhadap [totalCost]; `null` bila modal belum diisi.
+  double? get profitLoss {
+    final cost = totalCost;
+    return cost == null ? null : currentValue - cost;
+  }
+
+  /// [profitLoss] dalam persen modal; `null` bila modal kosong atau nol.
+  double? get profitLossPercentage {
+    final cost = totalCost;
+    if (cost == null || cost == 0) {
+      return null;
+    }
+    return (currentValue - cost) / cost * 100;
   }
 }

@@ -57,7 +57,7 @@ void main() {
   });
 
   testWidgets(
-    'update asset value allows switching between Ubah Total and Tambah Nilai',
+    'update asset value allows switching between Ubah and Tambah',
     (tester) async {
       final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
@@ -72,18 +72,18 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Defaults to 'Ubah Total'
-      expect(find.text('Total nilai aset baru'), findsOneWidget);
+      // Defaults to 'Ubah'
+      expect(find.text('Total nilai aset'), findsOneWidget);
       expect(
         find.text('Nilai aset akan disesuaikan menjadi nominal ini.'),
         findsOneWidget,
       );
 
-      // Switch to 'Tambah Nilai'
-      await tester.tap(find.text('Tambah Nilai'));
+      // Switch to 'Tambah'
+      await tester.tap(find.text('Tambah'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Nominal penambahan'), findsOneWidget);
+      expect(find.text('Penambahan nilai'), findsOneWidget);
       expect(
         find.text('Nominal ini akan ditambahkan ke nilai aset saat ini.'),
         findsOneWidget,
@@ -105,8 +105,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // Switch to 'Tambah Nilai'
-    await tester.tap(find.text('Tambah Nilai'));
+    // Switch to 'Tambah'
+    await tester.tap(find.text('Tambah'));
     await tester.pumpAndSettle();
 
     // Enter 1,000,000
@@ -115,7 +115,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // BTC original value is 18,200,000 -> Latest should be 19,200,000 in preview
-    expect(find.text('Penambahan'), findsOneWidget);
+    expect(find.text('Tambahan nilai'), findsOneWidget);
 
     // Scroll to and tap 'Simpan'
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));

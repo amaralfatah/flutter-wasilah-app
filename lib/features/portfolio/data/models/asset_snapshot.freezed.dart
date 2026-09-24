@@ -14,7 +14,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AssetSnapshot {
 
- String get id; String get assetId; double get totalValue; DateTime get recordedAt; String? get note;
+ String get id; String get assetId; double get totalValue; DateTime get recordedAt; String? get note;/// Total modal per tanggal pencatatan; `null` bila belum diisi.
+ double? get totalCost;
 /// Create a copy of AssetSnapshot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +26,16 @@ $AssetSnapshotCopyWith<AssetSnapshot> get copyWith => _$AssetSnapshotCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssetSnapshot&&(identical(other.id, id) || other.id == id)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.note, note) || other.note == note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssetSnapshot&&(identical(other.id, id) || other.id == id)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.note, note) || other.note == note)&&(identical(other.totalCost, totalCost) || other.totalCost == totalCost));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,assetId,totalValue,recordedAt,note);
+int get hashCode => Object.hash(runtimeType,id,assetId,totalValue,recordedAt,note,totalCost);
 
 @override
 String toString() {
-  return 'AssetSnapshot(id: $id, assetId: $assetId, totalValue: $totalValue, recordedAt: $recordedAt, note: $note)';
+  return 'AssetSnapshot(id: $id, assetId: $assetId, totalValue: $totalValue, recordedAt: $recordedAt, note: $note, totalCost: $totalCost)';
 }
 
 
@@ -45,7 +46,7 @@ abstract mixin class $AssetSnapshotCopyWith<$Res>  {
   factory $AssetSnapshotCopyWith(AssetSnapshot value, $Res Function(AssetSnapshot) _then) = _$AssetSnapshotCopyWithImpl;
 @useResult
 $Res call({
- String id, String assetId, double totalValue, DateTime recordedAt, String? note
+ String id, String assetId, double totalValue, DateTime recordedAt, String? note, double? totalCost
 });
 
 
@@ -62,14 +63,15 @@ class _$AssetSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of AssetSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? assetId = null,Object? totalValue = null,Object? recordedAt = null,Object? note = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? assetId = null,Object? totalValue = null,Object? recordedAt = null,Object? note = freezed,Object? totalCost = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,assetId: null == assetId ? _self.assetId : assetId // ignore: cast_nullable_to_non_nullable
 as String,totalValue: null == totalValue ? _self.totalValue : totalValue // ignore: cast_nullable_to_non_nullable
 as double,recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,totalCost: freezed == totalCost ? _self.totalCost : totalCost // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 
@@ -154,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String assetId,  double totalValue,  DateTime recordedAt,  String? note)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String assetId,  double totalValue,  DateTime recordedAt,  String? note,  double? totalCost)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AssetSnapshot() when $default != null:
-return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.note);case _:
+return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.note,_that.totalCost);case _:
   return orElse();
 
 }
@@ -175,10 +177,10 @@ return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.n
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String assetId,  double totalValue,  DateTime recordedAt,  String? note)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String assetId,  double totalValue,  DateTime recordedAt,  String? note,  double? totalCost)  $default,) {final _that = this;
 switch (_that) {
 case _AssetSnapshot():
-return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.note);case _:
+return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.note,_that.totalCost);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +197,10 @@ return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.n
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String assetId,  double totalValue,  DateTime recordedAt,  String? note)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String assetId,  double totalValue,  DateTime recordedAt,  String? note,  double? totalCost)?  $default,) {final _that = this;
 switch (_that) {
 case _AssetSnapshot() when $default != null:
-return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.note);case _:
+return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.note,_that.totalCost);case _:
   return null;
 
 }
@@ -210,7 +212,7 @@ return $default(_that.id,_that.assetId,_that.totalValue,_that.recordedAt,_that.n
 
 
 class _AssetSnapshot extends AssetSnapshot {
-  const _AssetSnapshot({required this.id, required this.assetId, required this.totalValue, required this.recordedAt, this.note}): super._();
+  const _AssetSnapshot({required this.id, required this.assetId, required this.totalValue, required this.recordedAt, this.note, this.totalCost}): super._();
   
 
 @override final  String id;
@@ -218,6 +220,8 @@ class _AssetSnapshot extends AssetSnapshot {
 @override final  double totalValue;
 @override final  DateTime recordedAt;
 @override final  String? note;
+/// Total modal per tanggal pencatatan; `null` bila belum diisi.
+@override final  double? totalCost;
 
 /// Create a copy of AssetSnapshot
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +233,16 @@ _$AssetSnapshotCopyWith<_AssetSnapshot> get copyWith => __$AssetSnapshotCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AssetSnapshot&&(identical(other.id, id) || other.id == id)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.note, note) || other.note == note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AssetSnapshot&&(identical(other.id, id) || other.id == id)&&(identical(other.assetId, assetId) || other.assetId == assetId)&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.note, note) || other.note == note)&&(identical(other.totalCost, totalCost) || other.totalCost == totalCost));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,assetId,totalValue,recordedAt,note);
+int get hashCode => Object.hash(runtimeType,id,assetId,totalValue,recordedAt,note,totalCost);
 
 @override
 String toString() {
-  return 'AssetSnapshot(id: $id, assetId: $assetId, totalValue: $totalValue, recordedAt: $recordedAt, note: $note)';
+  return 'AssetSnapshot(id: $id, assetId: $assetId, totalValue: $totalValue, recordedAt: $recordedAt, note: $note, totalCost: $totalCost)';
 }
 
 
@@ -249,7 +253,7 @@ abstract mixin class _$AssetSnapshotCopyWith<$Res> implements $AssetSnapshotCopy
   factory _$AssetSnapshotCopyWith(_AssetSnapshot value, $Res Function(_AssetSnapshot) _then) = __$AssetSnapshotCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String assetId, double totalValue, DateTime recordedAt, String? note
+ String id, String assetId, double totalValue, DateTime recordedAt, String? note, double? totalCost
 });
 
 
@@ -266,14 +270,15 @@ class __$AssetSnapshotCopyWithImpl<$Res>
 
 /// Create a copy of AssetSnapshot
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? assetId = null,Object? totalValue = null,Object? recordedAt = null,Object? note = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? assetId = null,Object? totalValue = null,Object? recordedAt = null,Object? note = freezed,Object? totalCost = freezed,}) {
   return _then(_AssetSnapshot(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,assetId: null == assetId ? _self.assetId : assetId // ignore: cast_nullable_to_non_nullable
 as String,totalValue: null == totalValue ? _self.totalValue : totalValue // ignore: cast_nullable_to_non_nullable
 as double,recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,totalCost: freezed == totalCost ? _self.totalCost : totalCost // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 

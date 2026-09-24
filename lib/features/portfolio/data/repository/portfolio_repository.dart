@@ -27,6 +27,7 @@ abstract interface class PortfolioRepository {
     required double totalValue,
     required DateTime recordedAt,
     String? note,
+    double? totalCost,
   });
 
   Future<List<AllocationTarget>> getAllocationTargets();

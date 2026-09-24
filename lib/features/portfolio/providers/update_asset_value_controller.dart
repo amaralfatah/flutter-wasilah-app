@@ -18,6 +18,7 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
     required double totalValue,
     required DateTime recordedAt,
     String? note,
+    double? totalCost,
   }) async {
     final assetError = validateSelectedAsset(assetId);
     if (assetError != null) {
@@ -26,6 +27,10 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
 
     if (totalValue < 0) {
       throw ArgumentError('Nilai aset tidak boleh kurang dari nol.');
+    }
+
+    if (totalCost != null && totalCost < 0) {
+      throw ArgumentError('Total modal tidak boleh kurang dari nol.');
     }
 
     final noteError = validateNote(note);
@@ -43,6 +48,7 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             totalValue: totalValue,
             recordedAt: recordedAt,
             note: note?.trim().isEmpty ?? true ? null : note?.trim(),
+            totalCost: totalCost,
           );
 
       ref.invalidate(portfolioSummaryProvider);

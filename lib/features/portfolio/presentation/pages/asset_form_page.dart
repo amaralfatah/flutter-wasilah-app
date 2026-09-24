@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
@@ -29,6 +30,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _valueController = TextEditingController();
+  final _costController = TextEditingController();
   late DateTime _recordedAt;
   AssetCategory _category = AssetCategory.other;
   bool _didPopulate = false;
@@ -47,6 +49,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _nameController.dispose();
     _codeController.dispose();
     _valueController.dispose();
+    _costController.dispose();
     super.dispose();
   }
 
@@ -146,6 +149,17 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               ),
             ),
           ],
+          const SizedBox(height: AppSpacing.lg),
+          AppTextField(
+            label: 'Total modal (opsional)',
+            helperText:
+                'Total dana yang disetor, untuk menghitung untung/rugi.',
+            controller: _costController,
+            keyboardType: TextInputType.number,
+            prefixText: 'Rp',
+            inputFormatters: const [RupiahInputFormatter()],
+            validator: validateOptionalCurrencyValue,
+          ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
             label: _isEditing ? 'Simpan perubahan' : 'Tambah aset',
@@ -177,6 +191,10 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _nameController.text = asset.name;
     _codeController.text = asset.code;
     _category = asset.category;
+    final totalCost = asset.totalCost;
+    if (totalCost != null) {
+      _costController.text = formatCurrency(totalCost).replaceFirst('Rp', '');
+    }
     _didPopulate = true;
   }
 
@@ -202,6 +220,8 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
       return;
     }
 
+    final totalCost = parseCurrencyInput(_costController.text);
+
     try {
       if (editingAsset == null) {
         final value = parseCurrencyInput(_valueController.text);
@@ -217,6 +237,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               category: _category,
               currentValue: value,
               recordedAt: _recordedAt,
+              totalCost: totalCost,
             );
       } else {
         await ref
@@ -226,6 +247,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                 name: _nameController.text,
                 code: _codeController.text,
                 category: _category,
+                totalCost: totalCost,
               ),
             );
       }

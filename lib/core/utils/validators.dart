@@ -26,6 +26,15 @@ String? validateCurrencyValue(String? value) {
   return null;
 }
 
+/// Seperti [validateCurrencyValue], tetapi boleh dikosongkan.
+String? validateOptionalCurrencyValue(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return null;
+  }
+
+  return validateCurrencyValue(value);
+}
+
 String? validateSelectedAsset(String? assetId) {
   if (assetId == null || assetId.isEmpty) {
     return 'Aset wajib dipilih.';

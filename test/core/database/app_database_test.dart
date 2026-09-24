@@ -31,10 +31,24 @@ void main() {
       expect(await _countRows(database, 'asset_snapshots'), 0);
       expect(await _countRows(database, 'allocation_targets'), 0);
     });
+
+    test('adds empty total_cost to assets on upgrade from version 3', () async {
+      _createVersionOneDatabase(databaseFile, userVersion: 3);
+
+      final database = AppDatabase.forTesting(
+        NativeDatabase.createInBackground(databaseFile),
+      );
+      addTearDown(database.close);
+
+      final row = await database
+          .customSelect("SELECT total_cost FROM assets WHERE id = 'btc'")
+          .getSingle();
+      expect(row.readNullable<double>('total_cost'), isNull);
+    });
   });
 }
 
-void _createVersionOneDatabase(File file) {
+void _createVersionOneDatabase(File file, {int userVersion = 1}) {
   final database = sqlite3.sqlite3.open(file.path);
   try {
     database.execute('''
@@ -77,7 +91,7 @@ void _createVersionOneDatabase(File file) {
         id, category, target_percentage
       ) VALUES ('target-crypto', 'crypto', 35);
 
-      PRAGMA user_version = 1;
+      PRAGMA user_version = $userVersion;
     ''');
   } finally {
     database.dispose();
