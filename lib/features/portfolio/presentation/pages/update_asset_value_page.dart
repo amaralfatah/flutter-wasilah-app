@@ -121,6 +121,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<AssetValueUpdateType>(
+                    showSelectedIcon: false,
                     segments: [
                       ButtonSegment<AssetValueUpdateType>(
                         value: AssetValueUpdateType.override,

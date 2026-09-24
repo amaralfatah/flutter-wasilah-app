@@ -63,15 +63,15 @@ class SettingsTile extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1 : 0.5,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 64),
+          constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.xl,
-              vertical: AppSpacing.md,
+              vertical: AppSpacing.sm,
             ),
             child: Row(
               children: [
-                Icon(icon, size: 24, color: color),
+                Icon(icon, size: 22, color: color),
                 const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
@@ -120,7 +120,7 @@ class SettingsDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(height: 1, thickness: 0.2);
+    return const Divider();
   }
 }
 

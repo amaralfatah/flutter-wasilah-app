@@ -80,7 +80,7 @@ class TargetPage extends ConsumerWidget {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.xl,
-                            vertical: AppSpacing.lg,
+                            vertical: AppSpacing.sm,
                           ),
                           child: TargetAllocationItem(item: item),
                         ),

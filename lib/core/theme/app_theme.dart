@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 
 abstract final class AppTheme {
+  static const _compactShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(8)),
+  );
+
   static ThemeData light() => _theme(Brightness.light);
 
   static ThemeData dark() => _theme(Brightness.dark);
@@ -22,31 +26,81 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         toolbarHeight: 52,
       ),
+      // Tab aktif ditandai warna ikon/label saja, tanpa pil indikator M3 —
+      // seperti bar bawah Stockbit.
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
         height: 60,
-        labelTextStyle: WidgetStatePropertyAll(
-          _compactTextTheme(base: null).labelSmall,
+        indicatorColor: Colors.transparent,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          ),
         ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => _compactTextTheme(base: null).labelSmall?.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        indicatorColor: Colors.transparent,
+        selectedIconTheme: IconThemeData(color: colorScheme.primary),
+        selectedLabelTextStyle: _compactTextTheme(
+          base: null,
+        ).labelSmall?.copyWith(color: colorScheme.primary),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: colorScheme.surface,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: colorScheme.outlineVariant),
+        shape: _compactShape.copyWith(
+          side: BorderSide(color: colorScheme.outlineVariant, width: 0),
         ),
       ),
+      // Chip filter Stockbit berbentuk pil bergaris tanpa centang; status
+      // terpilih cukup dibedakan warna.
       chipTheme: const ChipThemeData(
         padding: EdgeInsets.symmetric(horizontal: 12),
         labelPadding: EdgeInsets.zero,
         shape: StadiumBorder(),
+        showCheckmark: false,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        isDense: true,
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        space: 1,
+        thickness: 0,
+        color: colorScheme.outlineVariant,
       ),
       listTileTheme: const ListTileThemeData(
         dense: true,
         minVerticalPadding: 8,
+      ),
+      filledButtonTheme: const FilledButtonThemeData(
+        style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
+      ),
+      outlinedButtonTheme: const OutlinedButtonThemeData(
+        style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
+      ),
+      textButtonTheme: const TextButtonThemeData(
+        style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
+      ),
+      segmentedButtonTheme: const SegmentedButtonThemeData(
+        style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
       ),
     );
 

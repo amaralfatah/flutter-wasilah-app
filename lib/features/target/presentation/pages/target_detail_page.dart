@@ -53,8 +53,15 @@ class TargetDetailPage extends ConsumerWidget {
           }
 
           final assets = assetsValue.asData?.value ?? const <Asset>[];
+          // Aset bernilai 0 sudah nonaktif/diarsipkan, sama seperti
+          // perlakuan di Dashboard: tidak ikut dihitung sebagai kepemilikan
+          // aktif dalam kategori ini.
           final categoryAssets = assets
-              .where((asset) => asset.category == item.category)
+              .where(
+                (asset) =>
+                    asset.category == item.category &&
+                    asset.currentValue != 0,
+              )
               .toList(growable: false);
           return RefreshablePageBody(
             onRefresh: () {
@@ -109,7 +116,6 @@ class TargetDetailPage extends ConsumerWidget {
                   )
                 else
                   AppListCard(
-                    hasHeader: true,
                     children: [
                       const AssetTableHeader(),
                       ...categoryAssets.map(

@@ -10,6 +10,7 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
@@ -110,6 +111,8 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 if (activeAssets.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xl),
+                  const AppSectionBand(),
+                  const SizedBox(height: AppSpacing.lg),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.xl,
@@ -122,7 +125,6 @@ class DashboardPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppListCard(
-                    hasHeader: true,
                     children: [
                       const AssetTableHeader(),
                       ...activeAssets

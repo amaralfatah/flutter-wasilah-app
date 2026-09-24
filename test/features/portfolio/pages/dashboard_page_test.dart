@@ -29,10 +29,11 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Nilai Portofolio'), findsOneWidget);
+    expect(find.text('Total Nilai'), findsOneWidget);
     expect(find.text('55.000.000'), findsOneWidget);
-    expect(find.text('Bulan Ini'), findsOneWidget);
-    expect(find.text('+3,4%'), findsOneWidget);
+    expect(find.text('Kas'), findsOneWidget);
+    expect(find.text('6.600.000'), findsOneWidget);
+    expect(find.text('Bulan Ini'), findsNothing);
     // Dashboard sengaja tanpa FAB: update nilai dicapai lewat tab Aset.
     expect(find.byType(FloatingActionButton), findsNothing);
   });

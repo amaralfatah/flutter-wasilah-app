@@ -9,9 +9,11 @@ import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
-/// Ringkasan portofolio ala kartu akun aplikasi sekuritas: grid 3x2 supaya
-/// nilai, modal, dan PnL semuanya terlihat sekaligus tanpa scroll atau
-/// membuka detail, ditutup baris pintasan ke histori.
+/// Ringkasan portofolio ala kartu akun Stockbit: grid 3x2 dengan kas di kiri
+/// atas (padanan Trading Balance) dan total nilai di kanan bawah (padanan
+/// Total Equity), ditutup baris pintasan ke histori. Beda dengan Stockbit,
+/// modal dan return ikut menghitung kas karena kas di sini dana serok yang
+/// jadi bagian strategi, bukan saldo menganggur.
 class PortfolioSummaryCard extends StatelessWidget {
   const PortfolioSummaryCard({
     required this.summary,
@@ -25,24 +27,29 @@ class PortfolioSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final change = summary.monthlyChangePercentage;
     // Aset bernilai 0 sudah nonaktif/diarsipkan; historinya tetap tersimpan
     // tapi tidak lagi ikut dihitung sebagai kepemilikan aktif.
     final activeAssets = summary.assets
         .where((asset) => asset.currentValue != 0)
         .toList(growable: false);
+    final cash = activeAssets
+        .where((asset) => asset.category == AssetCategory.cash)
+        .fold<double>(0, (sum, asset) => sum + asset.currentValue);
     final profitLoss = _totalProfitLoss(activeAssets);
 
     return AppCard(
       padding: EdgeInsets.zero,
       child: Semantics(
-        label: _semanticLabel(context, l10n, change, profitLoss),
+        label: _semanticLabel(context, l10n, cash, profitLoss),
         excludeSemantics: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.xl,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -50,14 +57,15 @@ class PortfolioSummaryCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _SummaryMetric(
-                          label: l10n.dashboardPortfolioValueLabel,
-                          value: formatNumber(summary.totalValue),
+                          label: l10n.dashboardCashLabel,
+                          value: formatNumber(cash),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: _SummaryMetric(
                           label: l10n.dashboardCapitalLabel,
+                          alignment: _MetricAlignment.center,
                           value: profitLoss == null
                               ? '-'
                               : formatNumber(profitLoss.cost),
@@ -67,19 +75,18 @@ class PortfolioSummaryCard extends StatelessWidget {
                       Expanded(
                         child: _SummaryMetric(
                           label: l10n.dashboardAssetCountLabel,
+                          alignment: _MetricAlignment.end,
                           value: '${activeAssets.length}',
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       Expanded(
                         child: _SummaryMetric(
-                          label: profitLoss == null
-                              ? l10n.dashboardProfitLossFallbackLabel
-                              : profitLossLabel(context, profitLoss.amount),
+                          label: l10n.dashboardProfitLossLabel,
                           value: profitLoss == null
                               ? '-'
                               : formatSignedNumber(profitLoss.amount),
@@ -92,6 +99,7 @@ class PortfolioSummaryCard extends StatelessWidget {
                       Expanded(
                         child: _SummaryMetric(
                           label: l10n.commonReturnLabel,
+                          alignment: _MetricAlignment.center,
                           value: profitLoss?.percentage == null
                               ? '-'
                               : formatSignedPercentage(
@@ -105,9 +113,9 @@ class PortfolioSummaryCard extends StatelessWidget {
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: _SummaryMetric(
-                          label: l10n.dashboardThisMonthLabel,
-                          value: formatSignedPercentage(change),
-                          valueColor: profitLossColorOf(context, change),
+                          label: l10n.dashboardPortfolioValueLabel,
+                          alignment: _MetricAlignment.end,
+                          value: formatNumber(summary.totalValue),
                         ),
                       ),
                     ],
@@ -116,18 +124,23 @@ class PortfolioSummaryCard extends StatelessWidget {
               ),
             ),
             if (onViewHistory != null) ...[
-              const Divider(height: 1),
+              const Divider(),
               InkWell(
                 onTap: onViewHistory,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
+                  // Diukur dari "View Performance" Stockbit: ikon lebih
+                  // dekat ke tepi kiri, chevron lebih dekat ke tepi kanan,
+                  // dan baris lebih pendek dari metrik di atasnya.
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    10,
+                    AppSpacing.sm,
+                    10,
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.show_chart_outlined,
+                        Icons.trending_up,
                         size: 20,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -135,7 +148,12 @@ class PortfolioSummaryCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           l10n.dashboardViewHistoryLabel,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ),
                       Icon(
@@ -153,10 +171,10 @@ class PortfolioSummaryCard extends StatelessWidget {
     );
   }
 
-  /// Untung/rugi gabungan dari [activeAssets]; `null` bila belum ada aset
-  /// yang punya modal. Aset tanpa modal dianggap impas (modal = nilai)
-  /// supaya tidak terbaca sebagai untung — sama dengan perhitungan histori
-  /// portofolio.
+  /// Untung/rugi gabungan dari [activeAssets], termasuk kas; `null` bila
+  /// belum ada aset yang punya modal. Aset tanpa modal dianggap impas
+  /// (modal = nilai) supaya tidak terbaca sebagai untung — sama dengan
+  /// perhitungan histori portofolio.
   ({double amount, double cost, double? percentage})? _totalProfitLoss(
     List<Asset> activeAssets,
   ) {
@@ -181,13 +199,13 @@ class PortfolioSummaryCard extends StatelessWidget {
   String _semanticLabel(
     BuildContext context,
     AppLocalizations l10n,
-    double change,
+    double cash,
     ({double amount, double cost, double? percentage})? profitLoss,
   ) {
     final buffer = StringBuffer(
       '${l10n.dashboardTotalPortfolioSemantic(
         formatCurrency(summary.totalValue),
-        _changeLabel(l10n, change),
+        formatCurrency(cash),
       )}.',
     );
     if (profitLoss != null) {
@@ -205,18 +223,20 @@ class PortfolioSummaryCard extends StatelessWidget {
     }
     return buffer.toString();
   }
+}
 
-  String _changeLabel(AppLocalizations l10n, double value) {
-    final formatted = value.abs().toStringAsFixed(1).replaceAll('.', ',');
-    if (value > 0) {
-      return l10n.dashboardChangeUpLabel(formatted);
-    }
-    if (value < 0) {
-      return l10n.dashboardChangeDownLabel(formatted);
-    }
+/// Kolom kiri rata kiri, tengah rata tengah, kanan rata kanan — pola kartu
+/// akun Stockbit supaya tiga angka sebaris terbaca sebagai tiga kolom.
+enum _MetricAlignment {
+  start(CrossAxisAlignment.start, Alignment.centerLeft, TextAlign.start),
+  center(CrossAxisAlignment.center, Alignment.center, TextAlign.center),
+  end(CrossAxisAlignment.end, Alignment.centerRight, TextAlign.end);
 
-    return l10n.dashboardChangeStableLabel;
-  }
+  const _MetricAlignment(this.cross, this.fit, this.text);
+
+  final CrossAxisAlignment cross;
+  final Alignment fit;
+  final TextAlign text;
 }
 
 class _SummaryMetric extends StatelessWidget {
@@ -224,11 +244,13 @@ class _SummaryMetric extends StatelessWidget {
     required this.label,
     required this.value,
     this.valueColor,
+    this.alignment = _MetricAlignment.start,
   });
 
   final String label;
   final String value;
   final Color? valueColor;
+  final _MetricAlignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -236,28 +258,32 @@ class _SummaryMetric extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: alignment.cross,
       children: [
         FittedBox(
           fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
+          alignment: alignment.fit,
           child: Text(
             value,
             maxLines: 1,
-            style: textTheme.titleMedium?.copyWith(
+            style: textTheme.titleSmall?.copyWith(
               color: valueColor ?? colorScheme.onSurface,
               fontWeight: FontWeight.w700,
-              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+        const SizedBox(height: 2),
+        // Mengecil, bukan terpotong: label seperti "Portfolio Value" harus
+        // tetap terbaca utuh di kolom sempit.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: alignment.fit,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],

@@ -452,6 +452,30 @@ abstract class AppLocalizations {
   /// **'Histori'**
   String get historyTitle;
 
+  /// Label time-weighted return kumulatif seluruh histori
+  ///
+  /// In id, this message translates to:
+  /// **'Return sejak awal'**
+  String get historyTwrSinceStartLabel;
+
+  /// Label time-weighted return untuk satu tahun
+  ///
+  /// In id, this message translates to:
+  /// **'Return {year}'**
+  String historyTwrYearLabel(String year);
+
+  /// Label time-weighted return yang disetahunkan
+  ///
+  /// In id, this message translates to:
+  /// **'Per tahun'**
+  String get historyTwrAnnualizedLabel;
+
+  /// Keterangan singkat arti TWR di halaman histori
+  ///
+  /// In id, this message translates to:
+  /// **'Time-weighted return: tidak terpengaruh setoran, mengukur hasil strategi'**
+  String get historyTwrCaption;
+
   /// Pesan state kosong histori portofolio
   ///
   /// In id, this message translates to:
@@ -1016,11 +1040,17 @@ abstract class AppLocalizations {
   /// **'Total modal tidak boleh kurang dari nol.'**
   String get invalidTotalCostMessage;
 
-  /// Label metrik nilai portofolio di kartu ringkasan dashboard
+  /// Label metrik total nilai portofolio (kas + investasi) di kartu ringkasan dashboard
   ///
   /// In id, this message translates to:
-  /// **'Nilai Portofolio'**
+  /// **'Total Nilai'**
   String get dashboardPortfolioValueLabel;
+
+  /// Label metrik total aset kategori kas di kartu ringkasan dashboard
+  ///
+  /// In id, this message translates to:
+  /// **'Kas'**
+  String get dashboardCashLabel;
 
   /// Label singkat 'Modal', dipakai di kartu ringkasan dan header tabel aset
   ///
@@ -1034,17 +1064,11 @@ abstract class AppLocalizations {
   /// **'Jumlah Aset'**
   String get dashboardAssetCountLabel;
 
-  /// Label fallback untung/rugi saat belum ada modal tercatat
+  /// Label metrik untung/rugi di kartu ringkasan dashboard, meniru istilah aplikasi sekuritas
   ///
   /// In id, this message translates to:
-  /// **'Untung/Rugi'**
-  String get dashboardProfitLossFallbackLabel;
-
-  /// Label metrik perubahan bulan ini di kartu ringkasan dashboard
-  ///
-  /// In id, this message translates to:
-  /// **'Bulan Ini'**
-  String get dashboardThisMonthLabel;
+  /// **'P&L'**
+  String get dashboardProfitLossLabel;
 
   /// Label baris pintasan ke halaman histori dari kartu ringkasan
   ///
@@ -1055,8 +1079,8 @@ abstract class AppLocalizations {
   /// Bagian awal label screen-reader kartu ringkasan portofolio
   ///
   /// In id, this message translates to:
-  /// **'Total portofolio {totalValue}. {changeLabel}'**
-  String dashboardTotalPortfolioSemantic(String totalValue, String changeLabel);
+  /// **'Total portofolio {totalValue}. Kas {cash}'**
+  String dashboardTotalPortfolioSemantic(String totalValue, String cash);
 
   /// Bagian untung/rugi label screen-reader kartu ringkasan portofolio
   ///
@@ -1067,24 +1091,6 @@ abstract class AppLocalizations {
     String profitLossLabel,
     String amount,
   );
-
-  /// Label screen-reader perubahan portofolio naik
-  ///
-  /// In id, this message translates to:
-  /// **'Naik {percent}% bulan ini'**
-  String dashboardChangeUpLabel(String percent);
-
-  /// Label screen-reader perubahan portofolio turun
-  ///
-  /// In id, this message translates to:
-  /// **'Turun {percent}% bulan ini'**
-  String dashboardChangeDownLabel(String percent);
-
-  /// Label screen-reader perubahan portofolio stabil
-  ///
-  /// In id, this message translates to:
-  /// **'Stabil bulan ini'**
-  String get dashboardChangeStableLabel;
 
   /// Header kolom kode aset pada tabel daftar aset
   ///

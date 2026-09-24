@@ -8,6 +8,7 @@ import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_provi
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
@@ -22,11 +23,18 @@ const _assetListPagePadding = EdgeInsets.fromLTRB(
   AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
 );
 
-class AssetListPage extends ConsumerWidget {
+class AssetListPage extends ConsumerStatefulWidget {
   const AssetListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AssetListPage> createState() => _AssetListPageState();
+}
+
+class _AssetListPageState extends ConsumerState<AssetListPage> {
+  AssetCategory? _selectedCategory;
+
+  @override
+  Widget build(BuildContext context) {
     final assetsValue = ref.watch(assetListProvider);
     final l10n = context.l10n;
 
@@ -58,12 +66,21 @@ class AssetListPage extends ConsumerWidget {
             );
           }
 
+          // Chip kategori hanya untuk kategori yang benar-benar dipakai,
+          // supaya tidak menampilkan filter yang pasti kosong.
+          final categories = {for (final asset in assets) asset.category};
+          final filteredAssets = _selectedCategory == null
+              ? assets
+              : assets
+                    .where((asset) => asset.category == _selectedCategory)
+                    .toList(growable: false);
+
           // Aset bernilai 0 sudah dijual/habis tapi belum dihapus; pisahkan
           // supaya tidak menyesaki list aktif tapi datanya tetap tersimpan.
-          final activeAssets = assets
+          final activeAssets = filteredAssets
               .where((asset) => asset.currentValue != 0)
               .toList(growable: false);
-          final archivedAssets = assets
+          final archivedAssets = filteredAssets
               .where((asset) => asset.currentValue == 0)
               .toList(growable: false);
 
@@ -76,9 +93,37 @@ class AssetListPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (categories.length > 1) ...[
+                  SizedBox(
+                    height: 32,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
+                      children: [
+                        ChoiceChip(
+                          label: Text(l10n.allFilterLabel),
+                          selected: _selectedCategory == null,
+                          onSelected: (_) =>
+                              setState(() => _selectedCategory = null),
+                        ),
+                        for (final category in categories) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          ChoiceChip(
+                            label: Text(category.label),
+                            selected: _selectedCategory == category,
+                            onSelected: (_) =>
+                                setState(() => _selectedCategory = category),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 if (activeAssets.isNotEmpty)
                   AppListCard(
-                    hasHeader: true,
                     children: [
                       const AssetTableHeader(),
                       ...activeAssets.map(
@@ -91,14 +136,23 @@ class AssetListPage extends ConsumerWidget {
                     ],
                   ),
                 if (archivedAssets.isNotEmpty) ...[
-                  if (activeAssets.isNotEmpty)
-                    const SizedBox(height: AppSpacing.xl),
+                  if (activeAssets.isNotEmpty) const AppSectionBand(),
                   _ArchivedAssetsSection(
                     assets: archivedAssets,
                     onTapAsset: (asset) =>
                         context.push('${RouteNames.assets}/${asset.id}'),
                   ),
                 ],
+                if (activeAssets.isEmpty && archivedAssets.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                    child: AppEmptyState(
+                      title: l10n.commonEmptyAssetsTitle,
+                      message: l10n.emptyAssetsInCategoryMessage,
+                    ),
+                  ),
               ],
             ),
           );
@@ -146,12 +200,16 @@ class _ArchivedAssetsSection extends StatelessWidget {
           tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           childrenPadding: EdgeInsets.zero,
           children: [
-            const AssetTableHeader(),
-            ...assets.map(
-              (asset) => AssetListItem(
-                asset: asset,
-                onTap: () => onTapAsset(asset),
-              ),
+            AppListCard(
+              children: [
+                const AssetTableHeader(),
+                ...assets.map(
+                  (asset) => AssetListItem(
+                    asset: asset,
+                    onTap: () => onTapAsset(asset),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -181,7 +181,7 @@ class _AppShellScaffold extends StatelessWidget {
             border: Border(
               top: BorderSide(
                 color: Theme.of(context).colorScheme.outlineVariant,
-                width: 0.2,
+                width: 0,
               ),
             ),
           ),

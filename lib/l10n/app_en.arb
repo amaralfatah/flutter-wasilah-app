@@ -67,6 +67,13 @@
   "updateAssetValueFailedMessage": "Failed to update asset value. Try again.",
 
   "historyTitle": "History",
+  "historyTwrSinceStartLabel": "Return since start",
+  "historyTwrYearLabel": "Return {year}",
+  "@historyTwrYearLabel": {
+    "placeholders": {"year": {"type": "String"}}
+  },
+  "historyTwrAnnualizedLabel": "Annualized",
+  "historyTwrCaption": "Time-weighted return: unaffected by deposits, measures strategy results",
   "emptyHistoryMessage": "History appears once an asset value is recorded.",
   "allFilterLabel": "All",
   "noFilteredDataTitle": "No data for this filter",
@@ -194,17 +201,17 @@
   "invalidCurrentValueMessage": "Asset value cannot be less than zero.",
   "invalidTotalCostMessage": "Total cost cannot be less than zero.",
 
-  "dashboardPortfolioValueLabel": "Portfolio Value",
+  "dashboardPortfolioValueLabel": "Total Value",
+  "dashboardCashLabel": "Cash",
   "dashboardCapitalLabel": "Capital",
   "dashboardAssetCountLabel": "Asset Count",
-  "dashboardProfitLossFallbackLabel": "Profit/Loss",
-  "dashboardThisMonthLabel": "This Month",
+  "dashboardProfitLossLabel": "P&L",
   "dashboardViewHistoryLabel": "View history",
-  "dashboardTotalPortfolioSemantic": "Total portfolio {totalValue}. {changeLabel}",
+  "dashboardTotalPortfolioSemantic": "Total portfolio {totalValue}. Cash {cash}",
   "@dashboardTotalPortfolioSemantic": {
     "placeholders": {
       "totalValue": {"type": "String"},
-      "changeLabel": {"type": "String"}
+      "cash": {"type": "String"}
     }
   },
   "dashboardProfitLossSemantic": "Capital {cost}. {profitLossLabel} {amount}",
@@ -215,15 +222,6 @@
       "amount": {"type": "String"}
     }
   },
-  "dashboardChangeUpLabel": "Up {percent}% this month",
-  "@dashboardChangeUpLabel": {
-    "placeholders": {"percent": {"type": "String"}}
-  },
-  "dashboardChangeDownLabel": "Down {percent}% this month",
-  "@dashboardChangeDownLabel": {
-    "placeholders": {"percent": {"type": "String"}}
-  },
-  "dashboardChangeStableLabel": "Stable this month",
 
   "assetTableCodeHeader": "Code",
   "assetTableNameHeader": "Name",

@@ -13,9 +13,13 @@ class HistoryRow extends StatelessWidget {
     super.key,
     this.changeLabel,
     this.changeColor,
+    this.showYear = true,
   });
 
   final AssetSnapshot snapshot;
+
+  /// `false` bila tahun sudah tampil di pita grup di atas baris.
+  final bool showYear;
 
   /// Perubahan dari bulan sebelumnya, misalnya "Naik 5,1%"; `null` untuk
   /// halaman yang tidak menghitungnya (histori per aset).
@@ -46,12 +50,13 @@ class HistoryRow extends StatelessWidget {
                   ),
                   style: textTheme.titleSmall,
                 ),
-                Text(
-                  '${snapshot.recordedAt.year}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                if (showYear)
+                  Text(
+                    '${snapshot.recordedAt.year}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

@@ -194,6 +194,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyTitle => 'History';
 
   @override
+  String get historyTwrSinceStartLabel => 'Return since start';
+
+  @override
+  String historyTwrYearLabel(String year) {
+    return 'Return $year';
+  }
+
+  @override
+  String get historyTwrAnnualizedLabel => 'Annualized';
+
+  @override
+  String get historyTwrCaption =>
+      'Time-weighted return: unaffected by deposits, measures strategy results';
+
+  @override
   String get emptyHistoryMessage =>
       'History appears once an asset value is recorded.';
 
@@ -504,7 +519,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidTotalCostMessage => 'Total cost cannot be less than zero.';
 
   @override
-  String get dashboardPortfolioValueLabel => 'Portfolio Value';
+  String get dashboardPortfolioValueLabel => 'Total Value';
+
+  @override
+  String get dashboardCashLabel => 'Cash';
 
   @override
   String get dashboardCapitalLabel => 'Capital';
@@ -513,20 +531,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardAssetCountLabel => 'Asset Count';
 
   @override
-  String get dashboardProfitLossFallbackLabel => 'Profit/Loss';
-
-  @override
-  String get dashboardThisMonthLabel => 'This Month';
+  String get dashboardProfitLossLabel => 'P&L';
 
   @override
   String get dashboardViewHistoryLabel => 'View history';
 
   @override
-  String dashboardTotalPortfolioSemantic(
-    String totalValue,
-    String changeLabel,
-  ) {
-    return 'Total portfolio $totalValue. $changeLabel';
+  String dashboardTotalPortfolioSemantic(String totalValue, String cash) {
+    return 'Total portfolio $totalValue. Cash $cash';
   }
 
   @override
@@ -537,19 +549,6 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return 'Capital $cost. $profitLossLabel $amount';
   }
-
-  @override
-  String dashboardChangeUpLabel(String percent) {
-    return 'Up $percent% this month';
-  }
-
-  @override
-  String dashboardChangeDownLabel(String percent) {
-    return 'Down $percent% this month';
-  }
-
-  @override
-  String get dashboardChangeStableLabel => 'Stable this month';
 
   @override
   String get assetTableCodeHeader => 'Code';

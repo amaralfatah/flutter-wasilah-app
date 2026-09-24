@@ -125,6 +125,17 @@
   "@updateAssetValueFailedMessage": {"description": "Snackbar gagal update nilai aset"},
 
   "historyTitle": "Histori",
+  "historyTwrSinceStartLabel": "Return sejak awal",
+  "@historyTwrSinceStartLabel": {"description": "Label time-weighted return kumulatif seluruh histori"},
+  "historyTwrYearLabel": "Return {year}",
+  "@historyTwrYearLabel": {
+    "description": "Label time-weighted return untuk satu tahun",
+    "placeholders": {"year": {"type": "String"}}
+  },
+  "historyTwrAnnualizedLabel": "Per tahun",
+  "@historyTwrAnnualizedLabel": {"description": "Label time-weighted return yang disetahunkan"},
+  "historyTwrCaption": "Time-weighted return: tidak terpengaruh setoran, mengukur hasil strategi",
+  "@historyTwrCaption": {"description": "Keterangan singkat arti TWR di halaman histori"},
   "@historyTitle": {"description": "Judul halaman histori portofolio"},
   "emptyHistoryMessage": "Histori muncul setelah nilai aset dicatat.",
   "@emptyHistoryMessage": {"description": "Pesan state kosong histori portofolio"},
@@ -347,24 +358,24 @@
   "invalidTotalCostMessage": "Total modal tidak boleh kurang dari nol.",
   "@invalidTotalCostMessage": {"description": "Validasi total modal tidak boleh negatif"},
 
-  "dashboardPortfolioValueLabel": "Nilai Portofolio",
-  "@dashboardPortfolioValueLabel": {"description": "Label metrik nilai portofolio di kartu ringkasan dashboard"},
+  "dashboardPortfolioValueLabel": "Total Nilai",
+  "@dashboardPortfolioValueLabel": {"description": "Label metrik total nilai portofolio (kas + investasi) di kartu ringkasan dashboard"},
+  "dashboardCashLabel": "Kas",
+  "@dashboardCashLabel": {"description": "Label metrik total aset kategori kas di kartu ringkasan dashboard"},
   "dashboardCapitalLabel": "Modal",
   "@dashboardCapitalLabel": {"description": "Label singkat 'Modal', dipakai di kartu ringkasan dan header tabel aset"},
   "dashboardAssetCountLabel": "Jumlah Aset",
   "@dashboardAssetCountLabel": {"description": "Label metrik jumlah aset di kartu ringkasan dashboard"},
-  "dashboardProfitLossFallbackLabel": "Untung/Rugi",
-  "@dashboardProfitLossFallbackLabel": {"description": "Label fallback untung/rugi saat belum ada modal tercatat"},
-  "dashboardThisMonthLabel": "Bulan Ini",
-  "@dashboardThisMonthLabel": {"description": "Label metrik perubahan bulan ini di kartu ringkasan dashboard"},
+  "dashboardProfitLossLabel": "P&L",
+  "@dashboardProfitLossLabel": {"description": "Label metrik untung/rugi di kartu ringkasan dashboard, meniru istilah aplikasi sekuritas"},
   "dashboardViewHistoryLabel": "Lihat histori",
   "@dashboardViewHistoryLabel": {"description": "Label baris pintasan ke halaman histori dari kartu ringkasan"},
-  "dashboardTotalPortfolioSemantic": "Total portofolio {totalValue}. {changeLabel}",
+  "dashboardTotalPortfolioSemantic": "Total portofolio {totalValue}. Kas {cash}",
   "@dashboardTotalPortfolioSemantic": {
     "description": "Bagian awal label screen-reader kartu ringkasan portofolio",
     "placeholders": {
       "totalValue": {"type": "String"},
-      "changeLabel": {"type": "String"}
+      "cash": {"type": "String"}
     }
   },
   "dashboardProfitLossSemantic": "Modal {cost}. {profitLossLabel} {amount}",
@@ -376,18 +387,6 @@
       "amount": {"type": "String"}
     }
   },
-  "dashboardChangeUpLabel": "Naik {percent}% bulan ini",
-  "@dashboardChangeUpLabel": {
-    "description": "Label screen-reader perubahan portofolio naik",
-    "placeholders": {"percent": {"type": "String"}}
-  },
-  "dashboardChangeDownLabel": "Turun {percent}% bulan ini",
-  "@dashboardChangeDownLabel": {
-    "description": "Label screen-reader perubahan portofolio turun",
-    "placeholders": {"percent": {"type": "String"}}
-  },
-  "dashboardChangeStableLabel": "Stabil bulan ini",
-  "@dashboardChangeStableLabel": {"description": "Label screen-reader perubahan portofolio stabil"},
 
   "assetTableCodeHeader": "Kode",
   "@assetTableCodeHeader": {"description": "Header kolom kode aset pada tabel daftar aset"},

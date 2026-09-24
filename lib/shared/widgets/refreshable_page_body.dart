@@ -40,8 +40,7 @@ class RefreshablePageBody extends StatelessWidget {
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding:
-                resolvedPadding +
-                EdgeInsets.symmetric(horizontal: sideGutter),
+                resolvedPadding + EdgeInsets.symmetric(horizontal: sideGutter),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: minHeight),
               child: SizedBox(width: double.infinity, child: child),

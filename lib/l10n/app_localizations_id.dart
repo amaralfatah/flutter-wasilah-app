@@ -194,6 +194,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get historyTitle => 'Histori';
 
   @override
+  String get historyTwrSinceStartLabel => 'Return sejak awal';
+
+  @override
+  String historyTwrYearLabel(String year) {
+    return 'Return $year';
+  }
+
+  @override
+  String get historyTwrAnnualizedLabel => 'Per tahun';
+
+  @override
+  String get historyTwrCaption =>
+      'Time-weighted return: tidak terpengaruh setoran, mengukur hasil strategi';
+
+  @override
   String get emptyHistoryMessage =>
       'Histori muncul setelah nilai aset dicatat.';
 
@@ -509,7 +524,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Total modal tidak boleh kurang dari nol.';
 
   @override
-  String get dashboardPortfolioValueLabel => 'Nilai Portofolio';
+  String get dashboardPortfolioValueLabel => 'Total Nilai';
+
+  @override
+  String get dashboardCashLabel => 'Kas';
 
   @override
   String get dashboardCapitalLabel => 'Modal';
@@ -518,20 +536,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get dashboardAssetCountLabel => 'Jumlah Aset';
 
   @override
-  String get dashboardProfitLossFallbackLabel => 'Untung/Rugi';
-
-  @override
-  String get dashboardThisMonthLabel => 'Bulan Ini';
+  String get dashboardProfitLossLabel => 'P&L';
 
   @override
   String get dashboardViewHistoryLabel => 'Lihat histori';
 
   @override
-  String dashboardTotalPortfolioSemantic(
-    String totalValue,
-    String changeLabel,
-  ) {
-    return 'Total portofolio $totalValue. $changeLabel';
+  String dashboardTotalPortfolioSemantic(String totalValue, String cash) {
+    return 'Total portofolio $totalValue. Kas $cash';
   }
 
   @override
@@ -542,19 +554,6 @@ class AppLocalizationsId extends AppLocalizations {
   ) {
     return 'Modal $cost. $profitLossLabel $amount';
   }
-
-  @override
-  String dashboardChangeUpLabel(String percent) {
-    return 'Naik $percent% bulan ini';
-  }
-
-  @override
-  String dashboardChangeDownLabel(String percent) {
-    return 'Turun $percent% bulan ini';
-  }
-
-  @override
-  String get dashboardChangeStableLabel => 'Stabil bulan ini';
 
   @override
   String get assetTableCodeHeader => 'Kode';

@@ -77,7 +77,12 @@ class TargetAllocationItem extends StatelessWidget {
                 ),
                 value: actualOfTarget,
                 child: LinearProgressIndicator(
-                  value: (item.actualPercentage / 100).clamp(0.0, 1.0),
+                  // Progress relatif ke target, bukan ke 100%: target kecil
+                  // (mis. 5%) pun terlihat penuh saat aset sudah tercapai.
+                  value: item.targetPercentage <= 0
+                      ? 0.0
+                      : (item.actualPercentage / item.targetPercentage)
+                            .clamp(0.0, 1.0),
                   minHeight: 6,
                   borderRadius: BorderRadius.circular(3),
                   color: categoryColor,

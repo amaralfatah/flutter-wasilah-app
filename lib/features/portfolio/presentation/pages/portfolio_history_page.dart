@@ -3,15 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/time_weighted_return.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
@@ -60,6 +64,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                     .where((item) => item.recordedAt.year == _selectedYear)
                     .toList();
           final changeMap = _buildChangeMap(history);
+          final twr = timeWeightedReturn(visibleHistory, year: _selectedYear);
           final firstSnapshotId = history.last.id;
 
           return RefreshablePageBody(
@@ -70,6 +75,39 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Filter diletakkan di atas grafik: kalau di bawah, hasil
+                // penekanan chip berubah di luar pandangan user. Full-bleed
+                // (bukan Wrap) supaya tahun yang banyak bisa digeser
+                // horizontal tanpa memenuhi tinggi layar.
+                if (years.length > 1) ...[
+                  SizedBox(
+                    height: 32,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
+                      children: [
+                        ChoiceChip(
+                          label: Text(l10n.allFilterLabel),
+                          selected: _selectedYear == null,
+                          onSelected: (_) =>
+                              setState(() => _selectedYear = null),
+                        ),
+                        for (final year in years) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          ChoiceChip(
+                            label: Text('$year'),
+                            selected: _selectedYear == year,
+                            onSelected: (_) =>
+                                setState(() => _selectedYear = year),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.xl,
@@ -77,30 +115,17 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Filter diletakkan di atas grafik: kalau di bawah,
-                      // hasil penekanan chip berubah di luar pandangan user.
-                      if (years.length > 1) ...[
-                        Wrap(
-                          spacing: AppSpacing.sm,
-                          runSpacing: AppSpacing.sm,
-                          children: [
-                            ChoiceChip(
-                              label: Text(l10n.allFilterLabel),
-                              selected: _selectedYear == null,
-                              onSelected: (_) =>
-                                  setState(() => _selectedYear = null),
-                            ),
-                            ...years.map(
-                              (year) => ChoiceChip(
-                                label: Text('$year'),
-                                selected: _selectedYear == year,
-                                onSelected: (_) =>
-                                    setState(() => _selectedYear = year),
-                              ),
-                            ),
-                          ],
+                      if (twr != null) ...[
+                        _TwrCard(
+                          label: _selectedYear == null
+                              ? l10n.historyTwrSinceStartLabel
+                              : l10n.historyTwrYearLabel('$_selectedYear'),
+                          cumulative: twr.cumulative,
+                          annualized: _selectedYear == null
+                              ? twr.annualized
+                              : null,
                         ),
-                        const SizedBox(height: AppSpacing.lg),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
                       if (filteredHistory.isNotEmpty) ...[
                         HistoryLineChart(
@@ -116,9 +141,19 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                     ],
                   ),
                 ),
-                if (filteredHistory.isNotEmpty)
+                // Dikelompokkan per tahun di bawah pita judul, seperti grup
+                // bulan di riwayat transaksi Stockbit. Pita tahun pertama
+                // sekaligus jadi pemisah dari blok chart/filter di atasnya
+                // — pita tebal tanpa label sebelumnya tumpuk dengan pita
+                // tahun sehingga terlihat menyatu.
+
+                for (final year in {
+                  for (final item in filteredHistory) item.recordedAt.year,
+                }) ...[
+                  AppSectionBand(label: '$year'),
                   AppListCard(
                     children: filteredHistory
+                        .where((item) => item.recordedAt.year == year)
                         .map(
                           (item) => Dismissible(
                             key: ValueKey(item.id),
@@ -131,6 +166,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                             },
                             child: HistoryRow(
                               snapshot: item,
+                              showYear: false,
                               changeLabel: _formatChange(
                                 changeMap[item.id],
                                 isFirstSnapshot: item.id == firstSnapshotId,
@@ -146,6 +182,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                         )
                         .toList(growable: false),
                   ),
+                ],
               ],
             ),
           );
@@ -234,5 +271,95 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     }
 
     return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+}
+
+/// Kemampuan investasi dalam satu angka: time-weighted return, supaya
+/// setoran bulanan tidak ikut terbaca sebagai hasil.
+class _TwrCard extends StatelessWidget {
+  const _TwrCard({
+    required this.label,
+    required this.cumulative,
+    this.annualized,
+  });
+
+  final String label;
+  final double cumulative;
+  final double? annualized;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final annualized = this.annualized;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _TwrMetric(label: label, value: cumulative),
+              ),
+              if (annualized != null) ...[
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _TwrMetric(
+                    label: l10n.historyTwrAnnualizedLabel,
+                    value: annualized,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            l10n.historyTwrCaption,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TwrMetric extends StatelessWidget {
+  const _TwrMetric({
+    required this.label,
+    required this.value,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
+  });
+
+  final String label;
+  final double value;
+  final CrossAxisAlignment crossAxisAlignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        Text(
+          formatSignedPercentage(value),
+          style: textTheme.titleSmall?.copyWith(
+            color: profitLossColorOf(context, value) ?? colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
   }
 }

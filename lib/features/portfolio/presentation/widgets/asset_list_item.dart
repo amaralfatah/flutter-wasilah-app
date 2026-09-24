@@ -25,12 +25,9 @@ class AssetListItem extends StatelessWidget {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final primaryStyle = textTheme.bodyMedium?.copyWith(
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
+    final primaryStyle = textTheme.bodyMedium;
     final captionStyle = textTheme.bodySmall?.copyWith(
       color: colorScheme.onSurfaceVariant,
-      fontFeatures: const [FontFeature.tabularFigures()],
     );
 
     final cost = asset.totalCost;
