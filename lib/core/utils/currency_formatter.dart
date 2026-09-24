@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 String formatCurrency(double value) {
   final rounded = value.round();
   final digits = rounded.abs().toString();
@@ -41,4 +43,27 @@ String _formatCompact(double value) {
   final hasDecimal = value.truncateToDouble() != value;
   final text = hasDecimal ? value.toStringAsFixed(1) : value.toStringAsFixed(0);
   return text.replaceAll('.', ',');
+}
+
+/// Harga pasar (Yahoo Finance) dalam mata uang aslinya, tanpa konversi
+/// kurs. `IDR` tanpa simbol seperti Stockbit (`4.070`); mata uang lain
+/// pakai simbolnya (`$4,070.12`).
+String formatPrice(double value, String currency) {
+  if (currency == 'IDR') {
+    return value.abs() < 1
+        ? NumberFormat('#,##0.00', 'id_ID').format(value)
+        : formatNumber(value);
+  }
+
+  return NumberFormat.simpleCurrency(
+    name: currency,
+    decimalDigits: 2,
+  ).format(value);
+}
+
+/// Seperti [formatPrice], dengan tanda `+` untuk nilai positif.
+String formatSignedPrice(double value, String currency) {
+  return value > 0
+      ? '+${formatPrice(value, currency)}'
+      : formatPrice(value, currency);
 }

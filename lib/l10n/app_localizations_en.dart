@@ -669,4 +669,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appErrorRetryButtonLabel => 'Try again';
+
+  @override
+  String get marketPriceTitle => 'Market Price';
+
+  @override
+  String get marketSymbolLabel => 'Yahoo Finance symbol (optional)';
+
+  @override
+  String get marketSymbolHelper => 'Example: BMRI.JK · BTC-USD · SPY';
+
+  @override
+  String marketAsOf(String dateTime) {
+    return 'as of $dateTime';
+  }
+
+  @override
+  String get marketOfflineChip => 'Offline';
+
+  @override
+  String get marketLoading => 'Loading price…';
+
+  @override
+  String get marketUnavailableShort => 'Price unavailable';
+
+  @override
+  String marketSymbolNotFound(String symbol) {
+    return 'Symbol $symbol was not found on Yahoo Finance.';
+  }
+
+  @override
+  String get marketUnavailable =>
+      'Price couldn\'t be loaded. Pull to try again.';
+
+  @override
+  String get marketChartEmpty => 'Chart data isn\'t available yet.';
+
+  @override
+  String get editAssetButton => 'Edit Asset';
+
+  @override
+  String get chartRange1D => '1D';
+
+  @override
+  String get chartRange1W => '1W';
+
+  @override
+  String get chartRange1M => '1M';
+
+  @override
+  String get chartRange3M => '3M';
+
+  @override
+  String get chartRangeYTD => 'YTD';
+
+  @override
+  String get chartRange1Y => '1Y';
+
+  @override
+  String get chartRange3Y => '3Y';
+
+  @override
+  String get chartRange5Y => '5Y';
+
+  @override
+  String get chartPeriodToday => 'Today';
+
+  @override
+  String get chartPeriodPastWeek => 'Past Week';
+
+  @override
+  String get chartPeriodPastMonth => 'Past Month';
+
+  @override
+  String get chartPeriodPastThreeMonths => 'Past 3 Months';
+
+  @override
+  String get chartPeriodYearToDate => 'Year to Date';
+
+  @override
+  String get chartPeriodPastYear => 'Past Year';
+
+  @override
+  String get chartPeriodPastThreeYears => 'Past 3 Years';
+
+  @override
+  String get chartPeriodPastFiveYears => 'Past 5 Years';
 }

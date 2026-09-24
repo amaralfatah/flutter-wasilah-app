@@ -4,6 +4,7 @@ abstract final class RouteNames {
   static const String assets = '/assets';
   static const String assetCreate = '/assets/new';
   static const String assetUpdate = '/assets/update';
+  static const String assetMarketSegment = 'market';
   static const String target = '/target';
   static const String targetCreate = '/target/new';
   static const String settings = '/settings';

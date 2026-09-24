@@ -282,6 +282,47 @@ void main() {
     });
 
     test(
+      'normalizes and persists marketSymbol, and clears it back to null',
+      () async {
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.createAsset(
+          Asset(
+            id: 'bmri',
+            name: 'Bank Mandiri',
+            code: 'BMRI',
+            category: AssetCategory.stock,
+            currentValue: 10000000,
+            allocationPercentage: 0,
+            lastUpdatedAt: DateTime(2026, 7, 16),
+            // Lowercase and padded with whitespace on purpose: the
+            // repository must normalize it to trimmed, uppercase.
+            marketSymbol: '  bmri.jk  ',
+          ),
+        );
+
+        var asset = await repository.getAssetById('bmri');
+        expect(asset?.marketSymbol, 'BMRI.JK');
+        expect(await repository.getAssets(), [
+          isA<Asset>().having(
+            (item) => item.marketSymbol,
+            'marketSymbol',
+            'BMRI.JK',
+          ),
+        ]);
+
+        await repository.updateAsset(asset!.copyWith(marketSymbol: ''));
+
+        asset = await repository.getAssetById('bmri');
+        expect(asset?.marketSymbol, isNull);
+      },
+    );
+
+    test(
       'backfilling one asset for a past month excludes assets not yet '
       'tracked back then, instead of using their current value',
       () async {

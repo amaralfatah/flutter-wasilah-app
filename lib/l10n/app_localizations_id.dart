@@ -668,4 +668,90 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get appErrorRetryButtonLabel => 'Coba lagi';
+
+  @override
+  String get marketPriceTitle => 'Harga Pasar';
+
+  @override
+  String get marketSymbolLabel => 'Simbol Yahoo Finance (opsional)';
+
+  @override
+  String get marketSymbolHelper => 'Contoh: BMRI.JK · BTC-USD · SPY';
+
+  @override
+  String marketAsOf(String dateTime) {
+    return 'per $dateTime';
+  }
+
+  @override
+  String get marketOfflineChip => 'Offline';
+
+  @override
+  String get marketLoading => 'Memuat harga…';
+
+  @override
+  String get marketUnavailableShort => 'Harga tidak tersedia';
+
+  @override
+  String marketSymbolNotFound(String symbol) {
+    return 'Simbol $symbol tidak ditemukan di Yahoo Finance.';
+  }
+
+  @override
+  String get marketUnavailable =>
+      'Harga belum bisa dimuat. Tarik untuk coba lagi.';
+
+  @override
+  String get marketChartEmpty => 'Data chart belum tersedia.';
+
+  @override
+  String get editAssetButton => 'Edit Aset';
+
+  @override
+  String get chartRange1D => '1D';
+
+  @override
+  String get chartRange1W => '1W';
+
+  @override
+  String get chartRange1M => '1B';
+
+  @override
+  String get chartRange3M => '3B';
+
+  @override
+  String get chartRangeYTD => 'YTD';
+
+  @override
+  String get chartRange1Y => '1T';
+
+  @override
+  String get chartRange3Y => '3T';
+
+  @override
+  String get chartRange5Y => '5T';
+
+  @override
+  String get chartPeriodToday => 'Hari Ini';
+
+  @override
+  String get chartPeriodPastWeek => '1 Minggu Terakhir';
+
+  @override
+  String get chartPeriodPastMonth => '1 Bulan Terakhir';
+
+  @override
+  String get chartPeriodPastThreeMonths => '3 Bulan Terakhir';
+
+  @override
+  String get chartPeriodYearToDate => 'Sejak Awal Tahun';
+
+  @override
+  String get chartPeriodPastYear => '1 Tahun Terakhir';
+
+  @override
+  String get chartPeriodPastThreeYears => '3 Tahun Terakhir';
+
+  @override
+  String get chartPeriodPastFiveYears => '5 Tahun Terakhir';
 }

@@ -7,6 +7,7 @@ import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
+import 'package:flutter_wasilah_app/features/market/data/market_symbol_suggestion.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/asset_management_controller.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -33,9 +34,14 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   final _codeController = TextEditingController();
   final _valueController = TextEditingController();
   final _costController = TextEditingController();
+  final _marketSymbolController = TextEditingController();
   late DateTime _recordedAt;
   AssetCategory _category = AssetCategory.other;
   bool _didPopulate = false;
+
+  // Prefill simbol Yahoo berhenti begitu user pernah mengetik di field itu
+  // sendiri (termasuk mengosongkannya), supaya tidak menimpa pilihan user.
+  bool _marketSymbolEditedByUser = false;
 
   bool get _isEditing => widget.assetId != null;
 
@@ -52,6 +58,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _codeController.dispose();
     _valueController.dispose();
     _costController.dispose();
+    _marketSymbolController.dispose();
     super.dispose();
   }
 
@@ -111,6 +118,14 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               value,
               message: l10n.assetCodeRequired,
             ),
+            onChanged: (_) => _maybeSuggestMarketSymbol(),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppTextField(
+            label: l10n.marketSymbolLabel,
+            helperText: l10n.marketSymbolHelper,
+            controller: _marketSymbolController,
+            onChanged: (_) => _marketSymbolEditedByUser = true,
           ),
           const SizedBox(height: AppSpacing.lg),
           DropdownButtonFormField<AssetCategory>(
@@ -133,6 +148,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                     setState(() {
                       _category = value;
                     });
+                    _maybeSuggestMarketSymbol();
                   },
           ),
           if (!_isEditing) ...[
@@ -204,7 +220,21 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     if (totalCost != null) {
       _costController.text = formatCurrency(totalCost).replaceFirst('Rp', '');
     }
+    _marketSymbolController.text = asset.marketSymbol ?? '';
+    // Mode edit menampilkan nilai tersimpan apa adanya, tanpa prefill
+    // otomatis menimpanya saat kategori/kode di form ini diubah.
+    _marketSymbolEditedByUser = true;
     _didPopulate = true;
+  }
+
+  /// Isi otomatis simbol Yahoo dari kategori + kode, hanya di mode tambah
+  /// dan hanya selama user belum pernah mengedit field simbol sendiri.
+  void _maybeSuggestMarketSymbol() {
+    if (_isEditing || _marketSymbolEditedByUser) {
+      return;
+    }
+    final suggestion = suggestMarketSymbol(_category, _codeController.text);
+    _marketSymbolController.text = suggestion ?? '';
   }
 
   Future<void> _selectDate() async {
@@ -247,6 +277,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               currentValue: value,
               recordedAt: _recordedAt,
               totalCost: totalCost,
+              marketSymbol: _marketSymbolController.text,
             );
       } else {
         await ref
@@ -257,6 +288,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                 code: _codeController.text,
                 category: _category,
                 totalCost: totalCost,
+                marketSymbol: _marketSymbolController.text,
               ),
             );
       }

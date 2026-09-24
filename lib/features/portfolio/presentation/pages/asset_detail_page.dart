@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
+import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
+import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
@@ -56,70 +60,104 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
 
         return Scaffold(
           appBar: _AssetDetailAppBar(asset: asset),
+          bottomNavigationBar: SafeArea(
+            minimum: const EdgeInsets.all(AppSpacing.lg),
+            child: FilledButton(
+              onPressed: () =>
+                  context.push('${RouteNames.assets}/${asset.id}/update'),
+              child: Text(l10n.updateValueButton),
+            ),
+          ),
           body: RefreshablePageBody(
             onRefresh: () {
               ref.invalidate(assetHistoryProvider(assetId));
+              if (asset.marketSymbol case final marketSymbol?) {
+                ref.invalidate(marketQuoteProvider(marketSymbol));
+              }
               return ref.refresh(assetDetailProvider(assetId).future);
             },
             // Horizontal 0: AppListCard (metrik & riwayat) full-bleed sampai
             // tepi layar. Konten lain mengatur padding horizontalnya sendiri.
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
+                    horizontal: AppSpacing.lg,
                   ),
-                  child: _AssetHeader(asset: asset),
+                  child: AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    onTap: asset.marketSymbol == null
+                        ? null
+                        : () => context.push(
+                            '${RouteNames.assets}/${asset.id}/'
+                            '${RouteNames.assetMarketSegment}',
+                          ),
+                    child: _AssetHeader(asset: asset),
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                AppListCard(
-                  children: [
-                    _MetricTile(
-                      label: l10n.commonCurrentValueLabel,
-                      value: formatCurrency(asset.currentValue),
-                    ),
-                    if (asset.totalCost case final totalCost?) ...[
-                      _MetricTile(
-                        label: l10n.totalCostLabel,
-                        value: formatCurrency(totalCost),
-                      ),
-                      _ProfitLossTile(asset: asset),
-                    ],
-                    _MetricTile(
-                      label: l10n.allocationLabel,
-                      value: formatPercentage(asset.allocationPercentage),
-                    ),
-                    _MetricTile(
-                      label: l10n.lastUpdatedLabel,
-                      value: formatFullDate(
-                        asset.lastUpdatedAt,
-                        Localizations.localeOf(context),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: AppSpacing.lg),
+                const AppSectionBand(),
+                const SizedBox(height: AppSpacing.lg),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
+                    horizontal: AppSpacing.lg,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: AppSpacing.lg),
-                      FilledButton(
-                        onPressed: () => context.push(
-                          '${RouteNames.assets}/${asset.id}/update',
+                  child: AppCard(
+                    padding: EdgeInsets.zero,
+                    child: AppListCard(
+                      children: [
+                        _MetricTile(
+                          label: l10n.commonCurrentValueLabel,
+                          value: formatCurrency(asset.currentValue),
                         ),
-                        child: Text(l10n.updateValueButton),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      SectionHeader(title: l10n.historySectionTitle),
-                    ],
+                        if (asset.totalCost case final totalCost?) ...[
+                          _MetricTile(
+                            label: l10n.totalCostLabel,
+                            value: formatCurrency(totalCost),
+                          ),
+                          _ProfitLossTile(asset: asset),
+                        ],
+                        _MetricTile(
+                          label: l10n.lastUpdatedLabel,
+                          value: formatFullDate(
+                            asset.lastUpdatedAt,
+                            Localizations.localeOf(context),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
+                const AppSectionBand(),
+                const SizedBox(height: AppSpacing.lg),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: AppCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: _AllocationRow(
+                      label: l10n.allocationLabel,
+                      percentage: asset.allocationPercentage,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const AppSectionBand(),
+                const SizedBox(height: AppSpacing.lg),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: SectionHeader(title: l10n.historySectionTitle),
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 historyValue.when(
                   data: (fullHistory) {
                     final history = fullHistory
@@ -129,7 +167,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     if (history.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
+                          horizontal: AppSpacing.lg,
                         ),
                         child: AppEmptyState(
                           title: l10n.commonEmptyHistoryTitle,
@@ -143,32 +181,41 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.xl,
+                            horizontal: AppSpacing.lg,
                           ),
                           child: HistoryLineChart(
                             history: history.reversed.toList(),
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AppListCard(
-                          children: history
-                              .map(
-                                (snapshot) => Dismissible(
-                                  key: ValueKey(snapshot.id),
-                                  direction: DismissDirection.endToStart,
-                                  background: const DeleteSwipeBackground(),
-                                  confirmDismiss: (_) =>
-                                      _confirmDeleteSnapshot(context),
-                                  onDismissed: (_) {
-                                    setState(
-                                      () => _removedIds.add(snapshot.id),
-                                    );
-                                    _deleteSnapshot(assetId, snapshot.id);
-                                  },
-                                  child: HistoryRow(snapshot: snapshot),
-                                ),
-                              )
-                              .toList(growable: false),
+                        const SizedBox(height: AppSpacing.sm),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
+                          child: AppCard(
+                            padding: EdgeInsets.zero,
+                            child: AppListCard(
+                              children: history
+                                  .map(
+                                    (snapshot) => Dismissible(
+                                      key: ValueKey(snapshot.id),
+                                      direction: DismissDirection.endToStart,
+                                      background:
+                                          const DeleteSwipeBackground(),
+                                      confirmDismiss: (_) =>
+                                          _confirmDeleteSnapshot(context),
+                                      onDismissed: (_) {
+                                        setState(
+                                          () => _removedIds.add(snapshot.id),
+                                        );
+                                        _deleteSnapshot(assetId, snapshot.id);
+                                      },
+                                      child: HistoryRow(snapshot: snapshot),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                            ),
+                          ),
                         ),
                       ],
                     );
@@ -248,11 +295,19 @@ class _AssetDetailAppBar extends StatelessWidget
       ),
       actions: [
         if (asset != null)
-          IconButton(
+          PopupMenuButton<String>(
             tooltip: l10n.editAssetTooltip,
-            onPressed: () =>
-                context.push('${RouteNames.assets}/${asset.id}/edit'),
-            icon: const Icon(Icons.edit_outlined),
+            onSelected: (value) {
+              if (value == 'edit') {
+                context.push('${RouteNames.assets}/${asset.id}/edit');
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Text(l10n.editAssetTooltip),
+              ),
+            ],
           ),
       ],
     );
@@ -277,17 +332,99 @@ class _AssetHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      asset.code,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  _CategoryBadge(category: asset.category),
+                ],
+              ),
+              const SizedBox(height: 2),
               Text(
                 asset.name,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                '${asset.code} - ${asset.category.label}',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+      ],
+    );
+  }
+}
+
+class _CategoryBadge extends StatelessWidget {
+  const _CategoryBadge({required this.category});
+
+  final AssetCategory category;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppColors.categoryColorOf(context, category.index);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(color: color),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        category.label,
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: color),
+      ),
+    );
+  }
+}
+
+/// Baris alokasi porsi aset ala Stockbit: label di kiri, cincin persentase
+/// di kanan — beda dari _MetricTile teks biasa supaya alokasi lebih mudah
+/// dipindai saat portofolio berisi banyak aset.
+class _AllocationRow extends StatelessWidget {
+  const _AllocationRow({required this.label, required this.percentage});
+
+  final String label;
+  final double percentage;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: textTheme.bodyMedium)),
+        SizedBox(
+          width: 36,
+          height: 36,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                value: (percentage / 100).clamp(0, 1),
+                strokeWidth: 3,
+                backgroundColor: colorScheme.outlineVariant,
+                color: colorScheme.primary,
+              ),
+              FittedBox(
+                child: Text(
+                  formatPercentage(percentage),
+                  style: textTheme.labelSmall?.copyWith(fontSize: 9),
                 ),
               ),
             ],

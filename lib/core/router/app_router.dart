@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/features/backup/presentation/pages/restore_page.dart';
+import 'package:flutter_wasilah_app/features/market/presentation/pages/market_detail_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_detail_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_list_page.dart';
@@ -93,6 +94,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final assetId = state.pathParameters['id']!;
               return AssetFormPage(assetId: assetId);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.assetMarketSegment,
+            builder: (context, state) {
+              final assetId = state.pathParameters['id']!;
+              return MarketDetailPage(assetId: assetId);
             },
           ),
         ],

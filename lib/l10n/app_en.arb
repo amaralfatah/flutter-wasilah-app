@@ -313,5 +313,41 @@
 
   "appErrorDefaultTitle": "Data could not be loaded.",
   "appErrorDefaultMessage": "Something went wrong while reading the data. Try again.",
-  "appErrorRetryButtonLabel": "Try again"
+  "appErrorRetryButtonLabel": "Try again",
+
+  "marketPriceTitle": "Market Price",
+  "marketSymbolLabel": "Yahoo Finance symbol (optional)",
+  "marketSymbolHelper": "Example: BMRI.JK · BTC-USD · SPY",
+  "marketAsOf": "as of {dateTime}",
+  "@marketAsOf": {
+    "placeholders": {"dateTime": {"type": "String"}}
+  },
+  "marketOfflineChip": "Offline",
+  "marketLoading": "Loading price…",
+  "marketUnavailableShort": "Price unavailable",
+  "marketSymbolNotFound": "Symbol {symbol} was not found on Yahoo Finance.",
+  "@marketSymbolNotFound": {
+    "placeholders": {"symbol": {"type": "String"}}
+  },
+  "marketUnavailable": "Price couldn't be loaded. Pull to try again.",
+  "marketChartEmpty": "Chart data isn't available yet.",
+  "editAssetButton": "Edit Asset",
+
+  "chartRange1D": "1D",
+  "chartRange1W": "1W",
+  "chartRange1M": "1M",
+  "chartRange3M": "3M",
+  "chartRangeYTD": "YTD",
+  "chartRange1Y": "1Y",
+  "chartRange3Y": "3Y",
+  "chartRange5Y": "5Y",
+
+  "chartPeriodToday": "Today",
+  "chartPeriodPastWeek": "Past Week",
+  "chartPeriodPastMonth": "Past Month",
+  "chartPeriodPastThreeMonths": "Past 3 Months",
+  "chartPeriodYearToDate": "Year to Date",
+  "chartPeriodPastYear": "Past Year",
+  "chartPeriodPastThreeYears": "Past 3 Years",
+  "chartPeriodPastFiveYears": "Past 5 Years"
 }

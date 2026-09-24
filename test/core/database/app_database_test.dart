@@ -45,6 +45,41 @@ void main() {
           .getSingle();
       expect(row.readNullable<double>('total_cost'), isNull);
     });
+
+    test(
+      'adds market_symbol column and market_quotes table on upgrade from '
+      'version 5',
+      () async {
+        _createVersionOneDatabase(databaseFile, userVersion: 5);
+
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+
+        final row = await database
+            .customSelect("SELECT market_symbol FROM assets WHERE id = 'btc'")
+            .getSingle();
+        expect(row.readNullable<String>('market_symbol'), isNull);
+
+        // Existing asset data survives the migration untouched.
+        final nameRow = await database
+            .customSelect("SELECT name FROM assets WHERE id = 'btc'")
+            .getSingle();
+        expect(nameRow.read<String>('name'), 'Bitcoin');
+
+        expect(await _countRows(database, 'market_quotes'), 0);
+      },
+    );
+
+    test('creates market_quotes on a brand-new database', () async {
+      final database = AppDatabase.forTesting(
+        NativeDatabase.createInBackground(databaseFile),
+      );
+      addTearDown(database.close);
+
+      expect(await _countRows(database, 'market_quotes'), 0);
+    });
   });
 }
 

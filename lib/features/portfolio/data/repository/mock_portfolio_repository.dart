@@ -248,6 +248,7 @@ class MockPortfolioRepository implements PortfolioRepository {
       code: asset.code,
       category: asset.category,
       totalCost: asset.totalCost,
+      marketSymbol: asset.marketSymbol,
     );
   }
 

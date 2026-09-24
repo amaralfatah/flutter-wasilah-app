@@ -33,3 +33,11 @@ class GoogleConnectFailedException implements Exception {
 class BackupFailedException implements Exception {
   const BackupFailedException();
 }
+
+class MarketSymbolNotFoundException implements Exception {
+  const MarketSymbolNotFoundException();
+}
+
+class MarketDataUnavailableException implements Exception {
+  const MarketDataUnavailableException();
+}

@@ -13,7 +13,7 @@ class AppDatabase extends GeneratedDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
@@ -30,7 +30,19 @@ class AppDatabase extends GeneratedDatabase {
           current_value REAL NOT NULL,
           allocation_percentage REAL NOT NULL,
           last_updated_at INTEGER NOT NULL,
-          total_cost REAL
+          total_cost REAL,
+          market_symbol TEXT
+        );
+      ''');
+
+      await customStatement('''
+        CREATE TABLE market_quotes (
+          symbol TEXT PRIMARY KEY NOT NULL,
+          currency TEXT NOT NULL,
+          price REAL NOT NULL,
+          previous_close REAL,
+          market_time INTEGER NOT NULL,
+          fetched_at INTEGER NOT NULL
         );
       ''');
 
@@ -82,6 +94,19 @@ class AppDatabase extends GeneratedDatabase {
         // dicek dulu supaya database v4 itu tetap ikut dilengkapi.
         await _addColumnIfMissing('assets', 'total_cost', 'REAL');
         await _addColumnIfMissing('asset_snapshots', 'total_cost', 'REAL');
+      }
+      if (from < 6) {
+        await _addColumnIfMissing('assets', 'market_symbol', 'TEXT');
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS market_quotes (
+            symbol TEXT PRIMARY KEY NOT NULL,
+            currency TEXT NOT NULL,
+            price REAL NOT NULL,
+            previous_close REAL,
+            market_time INTEGER NOT NULL,
+            fetched_at INTEGER NOT NULL
+          );
+        ''');
       }
     },
   );

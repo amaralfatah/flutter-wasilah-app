@@ -40,7 +40,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
     final row = await _database
         .customSelect(
           '''
-      SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost
+      SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost, market_symbol
       FROM assets
       WHERE id = ?
       LIMIT 1
@@ -56,7 +56,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
   Future<List<Asset>> getAssets() async {
     await _ensureInitialized();
     final rows = await _database.customSelect('''
-      SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost
+      SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost, market_symbol
       FROM assets
       ORDER BY current_value DESC, name ASC
       ''').get();
@@ -72,8 +72,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
       await _database.customStatement(
         '''
         INSERT INTO assets (
-          id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost, market_symbol
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         [
           asset.id,
@@ -84,6 +84,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
           asset.allocationPercentage,
           _dateToSql(asset.lastUpdatedAt),
           asset.totalCost,
+          _normalizeMarketSymbol(asset.marketSymbol),
         ],
       );
 
@@ -106,7 +107,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
       await _database.customUpdate(
         '''
         UPDATE assets
-        SET name = ?, code = ?, category = ?, total_cost = ?
+        SET name = ?, code = ?, category = ?, total_cost = ?, market_symbol = ?
         WHERE id = ?
         ''',
         variables: [
@@ -114,6 +115,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
           Variable.withString(asset.code),
           Variable.withString(asset.category.name),
           Variable<double>(asset.totalCost),
+          Variable<String>(_normalizeMarketSymbol(asset.marketSymbol)),
           Variable.withString(asset.id),
         ],
       );
@@ -565,6 +567,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
       allocationPercentage: row.read<double>('allocation_percentage'),
       lastUpdatedAt: row.read<DateTime>('last_updated_at'),
       totalCost: row.readNullable<double>('total_cost'),
+      marketSymbol: row.readNullable<String>('market_symbol'),
     );
   }
 
@@ -616,6 +619,12 @@ class DriftPortfolioRepository implements PortfolioRepository {
       ],
     );
   }
+}
+
+/// Huruf besar, di-trim; string kosong dianggap tidak ada simbol.
+String? _normalizeMarketSymbol(String? symbol) {
+  final trimmed = symbol?.trim().toUpperCase();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 String _buildSnapshotId(String assetId, DateTime recordedAt) {

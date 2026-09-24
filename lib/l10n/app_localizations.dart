@@ -1253,6 +1253,168 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Coba lagi'**
   String get appErrorRetryButtonLabel;
+
+  /// Judul kartu/section harga pasar Yahoo Finance
+  ///
+  /// In id, this message translates to:
+  /// **'Harga Pasar'**
+  String get marketPriceTitle;
+
+  /// Label field simbol Yahoo Finance pada form aset
+  ///
+  /// In id, this message translates to:
+  /// **'Simbol Yahoo Finance (opsional)'**
+  String get marketSymbolLabel;
+
+  /// Helper text field simbol Yahoo Finance
+  ///
+  /// In id, this message translates to:
+  /// **'Contoh: BMRI.JK · BTC-USD · SPY'**
+  String get marketSymbolHelper;
+
+  /// Waktu harga pasar terakhir diperbarui
+  ///
+  /// In id, this message translates to:
+  /// **'per {dateTime}'**
+  String marketAsOf(String dateTime);
+
+  /// Chip penanda harga pasar dari cache (offline)
+  ///
+  /// In id, this message translates to:
+  /// **'Offline'**
+  String get marketOfflineChip;
+
+  /// Status memuat harga pasar
+  ///
+  /// In id, this message translates to:
+  /// **'Memuat harga…'**
+  String get marketLoading;
+
+  /// Pesan singkat harga pasar gagal dimuat (tile ringkas)
+  ///
+  /// In id, this message translates to:
+  /// **'Harga tidak tersedia'**
+  String get marketUnavailableShort;
+
+  /// Pesan simbol pasar tidak ditemukan
+  ///
+  /// In id, this message translates to:
+  /// **'Simbol {symbol} tidak ditemukan di Yahoo Finance.'**
+  String marketSymbolNotFound(String symbol);
+
+  /// Pesan harga pasar gagal dimuat, tanpa cache
+  ///
+  /// In id, this message translates to:
+  /// **'Harga belum bisa dimuat. Tarik untuk coba lagi.'**
+  String get marketUnavailable;
+
+  /// Placeholder chart harga pasar tanpa data cukup
+  ///
+  /// In id, this message translates to:
+  /// **'Data chart belum tersedia.'**
+  String get marketChartEmpty;
+
+  /// Tombol menuju halaman edit aset
+  ///
+  /// In id, this message translates to:
+  /// **'Edit Aset'**
+  String get editAssetButton;
+
+  /// Label tab rentang chart 1 hari
+  ///
+  /// In id, this message translates to:
+  /// **'1D'**
+  String get chartRange1D;
+
+  /// Label tab rentang chart 1 minggu
+  ///
+  /// In id, this message translates to:
+  /// **'1W'**
+  String get chartRange1W;
+
+  /// Label tab rentang chart 1 bulan
+  ///
+  /// In id, this message translates to:
+  /// **'1B'**
+  String get chartRange1M;
+
+  /// Label tab rentang chart 3 bulan
+  ///
+  /// In id, this message translates to:
+  /// **'3B'**
+  String get chartRange3M;
+
+  /// Label tab rentang chart sejak awal tahun
+  ///
+  /// In id, this message translates to:
+  /// **'YTD'**
+  String get chartRangeYTD;
+
+  /// Label tab rentang chart 1 tahun
+  ///
+  /// In id, this message translates to:
+  /// **'1T'**
+  String get chartRange1Y;
+
+  /// Label tab rentang chart 3 tahun
+  ///
+  /// In id, this message translates to:
+  /// **'3T'**
+  String get chartRange3Y;
+
+  /// Label tab rentang chart 5 tahun
+  ///
+  /// In id, this message translates to:
+  /// **'5T'**
+  String get chartRange5Y;
+
+  /// Label periode perubahan harga rentang 1 hari
+  ///
+  /// In id, this message translates to:
+  /// **'Hari Ini'**
+  String get chartPeriodToday;
+
+  /// Label periode perubahan harga rentang 1 minggu
+  ///
+  /// In id, this message translates to:
+  /// **'1 Minggu Terakhir'**
+  String get chartPeriodPastWeek;
+
+  /// Label periode perubahan harga rentang 1 bulan
+  ///
+  /// In id, this message translates to:
+  /// **'1 Bulan Terakhir'**
+  String get chartPeriodPastMonth;
+
+  /// Label periode perubahan harga rentang 3 bulan
+  ///
+  /// In id, this message translates to:
+  /// **'3 Bulan Terakhir'**
+  String get chartPeriodPastThreeMonths;
+
+  /// Label periode perubahan harga sejak awal tahun
+  ///
+  /// In id, this message translates to:
+  /// **'Sejak Awal Tahun'**
+  String get chartPeriodYearToDate;
+
+  /// Label periode perubahan harga rentang 1 tahun
+  ///
+  /// In id, this message translates to:
+  /// **'1 Tahun Terakhir'**
+  String get chartPeriodPastYear;
+
+  /// Label periode perubahan harga rentang 3 tahun
+  ///
+  /// In id, this message translates to:
+  /// **'3 Tahun Terakhir'**
+  String get chartPeriodPastThreeYears;
+
+  /// Label periode perubahan harga rentang 5 tahun
+  ///
+  /// In id, this message translates to:
+  /// **'5 Tahun Terakhir'**
+  String get chartPeriodPastFiveYears;
 }
 
 class _AppLocalizationsDelegate

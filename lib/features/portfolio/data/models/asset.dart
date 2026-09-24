@@ -46,6 +46,10 @@ abstract class Asset with _$Asset {
 
     /// Total modal yang disetor ke aset ini; `null` bila belum diisi.
     double? totalCost,
+
+    /// Simbol Yahoo Finance (mis. `BMRI.JK`, `BTC-USD`); `null` bila aset
+    /// tidak punya harga pasar.
+    String? marketSymbol,
   }) = _Asset;
   const Asset._();
 
@@ -59,6 +63,7 @@ abstract class Asset with _$Asset {
       allocationPercentage: (json['allocationPercentage'] as num).toDouble(),
       lastUpdatedAt: DateTime.parse(json['lastUpdatedAt'] as String),
       totalCost: (json['totalCost'] as num?)?.toDouble(),
+      marketSymbol: json['marketSymbol'] as String?,
     );
   }
 
@@ -72,6 +77,7 @@ abstract class Asset with _$Asset {
       'allocationPercentage': allocationPercentage,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
       'totalCost': totalCost,
+      'marketSymbol': marketSymbol,
     };
   }
 
