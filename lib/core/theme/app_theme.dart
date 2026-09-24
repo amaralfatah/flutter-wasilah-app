@@ -7,12 +7,22 @@ abstract final class AppTheme {
   static ThemeData dark() => _theme(Brightness.dark);
 
   static ThemeData _theme(Brightness brightness) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: AppColors.seed,
+      brightness: brightness,
+    );
+
     final base = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.seed,
-        brightness: brightness,
-      ),
+      colorScheme: colorScheme,
       appBarTheme: const AppBarTheme(centerTitle: true),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
     );
 
     return base.copyWith(textTheme: _tabularFigures(base.textTheme));

@@ -2,18 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 
 class AssetCategoryIcon extends StatelessWidget {
-  const AssetCategoryIcon({required this.category, super.key});
+  const AssetCategoryIcon({required this.category, super.key, this.color});
 
   final AssetCategory category;
+
+  /// Warna latar; default `secondaryContainer`.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final background = color ?? colorScheme.secondaryContainer;
+    final foreground = color == null
+        ? colorScheme.onSecondaryContainer
+        : ThemeData.estimateBrightnessForColor(background) == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
 
     return CircleAvatar(
       radius: 20,
-      backgroundColor: colorScheme.secondaryContainer,
-      foregroundColor: colorScheme.onSecondaryContainer,
+      backgroundColor: background,
+      foregroundColor: foreground,
       child: Icon(_iconForCategory(category), size: 20),
     );
   }

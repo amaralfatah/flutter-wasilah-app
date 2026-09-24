@@ -158,6 +158,18 @@ abstract class AppLocalizations {
   /// **'Gelap'**
   String get themeDark;
 
+  /// Label toggle mode gelap
+  ///
+  /// In id, this message translates to:
+  /// **'Mode Gelap'**
+  String get settingsDarkMode;
+
+  /// Label baris pemilih bahasa
+  ///
+  /// In id, this message translates to:
+  /// **'Bahasa'**
+  String get settingsLanguageLabel;
+
   /// Pilihan bahasa Indonesia
   ///
   /// In id, this message translates to:
@@ -1193,6 +1205,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Grafik alokasi aktual per kategori: {summary}'**
   String categoryDonutSemanticLabel(String summary);
+
+  /// Jumlah kategori di tengah grafik donat alokasi
+  ///
+  /// In id, this message translates to:
+  /// **'{count} Kategori'**
+  String categoryDonutCategoryCount(int count);
 
   /// Teks aktual vs target pada item alokasi target
   ///

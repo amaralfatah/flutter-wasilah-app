@@ -5,9 +5,9 @@ import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
+import 'package:flutter_wasilah_app/features/settings/presentation/widgets/settings_tile.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,54 +20,48 @@ class BackupSection extends ConsumerWidget {
     final controller = ref.read(backupControllerProvider.notifier);
     final l10n = context.l10n;
 
+    final isConnecting =
+        state.connectionStatus == BackupConnectionStatus.connecting;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!state.isConnected) ...[
-          Text(
-            l10n.connectGoogleMessage,
-            style: Theme.of(context).textTheme.bodyMedium,
+        if (!state.isConnected)
+          SettingsTile(
+            icon: Icons.cloud_outlined,
+            title: l10n.connectGoogleButton,
+            subtitle: l10n.connectGoogleMessage,
+            trailing: isConnecting ? const SettingsTileProgress() : null,
+            onTap: isConnecting ? null : controller.connect,
+          )
+        else ...[
+          SettingsTile(
+            icon: Icons.account_circle_outlined,
+            // Status terhubung dipulihkan dari preferences tanpa sign-in
+            // ulang, jadi email bisa kosong untuk sesi yang tersambung
+            // sebelum email ikut disimpan. Baris kosong terbaca seperti bug.
+            title: state.accountEmail ?? l10n.connectedAccountFallback,
+            value: l10n.disconnectButton,
+            onTap: state.isBusy
+                ? null
+                : () => _confirmDisconnect(context, controller),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppPrimaryButton(
-            label: l10n.connectGoogleButton,
-            isLoading:
-                state.connectionStatus == BackupConnectionStatus.connecting,
-            onPressed: controller.connect,
+          const SettingsDivider(),
+          SettingsTile(
+            icon: Icons.sync,
+            title: l10n.autoBackupLabel,
+            trailing: Switch(
+              value: state.autoBackupEnabled,
+              onChanged: controller.setAutoBackupEnabled,
+            ),
+            onTap: () =>
+                controller.setAutoBackupEnabled(!state.autoBackupEnabled),
           ),
-        ] else ...[
-          Row(
-            children: [
-              const Icon(Icons.account_circle_outlined),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  // Status terhubung dipulihkan dari preferences tanpa
-                  // sign-in ulang, jadi email bisa kosong untuk sesi yang
-                  // tersambung sebelum email ikut disimpan. Baris kosong
-                  // terbaca seperti bug.
-                  state.accountEmail ?? l10n.connectedAccountFallback,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              TextButton(
-                onPressed: state.isBusy
-                    ? null
-                    : () => _confirmDisconnect(context, controller),
-                child: Text(l10n.disconnectButton),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.autoBackupLabel),
-            value: state.autoBackupEnabled,
-            onChanged: controller.setAutoBackupEnabled,
-          ),
-          Text(
-            state.isRestoring
+          const SettingsDivider(),
+          SettingsTile(
+            icon: Icons.cloud_upload_outlined,
+            title: l10n.backupNowButton,
+            subtitle: state.isRestoring
                 ? l10n.restoringMessage
                 : state.lastBackupAt == null
                 ? l10n.neverBackedUpMessage
@@ -77,33 +71,35 @@ class BackupSection extends ConsumerWidget {
                       Localizations.localeOf(context),
                     ),
                   ),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AppPrimaryButton(
-            label: l10n.backupNowButton,
-            isLoading: state.isBackingUp,
-            onPressed: state.isBusy
+            trailing: state.isBackingUp ? const SettingsTileProgress() : null,
+            onTap: state.isBusy
                 ? null
                 : () => _confirmBackup(context, controller),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppPrimaryButton(
-            label: l10n.restoreFromBackupButton,
-            onPressed: state.isBusy
+          const SettingsDivider(),
+          SettingsTile(
+            icon: Icons.cloud_download_outlined,
+            title: l10n.restoreFromBackupButton,
+            onTap: state.isBusy
                 ? null
                 : () => context.push(RouteNames.backupRestore),
           ),
         ],
-        if (state.error != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            _describeError(l10n, state.error!),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.error,
+        if (state.error != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.sm,
+              AppSpacing.xl,
+              0,
+            ),
+            child: Text(
+              _describeError(l10n, state.error!),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
             ),
           ),
-        ],
       ],
     );
   }

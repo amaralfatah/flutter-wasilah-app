@@ -21,6 +21,10 @@
   "@themeLight": {"description": "Pilihan tema terang"},
   "themeDark": "Gelap",
   "@themeDark": {"description": "Pilihan tema gelap"},
+  "settingsDarkMode": "Mode Gelap",
+  "@settingsDarkMode": {"description": "Label toggle mode gelap"},
+  "settingsLanguageLabel": "Bahasa",
+  "@settingsLanguageLabel": {"description": "Label baris pemilih bahasa"},
   "languageIndonesian": "Indonesia",
   "@languageIndonesian": {"description": "Pilihan bahasa Indonesia"},
   "languageEnglish": "English",
@@ -470,6 +474,11 @@
   "@categoryDonutSemanticLabel": {
     "description": "Label screen-reader grafik donat alokasi per kategori",
     "placeholders": {"summary": {"type": "String"}}
+  },
+  "categoryDonutCategoryCount": "{count} Kategori",
+  "@categoryDonutCategoryCount": {
+    "description": "Jumlah kategori di tengah grafik donat alokasi",
+    "placeholders": {"count": {"type": "int"}}
   },
 
   "targetAllocationActualOfTarget": "Aktual {actual} dari target {target}",

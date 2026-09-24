@@ -39,6 +39,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get themeDark => 'Gelap';
 
   @override
+  String get settingsDarkMode => 'Mode Gelap';
+
+  @override
+  String get settingsLanguageLabel => 'Bahasa';
+
+  @override
   String get languageIndonesian => 'Indonesia';
 
   @override
@@ -634,6 +640,11 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String categoryDonutSemanticLabel(String summary) {
     return 'Grafik alokasi aktual per kategori: $summary';
+  }
+
+  @override
+  String categoryDonutCategoryCount(int count) {
+    return '$count Kategori';
   }
 
   @override

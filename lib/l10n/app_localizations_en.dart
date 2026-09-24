@@ -39,6 +39,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get settingsDarkMode => 'Dark Mode';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
+
+  @override
   String get languageIndonesian => 'Indonesian';
 
   @override
@@ -629,6 +635,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String categoryDonutSemanticLabel(String summary) {
     return 'Actual allocation chart by category: $summary';
+  }
+
+  @override
+  String categoryDonutCategoryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Categories',
+      one: '1 Category',
+    );
+    return '$_temp0';
   }
 
   @override

@@ -3,11 +3,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
+/// Cincin alokasi aktual dengan total nilai di tengahnya. Legenda tidak
+/// digambar di sini: daftar target di bawahnya memakai warna yang sama.
 class CategoryDonutChart extends StatelessWidget {
   const CategoryDonutChart({required this.items, super.key});
 
@@ -16,6 +18,8 @@ class CategoryDonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final segments = items
         .where((item) => item.actualPercentage > 0)
         .toList(growable: false);
@@ -24,11 +28,10 @@ class CategoryDonutChart extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final colors = [
-      for (final item in segments)
-        AppColors.categoryColorOf(context, item.category.index),
-    ];
-
+    final totalValue = segments.fold<double>(
+      0,
+      (sum, item) => sum + item.actualValue,
+    );
     final semanticsSummary = segments
         .map(
           (item) => l10n.categoryDonutSemanticItem(
@@ -38,67 +41,48 @@ class CategoryDonutChart extends StatelessWidget {
         )
         .join(', ');
 
-    return AppCard(
-      child: Row(
-        children: [
-          // Grafiknya murni visual; tanpa label ini screen reader hanya
-          // menemukan kotak kosong sebelum daftar legenda.
-          Semantics(
-            label: l10n.categoryDonutSemanticLabel(semanticsSummary),
-            child: SizedBox(
-              height: 96,
-              width: 96,
-              child: CustomPaint(
-                painter: _DonutPainter(
-                  values: [
-                    for (final item in segments) item.actualPercentage,
-                  ],
-                  colors: colors,
-                  trackColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest,
-                ),
+    return Center(
+      child: Semantics(
+        label: l10n.categoryDonutSemanticLabel(semanticsSummary),
+        excludeSemantics: true,
+        child: SizedBox.square(
+          dimension: 200,
+          child: CustomPaint(
+            painter: _DonutPainter(
+              values: [for (final item in segments) item.actualPercentage],
+              colors: [
+                for (final item in segments)
+                  AppColors.categoryColorOf(context, item.category.index),
+              ],
+              trackColor: colorScheme.surfaceContainerHighest,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      formatCurrency(totalValue),
+                      maxLines: 1,
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    l10n.categoryDonutCategoryCount(segments.length),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var i = 0; i < segments.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: colors[i],
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            segments[i].category.label,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          '${segments[i].actualPercentage.toStringAsFixed(0)}%',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -117,7 +101,7 @@ class _DonutPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.shortestSide * 0.22;
+    final strokeWidth = size.shortestSide * 0.06;
     final rect = Rect.fromLTWH(
       strokeWidth / 2,
       strokeWidth / 2,
@@ -163,6 +147,8 @@ class _DonutPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DonutPainter oldDelegate) {
-    return oldDelegate.values != values || oldDelegate.colors != colors;
+    return oldDelegate.values != values ||
+        oldDelegate.colors != colors ||
+        oldDelegate.trackColor != trackColor;
   }
 }

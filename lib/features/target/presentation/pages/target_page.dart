@@ -70,23 +70,22 @@ class TargetPage extends ConsumerWidget {
                   ),
                   child: CategoryDonutChart(items: items),
                 ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: AppSpacing.xxl),
                 AppListCard(
-                  children: items
-                      .map(
-                        (item) => InkWell(
-                          onTap: () =>
-                              context.push('${RouteNames.target}/${item.id}'),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.xl,
-                              vertical: AppSpacing.lg,
-                            ),
-                            child: TargetAllocationItem(item: item),
+                  children: [
+                    for (final item in items)
+                      InkWell(
+                        onTap: () =>
+                            context.push('${RouteNames.target}/${item.id}'),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xl,
+                            vertical: AppSpacing.lg,
                           ),
+                          child: TargetAllocationItem(item: item),
                         ),
-                      )
-                      .toList(growable: false),
+                      ),
+                  ],
                 ),
               ],
             ),

@@ -11,6 +11,8 @@
   "themeSystem": "System",
   "themeLight": "Light",
   "themeDark": "Dark",
+  "settingsDarkMode": "Dark Mode",
+  "settingsLanguageLabel": "Language",
   "languageIndonesian": "Indonesian",
   "languageEnglish": "English",
 
@@ -291,6 +293,10 @@
   "categoryDonutSemanticLabel": "Actual allocation chart by category: {summary}",
   "@categoryDonutSemanticLabel": {
     "placeholders": {"summary": {"type": "String"}}
+  },
+  "categoryDonutCategoryCount": "{count, plural, =1{1 Category} other{{count} Categories}}",
+  "@categoryDonutCategoryCount": {
+    "placeholders": {"count": {"type": "int"}}
   },
 
   "targetAllocationActualOfTarget": "Actual {actual} of target {target}",
