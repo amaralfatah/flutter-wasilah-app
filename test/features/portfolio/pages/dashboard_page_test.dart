@@ -23,9 +23,10 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Total Portofolio'), findsOneWidget);
-    expect(find.text('Rp55.000.000'), findsOneWidget);
-    expect(find.text('Naik 3,4% bulan ini'), findsOneWidget);
+    expect(find.text('Nilai Portofolio'), findsOneWidget);
+    expect(find.text('55.000.000'), findsOneWidget);
+    expect(find.text('Bulan Ini'), findsOneWidget);
+    expect(find.text('+3,4%'), findsOneWidget);
     // Dashboard sengaja tanpa FAB: update nilai dicapai lewat tab Aset.
     expect(find.byType(FloatingActionButton), findsNothing);
   });
@@ -157,6 +158,7 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
     required double totalValue,
     required DateTime recordedAt,
     String? note,
+    double? totalCost,
   }) {
     throw UnimplementedError();
   }

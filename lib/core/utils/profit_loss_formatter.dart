@@ -16,6 +16,12 @@ String formatProfitLoss(double profitLoss, {required double cost}) {
   return '$amount (${formatSignedPercentage(profitLoss / cost * 100)})';
 }
 
+/// `Untung` atau `Rugi` sesuai tanda [profitLoss]; rugi untuk impas juga,
+/// supaya label tetap tegas alih-alih ambigu "Untung/Rugi".
+String profitLossLabel(double profitLoss) {
+  return profitLoss < 0 ? 'Rugi' : 'Untung';
+}
+
 /// Hijau untuk untung, merah untuk rugi, `null` (warna teks bawaan) untuk
 /// impas.
 Color? profitLossColorOf(BuildContext context, double profitLoss) {

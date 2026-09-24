@@ -24,9 +24,18 @@ String formatShortDate(DateTime date) {
       '${date.year}';
 }
 
+/// Tanggal ringkas tanpa tahun untuk kolom sempit, misalnya `24 Sep`.
+String formatDayMonth(DateTime date) {
+  return '${date.day} ${_monthNames[date.month - 1].substring(0, 3)}';
+}
+
 String formatMonthYear(DateTime date) {
   return '${_monthNames[date.month - 1]} ${date.year}';
 }
+
+/// Nama bulan saja, misalnya `September`, untuk baris histori yang tahunnya
+/// ditampilkan terpisah di bawahnya.
+String formatMonthName(DateTime date) => _monthNames[date.month - 1];
 
 String formatFullDateTime(DateTime date) {
   final hour = date.hour.toString().padLeft(2, '0');

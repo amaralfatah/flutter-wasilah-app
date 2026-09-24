@@ -15,6 +15,16 @@ String formatCurrency(double value) {
   return '$prefix$buffer';
 }
 
+/// Nominal tanpa simbol `Rp` untuk kolom tabel, misalnya `12.802.174`.
+String formatNumber(double value) {
+  return formatCurrency(value).replaceFirst('Rp', '');
+}
+
+/// Seperti [formatNumber], dengan tanda `+` untuk nilai positif.
+String formatSignedNumber(double value) {
+  return value > 0 ? '+${formatNumber(value)}' : formatNumber(value);
+}
+
 String formatCompactCurrency(double value) {
   if (value.abs() >= 1000000000) {
     return 'Rp${_formatCompact(value / 1000000000)} miliar';

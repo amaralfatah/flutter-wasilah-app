@@ -27,8 +27,13 @@ class HistoryLineChart extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final values = history.map((item) => item.totalValue).toList();
-    final costs = history.map((item) => item.totalCost).toList();
-    final hasCost = costs.any((cost) => cost != null);
+    // Satu titik modal tidak membentuk garis dan hanya tampak seperti titik
+    // nyasar, jadi garis modal baru digambar mulai dua pencatatan.
+    final recordedCosts = history.map((item) => item.totalCost).toList();
+    final hasCost = recordedCosts.nonNulls.length >= 2;
+    final costs = hasCost
+        ? recordedCosts
+        : List<double?>.filled(history.length, null);
     // Skala mencakup garis modal juga, supaya kedua garis bisa dibandingkan
     // langsung: jarak antar garis = untung/rugi.
     final scaleValues = [...values, ...costs.whereType<double>()];

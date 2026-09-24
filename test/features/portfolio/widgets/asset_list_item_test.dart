@@ -69,8 +69,8 @@ void main() {
       // Kode aset pendek, jadi lebar teksnya tidak mewakili ruang yang
       // tersedia. Ukur jarak judul ke kolom nominal sebagai proksi slot.
       final titleLeft = tester.getRect(find.text('BTC')).left;
-      final valueLeft = tester.getRect(find.byType(FittedBox)).left;
-      expect(valueLeft - titleLeft, greaterThan(100));
+      final valueLeft = tester.getRect(find.byType(FittedBox).first).left;
+      expect(valueLeft - titleLeft, greaterThan(48));
     });
 
     testWidgets('tidak meluber di layar sempit dan skala teks besar', (

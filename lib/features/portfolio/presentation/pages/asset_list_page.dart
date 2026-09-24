@@ -9,7 +9,6 @@ import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
 import 'package:go_router/go_router.dart';
 
 const _assetListPagePadding = EdgeInsets.fromLTRB(
@@ -51,28 +50,44 @@ class AssetListPage extends ConsumerWidget {
             );
           }
 
+          // Aset bernilai 0 sudah dijual/habis tapi belum dihapus; pisahkan
+          // supaya tidak menyesaki list aktif tapi datanya tetap tersimpan.
+          final activeAssets = assets
+              .where((asset) => asset.currentValue != 0)
+              .toList(growable: false);
+          final archivedAssets = assets
+              .where((asset) => asset.currentValue == 0)
+              .toList(growable: false);
+
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(assetListProvider.future),
             padding: _assetListPagePadding,
+            // Aset sudah datang terurut dari nilai terbesar (lihat
+            // getAssets di repository), jadi satu list tanpa pengelompokan
+            // kategori sudah cukup jelas.
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final (index, entry)
-                    in _groupByCategory(assets).entries.indexed) ...[
-                  if (index > 0) const SizedBox(height: AppSpacing.xl),
-                  SectionHeader(title: entry.key.label),
-                  const SizedBox(height: AppSpacing.md),
+                if (activeAssets.isNotEmpty)
                   AppListCard(
-                    children: entry.value
-                        .map(
-                          (asset) => AssetListItem(
-                            asset: asset,
-                            showCategory: false,
-                            onTap: () =>
-                                context.push('${RouteNames.assets}/${asset.id}'),
-                          ),
-                        )
-                        .toList(growable: false),
+                    children: [
+                      const AssetTableHeader(),
+                      ...activeAssets.map(
+                        (asset) => AssetListItem(
+                          asset: asset,
+                          onTap: () =>
+                              context.push('${RouteNames.assets}/${asset.id}'),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (archivedAssets.isNotEmpty) ...[
+                  if (activeAssets.isNotEmpty)
+                    const SizedBox(height: AppSpacing.xl),
+                  _ArchivedAssetsSection(
+                    assets: archivedAssets,
+                    onTapAsset: (asset) =>
+                        context.push('${RouteNames.assets}/${asset.id}'),
                   ),
                 ],
               ],
@@ -82,20 +97,60 @@ class AssetListPage extends ConsumerWidget {
       ),
     );
   }
+}
 
-  /// Kelompokkan aset per kategori dengan urutan tetap mengikuti urutan
-  /// deklarasi [AssetCategory], supaya posisi grup tidak melompat saat nilai
-  /// aset berubah. Kategori tanpa aset tidak muncul.
-  Map<AssetCategory, List<Asset>> _groupByCategory(List<Asset> assets) {
-    final grouped = <AssetCategory, List<Asset>>{};
-    for (final category in AssetCategory.values) {
-      final items = assets
-          .where((asset) => asset.category == category)
-          .toList(growable: false);
-      if (items.isNotEmpty) {
-        grouped[category] = items;
-      }
-    }
-    return grouped;
+/// Bagian "Aset nonaktif" bisa dibuka/tutup: aset bernilai 0 bukan hal yang
+/// perlu dilihat tiap buka tab, tapi tetap bisa dicari saat dibutuhkan.
+class _ArchivedAssetsSection extends StatelessWidget {
+  const _ArchivedAssetsSection({
+    required this.assets,
+    required this.onTapAsset,
+  });
+
+  final List<Asset> assets;
+  final ValueChanged<Asset> onTapAsset;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final mutedColor = colorScheme.onSurfaceVariant;
+
+    // Sengaja tanpa Card/elevasi: dulu section ini sama menonjolnya dengan
+    // daftar aset aktif, padahal isinya cuma arsip yang jarang dilihat.
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTileTheme(
+          data: ExpansionTileThemeData(
+            iconColor: mutedColor,
+            collapsedIconColor: mutedColor,
+          ),
+          child: ExpansionTile(
+            title: Text(
+              'Aset nonaktif',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: mutedColor),
+            ),
+            childrenPadding: EdgeInsets.zero,
+            children: [
+              const Divider(height: 1),
+              const AssetTableHeader(),
+              ...assets.map(
+                (asset) => AssetListItem(
+                  asset: asset,
+                  onTap: () => onTapAsset(asset),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

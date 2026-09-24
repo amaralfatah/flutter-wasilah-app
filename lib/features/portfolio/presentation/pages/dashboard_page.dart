@@ -45,7 +45,10 @@ class DashboardPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                PortfolioSummaryCard(summary: summary),
+                PortfolioSummaryCard(
+                  summary: summary,
+                  onViewHistory: () => context.push(RouteNames.history),
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 targetsValue.maybeWhen(
                   data: (targets) {
@@ -88,17 +91,19 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppListCard(
-                  children: summary.assets
-                      .take(4)
-                      .map(
-                        (asset) => AssetListItem(
-                          asset: asset,
-                          showUpdatedAt: false,
-                          onTap: () =>
-                              context.push('${RouteNames.assets}/${asset.id}'),
+                  children: [
+                    const AssetTableHeader(),
+                    ...summary.assets
+                        .take(4)
+                        .map(
+                          (asset) => AssetListItem(
+                            asset: asset,
+                            onTap: () => context.push(
+                              '${RouteNames.assets}/${asset.id}',
+                            ),
+                          ),
                         ),
-                      )
-                      .toList(growable: false),
+                  ],
                 ),
               ],
             ),
@@ -107,5 +112,4 @@ class DashboardPage extends ConsumerWidget {
       ),
     );
   }
-
 }

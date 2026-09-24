@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/profit_loss_caption.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
@@ -112,60 +111,16 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                               setState(() => _removedIds.add(item.id));
                               _deleteSnapshot(item.id);
                             },
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.lg,
-                                vertical: AppSpacing.sm,
+                            child: HistoryRow(
+                              snapshot: item,
+                              changeLabel: _formatChange(
+                                changeMap[item.id],
+                                isFirstSnapshot: item.id == firstSnapshotId,
                               ),
-                              title: Text(
-                                formatMonthYear(item.recordedAt),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.xs,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _formatChange(
-                                        changeMap[item.id],
-                                        isFirstSnapshot:
-                                            item.id == firstSnapshotId,
-                                      ),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: _changeColor(
-                                              context,
-                                              changeMap[item.id],
-                                              isFirstSnapshot:
-                                                  item.id == firstSnapshotId,
-                                            ),
-                                          ),
-                                    ),
-                                    if (item.totalCost case final cost?)
-                                      ProfitLossCaption(
-                                        cost: cost,
-                                        profitLoss: item.totalValue - cost,
-                                      ),
-                                    if (item.note != null)
-                                      Text(
-                                        item.note!,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              trailing: Text(
-                                formatCurrency(item.totalValue),
-                                style: Theme.of(context).textTheme.titleMedium,
-                                textAlign: TextAlign.end,
+                              changeColor: _changeColor(
+                                context,
+                                changeMap[item.id],
+                                isFirstSnapshot: item.id == firstSnapshotId,
                               ),
                             ),
                           ),
@@ -234,8 +189,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
       return 'Data awal';
     }
 
-    final prefix = value >= 0 ? 'Naik' : 'Turun';
-    return '$prefix ${value.abs().toStringAsFixed(1).replaceAll('.', ',')}%';
+    return formatSignedPercentage(value);
   }
 
   Color _changeColor(

@@ -89,16 +89,16 @@ class TargetDetailPage extends ConsumerWidget {
                   )
                 else
                   AppListCard(
-                    children: categoryAssets
-                        .map(
-                          (asset) => AssetListItem(
-                            asset: asset,
-                            showCategory: false,
-                            onTap: () =>
-                                context.push('${RouteNames.assets}/${asset.id}'),
-                          ),
-                        )
-                        .toList(growable: false),
+                    children: [
+                      const AssetTableHeader(),
+                      ...categoryAssets.map(
+                        (asset) => AssetListItem(
+                          asset: asset,
+                          onTap: () =>
+                              context.push('${RouteNames.assets}/${asset.id}'),
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),

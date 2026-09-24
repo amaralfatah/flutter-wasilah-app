@@ -260,7 +260,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _PreviewRow(
-                          label: 'Untung/rugi',
+                          label: profitLossLabel(latestValue - latestCost),
                           value: formatProfitLoss(
                             latestValue - latestCost,
                             cost: latestCost,
