@@ -301,7 +301,10 @@ class _AssetHeader extends StatelessWidget {
 
     return Row(
       children: [
-        AssetCategoryIcon(category: asset.category),
+        AssetCategoryIcon(
+          category: asset.category,
+          marketSymbol: asset.marketSymbol,
+        ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(

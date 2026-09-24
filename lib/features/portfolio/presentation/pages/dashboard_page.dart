@@ -13,7 +13,6 @@ import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
 import 'package:go_router/go_router.dart';
 
 class DashboardPage extends ConsumerWidget {
@@ -111,19 +110,12 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 if (activeAssets.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  const AppSectionBand(),
-                  const SizedBox(height: AppSpacing.lg),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl,
-                    ),
-                    child: SectionHeader(
-                      title: l10n.mainAssetsTitle,
-                      actionLabel: l10n.viewAllLabel,
-                      onAction: () => context.go(RouteNames.assets),
-                    ),
+                  AppSectionBand(
+                    label: l10n.mainAssetsTitle,
+                    actionLabel: l10n.viewAllLabel,
+                    onAction: () => context.go(RouteNames.assets),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.lg),
                   AppListCard(
                     children: [
                       const AssetTableHeader(),

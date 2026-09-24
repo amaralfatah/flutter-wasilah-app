@@ -571,6 +571,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get assetTableUpdatedHeader => 'Diperbarui';
 
   @override
+  String get assetTableCurrentPriceHeader => 'Harga Kini';
+
+  @override
   String get assetTableProfitLossHeader => 'U/R';
 
   @override

@@ -5,9 +5,16 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 /// jeda tebal antarblok; dengan [label] jadi judul grup (mis. tahun) di
 /// atas daftar full-bleed.
 class AppSectionBand extends StatelessWidget {
-  const AppSectionBand({super.key, this.label});
+  const AppSectionBand({
+    super.key,
+    this.label,
+    this.actionLabel,
+    this.onAction,
+  });
 
   final String? label;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +29,27 @@ class AppSectionBand extends StatelessWidget {
                 horizontal: AppSpacing.xl,
                 vertical: AppSpacing.sm,
               ),
-              child: Text(
-                label!,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label!,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (actionLabel != null && onAction != null)
+                    TextButton(
+                      onPressed: onAction,
+                      style: TextButton.styleFrom(
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Text(actionLabel!),
+                    ),
+                ],
               ),
             ),
     );

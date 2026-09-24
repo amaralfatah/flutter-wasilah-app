@@ -566,6 +566,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetTableUpdatedHeader => 'Updated';
 
   @override
+  String get assetTableCurrentPriceHeader => 'Current Price';
+
+  @override
   String get assetTableProfitLossHeader => 'P/L';
 
   @override

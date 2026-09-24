@@ -398,6 +398,8 @@
   "@assetTableValueHeader": {"description": "Header kolom nilai pada tabel daftar aset, juga dipakai sebagai label legenda grafik histori"},
   "assetTableUpdatedHeader": "Diperbarui",
   "@assetTableUpdatedHeader": {"description": "Header kolom tanggal diperbarui pada tabel daftar aset"},
+  "assetTableCurrentPriceHeader": "Harga Kini",
+  "@assetTableCurrentPriceHeader": {"description": "Header kolom harga pasar terkini pada tabel daftar aset"},
   "assetTableProfitLossHeader": "U/R",
   "@assetTableProfitLossHeader": {"description": "Header kolom untung/rugi (disingkat) pada tabel daftar aset"},
   "assetSemanticValueAllocation": "Nilai {value}, alokasi {allocation}",

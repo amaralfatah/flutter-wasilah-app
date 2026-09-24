@@ -1122,6 +1122,12 @@ abstract class AppLocalizations {
   /// **'Diperbarui'**
   String get assetTableUpdatedHeader;
 
+  /// Header kolom harga pasar terkini pada tabel daftar aset
+  ///
+  /// In id, this message translates to:
+  /// **'Harga Kini'**
+  String get assetTableCurrentPriceHeader;
+
   /// Header kolom untung/rugi (disingkat) pada tabel daftar aset
   ///
   /// In id, this message translates to:

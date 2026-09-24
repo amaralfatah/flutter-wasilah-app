@@ -147,7 +147,11 @@ class MarketQuoteHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            AssetCategoryIcon(category: asset.category, radius: 28),
+            AssetCategoryIcon(
+              category: asset.category,
+              marketSymbol: asset.marketSymbol,
+              radius: 28,
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),

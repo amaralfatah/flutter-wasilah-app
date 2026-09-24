@@ -228,6 +228,7 @@
   "assetTableAllocationHeader": "Allocation",
   "assetTableValueHeader": "Value",
   "assetTableUpdatedHeader": "Updated",
+  "assetTableCurrentPriceHeader": "Current Price",
   "assetTableProfitLossHeader": "P/L",
   "assetSemanticValueAllocation": "Value {value}, allocation {allocation}",
   "@assetSemanticValueAllocation": {

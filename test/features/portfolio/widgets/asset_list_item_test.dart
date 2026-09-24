@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/theme/app_theme.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
@@ -27,17 +28,19 @@ Future<void> _pumpRow(
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
-        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
-        child: Scaffold(
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: AppListCard(
-              children: [AssetListItem(asset: _asset(value), onTap: () {})],
+    ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+          child: Scaffold(
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: AppListCard(
+                children: [AssetListItem(asset: _asset(value), onTap: () {})],
+              ),
             ),
           ),
         ),

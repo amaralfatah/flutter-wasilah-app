@@ -142,7 +142,7 @@ class _PriceLineChartState extends State<PriceLineChart> {
                         8,
                     right: 0,
                     child: Text(
-                      formatNumber(tick),
+                      formatPrice(tick, widget.currency),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -320,7 +320,7 @@ class _ChartPainter extends CustomPainter {
   }) {
     final painter = TextPainter(
       text: TextSpan(
-        text: formatNumber(value),
+        text: formatPrice(value, currency),
         style: TextStyle(color: lineColor, fontSize: 11),
       ),
       textDirection: TextDirection.ltr,

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
+import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -14,14 +15,14 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 /// Tiap kolom dua baris — angka utama di atas, keterangan kecil di bawah —
 /// dan urutannya dijelaskan oleh [AssetTableHeader]. Pasang header itu
 /// sebagai baris pertama kartu daftar yang sama.
-class AssetListItem extends StatelessWidget {
+class AssetListItem extends ConsumerWidget {
   const AssetListItem({required this.asset, super.key, this.onTap});
 
   final Asset asset;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
@@ -69,10 +70,7 @@ class AssetListItem extends StatelessWidget {
           ),
           value: _Cell.number(
             primary: formatNumber(asset.currentValue),
-            secondary: formatDayMonth(
-              asset.lastUpdatedAt,
-              Localizations.localeOf(context),
-            ),
+            secondary: _currentPriceText(ref),
             primaryStyle: primaryStyle,
             secondaryStyle: captionStyle,
           ),
@@ -91,6 +89,24 @@ class AssetListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Harga pasar terkini via Yahoo Finance; `-` bila aset tidak punya
+  /// [Asset.marketSymbol] atau quote belum/gagal dimuat.
+  String _currentPriceText(WidgetRef ref) {
+    final marketSymbol = asset.marketSymbol;
+    if (marketSymbol == null) {
+      return '-';
+    }
+
+    final quoteResult = ref
+        .watch(marketQuoteProvider(marketSymbol))
+        .valueOrNull;
+    if (quoteResult == null) {
+      return '-';
+    }
+
+    return formatPrice(quoteResult.quote.price, quoteResult.quote.currency);
   }
 
   String _semanticLabel(BuildContext context, AppLocalizations l10n) {
@@ -128,9 +144,11 @@ class AssetTableHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final primaryStyle = textTheme.labelMedium?.copyWith(
       color: colorScheme.onSurface,
+      fontWeight: FontWeight.w700,
     );
     final secondaryStyle = textTheme.labelSmall?.copyWith(
       color: colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.w400,
     );
 
     Widget cell(String primary, String secondary, {bool number = true}) {
@@ -161,7 +179,10 @@ class AssetTableHeader extends StatelessWidget {
           l10n.dashboardCapitalLabel,
           l10n.assetTableAllocationHeader,
         ),
-        value: cell(l10n.assetTableValueHeader, l10n.assetTableUpdatedHeader),
+        value: cell(
+          l10n.assetTableValueHeader,
+          l10n.assetTableCurrentPriceHeader,
+        ),
         profitLoss: cell(
           l10n.assetTableProfitLossHeader,
           l10n.commonReturnLabel,
