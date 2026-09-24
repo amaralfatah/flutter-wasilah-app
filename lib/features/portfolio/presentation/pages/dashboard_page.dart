@@ -6,6 +6,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asse
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/portfolio_summary_card.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/target_progress_card.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
@@ -21,6 +22,7 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryValue = ref.watch(portfolioSummaryProvider);
     final targetsValue = ref.watch(allocationTargetProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Wasilah')),
@@ -32,9 +34,9 @@ class DashboardPage extends ConsumerWidget {
             return RefreshablePageBody(
               onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
               child: AppEmptyState(
-                title: 'Belum ada aset',
-                message: 'Catat aset pertama untuk melihat ringkasan.',
-                actionLabel: 'Tambah aset',
+                title: l10n.commonEmptyAssetsTitle,
+                message: l10n.emptyAssetsDashboardMessage,
+                actionLabel: l10n.commonAddAssetLabel,
                 onAction: () => context.push(RouteNames.assetCreate),
               ),
             );
@@ -48,56 +50,79 @@ class DashboardPage extends ConsumerWidget {
 
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
+            // Horizontal 0: daftar "Aset utama" full-bleed sampai tepi layar.
+            // Konten lain (kartu ringkasan, target) mengatur padding
+            // horizontalnya sendiri lewat Padding di bawah.
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                PortfolioSummaryCard(
-                  summary: summary,
-                  onViewHistory: () => context.push(RouteNames.history),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                targetsValue.maybeWhen(
-                  data: (targets) {
-                    if (targets.isEmpty) {
-                      return AppCard(
-                        onTap: () => context.go(RouteNames.target),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Belum ada target alokasi',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              'Buat target alokasi dulu agar progres '
-                              'portofolio bisa dihitung dengan benar.',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      );
-                    }
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PortfolioSummaryCard(
+                        summary: summary,
+                        onViewHistory: () => context.push(RouteNames.history),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      targetsValue.maybeWhen(
+                        data: (targets) {
+                          if (targets.isEmpty) {
+                            return AppCard(
+                              onTap: () => context.go(RouteNames.target),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.commonEmptyTargetsTitle,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    l10n.noTargetsCardMessage,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
 
-                    return TargetProgressCard(
-                      percentage: summary.targetProgressPercentage,
-                      onTap: () => context.go(RouteNames.target),
-                    );
-                  },
-                  orElse: () => TargetProgressCard(
-                    percentage: summary.targetProgressPercentage,
-                    onTap: () => context.go(RouteNames.target),
+                          return TargetProgressCard(
+                            percentage: summary.targetProgressPercentage,
+                            onTap: () => context.go(RouteNames.target),
+                          );
+                        },
+                        orElse: () => TargetProgressCard(
+                          percentage: summary.targetProgressPercentage,
+                          onTap: () => context.go(RouteNames.target),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (activeAssets.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  SectionHeader(
-                    title: 'Aset utama',
-                    actionLabel: 'Lihat semua',
-                    onAction: () => context.go(RouteNames.assets),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                    child: SectionHeader(
+                      title: l10n.mainAssetsTitle,
+                      actionLabel: l10n.viewAllLabel,
+                      onAction: () => context.go(RouteNames.assets),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppListCard(
+                    hasHeader: true,
                     children: [
                       const AssetTableHeader(),
                       ...activeAssets

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/backup/presentation/widgets/backup_section.dart';
+import 'package:flutter_wasilah_app/features/settings/providers/locale_provider.dart';
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -13,9 +15,11 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Setelan')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         children: [
@@ -23,7 +27,7 @@ class SettingsPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SettingsSectionHeader('Tampilan'),
+                _SettingsSectionHeader(l10n.settingsDisplaySection),
                 const SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
@@ -32,18 +36,18 @@ class SettingsPage extends ConsumerWidget {
                     // segmen terpilih, membuat teksnya membungkus. Warna
                     // segmen sudah cukup menandakan pilihan aktif.
                     showSelectedIcon: false,
-                    segments: const [
+                    segments: [
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.system,
-                        label: Text('Sistem'),
+                        label: Text(l10n.themeSystem),
                       ),
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.light,
-                        label: Text('Terang'),
+                        label: Text(l10n.themeLight),
                       ),
                       ButtonSegment<ThemeMode>(
                         value: ThemeMode.dark,
-                        label: Text('Gelap'),
+                        label: Text(l10n.themeDark),
                       ),
                     ],
                     selected: {themeMode},
@@ -56,32 +60,66 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const AppCard(
+          AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SettingsSectionHeader('Backup'),
-                SizedBox(height: AppSpacing.md),
-                BackupSection(),
+                _SettingsSectionHeader(l10n.settingsLanguageSection),
+                const SizedBox(height: AppSpacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<Locale?>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment<Locale?>(
+                        value: null,
+                        label: Text(l10n.themeSystem),
+                      ),
+                      ButtonSegment<Locale?>(
+                        value: const Locale('id'),
+                        label: Text(l10n.languageIndonesian),
+                      ),
+                      ButtonSegment<Locale?>(
+                        value: const Locale('en'),
+                        label: Text(l10n.languageEnglish),
+                      ),
+                    ],
+                    selected: {locale},
+                    onSelectionChanged: (selection) {
+                      _updateLocale(ref, selection.firstOrNull);
+                    },
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const AppCard(
+          AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SettingsSectionHeader('Aplikasi'),
-                SizedBox(height: AppSpacing.sm),
+                _SettingsSectionHeader(l10n.settingsBackupSection),
+                const SizedBox(height: AppSpacing.md),
+                const BackupSection(),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SettingsSectionHeader(l10n.settingsAppSection),
+                const SizedBox(height: AppSpacing.sm),
                 ListTileTheme(
-                  data: ListTileThemeData(
+                  data: const ListTileThemeData(
                     contentPadding: EdgeInsets.zero,
                   ),
                   child: AboutListTile(
-                    icon: Icon(Icons.info_outline),
+                    icon: const Icon(Icons.info_outline),
                     applicationName: 'Wasilah',
                     applicationVersion: _appVersion,
-                    child: Text('Tentang aplikasi'),
+                    child: Text(l10n.settingsAboutApp),
                   ),
                 ),
               ],
@@ -98,6 +136,10 @@ class SettingsPage extends ConsumerWidget {
     }
 
     ref.read(themeModeProvider.notifier).updateThemeMode(value);
+  }
+
+  void _updateLocale(WidgetRef ref, Locale? value) {
+    ref.read(localeProvider.notifier).updateLocale(value);
   }
 }
 

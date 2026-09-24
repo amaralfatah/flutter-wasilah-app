@@ -5,16 +5,19 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/category_donut_chart.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
 
+// Horizontal 0: AppListCard full-bleed sampai tepi layar. Konten lain
+// (chart, empty state) mengatur padding horizontalnya sendiri.
 const _targetPagePadding = EdgeInsets.fromLTRB(
+  0,
   AppSpacing.xl,
-  AppSpacing.xl,
-  AppSpacing.xl,
+  0,
   AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
 );
 
@@ -24,13 +27,14 @@ class TargetPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final targetItemsValue = ref.watch(targetAllocationItemsProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Target')),
+      appBar: AppBar(title: Text(l10n.targetTitle)),
       floatingActionButton: FloatingActionButton(
         heroTag: 'target_create_fab',
         onPressed: () => context.push(RouteNames.targetCreate),
-        tooltip: 'Tambah target',
+        tooltip: l10n.addTargetTooltip,
         child: const Icon(Icons.add),
       ),
       body: AsyncValueView(
@@ -42,13 +46,14 @@ class TargetPage extends ConsumerWidget {
               onRefresh: () =>
                   ref.refresh(targetAllocationItemsProvider.future),
               padding: _targetPagePadding,
-              child: AppEmptyState(
-                title: 'Belum ada target alokasi',
-                message:
-                    'Tentukan porsi ideal tiap kategori aset supaya progres '
-                    'portofolio bisa dihitung.',
-                actionLabel: 'Tambah target',
-                onAction: () => context.push(RouteNames.targetCreate),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                child: AppEmptyState(
+                  title: l10n.commonEmptyTargetsTitle,
+                  message: l10n.emptyTargetsMessage,
+                  actionLabel: l10n.commonAddTargetLabel,
+                  onAction: () => context.push(RouteNames.targetCreate),
+                ),
               ),
             );
           }
@@ -59,7 +64,12 @@ class TargetPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CategoryDonutChart(items: items),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                  ),
+                  child: CategoryDonutChart(items: items),
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 AppListCard(
                   children: items
@@ -69,7 +79,7 @@ class TargetPage extends ConsumerWidget {
                               context.push('${RouteNames.target}/${item.id}'),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.lg,
+                              horizontal: AppSpacing.xl,
                               vertical: AppSpacing.lg,
                             ),
                             child: TargetAllocationItem(item: item),

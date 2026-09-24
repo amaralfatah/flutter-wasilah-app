@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 
@@ -26,11 +27,11 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
     }
 
     if (totalValue < 0) {
-      throw ArgumentError('Nilai aset tidak boleh kurang dari nol.');
+      throw const InvalidCurrentValueException();
     }
 
     if (totalCost != null && totalCost < 0) {
-      throw ArgumentError('Total modal tidak boleh kurang dari nol.');
+      throw const InvalidTotalCostException();
     }
 
     final noteError = validateNote(note);

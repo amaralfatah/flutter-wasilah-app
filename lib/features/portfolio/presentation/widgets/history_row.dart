@@ -28,8 +28,8 @@ class HistoryRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.md,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +39,13 @@ class HistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(formatMonthName(snapshot.recordedAt)),
+                Text(
+                  formatMonthName(
+                    snapshot.recordedAt,
+                    Localizations.localeOf(context),
+                  ),
+                  style: textTheme.titleSmall,
+                ),
                 Text(
                   '${snapshot.recordedAt.year}',
                   style: textTheme.bodySmall?.copyWith(
@@ -55,7 +61,7 @@ class HistoryRow extends StatelessWidget {
             children: [
               Text(
                 formatCurrency(snapshot.totalValue),
-                style: textTheme.titleMedium,
+                style: textTheme.bodyMedium,
                 textAlign: TextAlign.end,
               ),
               if (changeLabel != null)

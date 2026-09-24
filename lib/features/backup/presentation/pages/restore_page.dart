@@ -4,6 +4,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
@@ -22,20 +23,21 @@ class RestorePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final backupsAsync = ref.watch(_backupListProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pulihkan dari backup')),
+      appBar: AppBar(title: Text(l10n.restoreTitle)),
       body: backupsAsync.when(
         loading: () => const AppLoading(),
         error: (error, stackTrace) => AppErrorView(
-          title: 'Daftar backup gagal dimuat',
+          title: l10n.backupListLoadFailedTitle,
           onRetry: () => ref.invalidate(_backupListProvider),
         ),
         data: (backups) {
           if (backups.isEmpty) {
-            return const AppEmptyState(
-              title: 'Belum ada backup',
-              message: 'Backup pertama Anda akan muncul di sini.',
+            return AppEmptyState(
+              title: l10n.emptyBackupTitle,
+              message: l10n.emptyBackupMessage,
               icon: Icons.cloud_off_outlined,
             );
           }
@@ -47,7 +49,12 @@ class RestorePage extends ConsumerWidget {
               final backup = backups[index];
               return ListTile(
                 leading: const Icon(Icons.description_outlined),
-                title: Text(formatFullDateTime(backup.createdAt)),
+                title: Text(
+                  formatFullDateTime(
+                    backup.createdAt,
+                    Localizations.localeOf(context),
+                  ),
+                ),
                 subtitle: Text(_formatFileSize(backup.sizeBytes)),
                 onTap: () => _confirmRestore(context, ref, backup),
               );
@@ -63,14 +70,14 @@ class RestorePage extends ConsumerWidget {
     WidgetRef ref,
     DriveBackupFile backup,
   ) async {
+    final l10n = context.l10n;
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Pulihkan data ini?',
-      message:
-          'Data portofolio saat ini akan diganti dengan backup '
-          '${formatFullDateTime(backup.createdAt)}. Tindakan ini tidak dapat '
-          'dibatalkan.',
-      confirmLabel: 'Pulihkan',
+      title: l10n.restoreDataTitle,
+      message: l10n.restoreDataMessage(
+        formatFullDateTime(backup.createdAt, Localizations.localeOf(context)),
+      ),
+      confirmLabel: l10n.restoreLabel,
       isDestructive: true,
     );
 
@@ -82,14 +89,14 @@ class RestorePage extends ConsumerWidget {
       await ref.read(backupControllerProvider.notifier).restore(backup.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data berhasil dipulihkan.')),
+          SnackBar(content: Text(l10n.restoreSuccessMessage)),
         );
         Navigator.of(context).pop();
       }
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pemulihan gagal. Coba lagi.')),
+          SnackBar(content: Text(l10n.restoreFailedMessage)),
         );
       }
     }

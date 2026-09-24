@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/asset_management_controller.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
@@ -55,20 +57,21 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final assetId = widget.assetId;
     if (assetId != null) {
       final assetValue = ref.watch(assetDetailProvider(assetId));
       return assetValue.when(
         data: (asset) {
           if (asset == null) {
-            return const Scaffold(
-              body: AppErrorView(message: 'Aset tidak ditemukan.'),
+            return Scaffold(
+              body: AppErrorView(message: l10n.assetNotFoundFormMessage),
             );
           }
 
           _populateFromAsset(asset);
           return _AssetFormScaffold(
-            title: 'Edit aset',
+            title: l10n.editAssetTitle,
             child: _buildForm(context, asset),
           );
         },
@@ -78,13 +81,14 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     }
 
     return _AssetFormScaffold(
-      title: 'Tambah aset',
+      title: l10n.addAssetTitle,
       child: _buildForm(context, null),
     );
   }
 
   Widget _buildForm(BuildContext context, Asset? editingAsset) {
     final submitState = ref.watch(assetManagementControllerProvider);
+    final l10n = context.l10n;
 
     return Form(
       key: _formKey,
@@ -92,22 +96,26 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
         padding: const EdgeInsets.all(AppSpacing.xl),
         children: [
           AppTextField(
-            label: 'Nama aset',
+            label: l10n.assetNameLabel,
             controller: _nameController,
-            validator: (value) =>
-                validateRequiredText(value, message: 'Nama aset wajib diisi.'),
+            validator: (value) => validateRequiredText(
+              value,
+              message: l10n.assetNameRequired,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
-            label: 'Kode aset',
+            label: l10n.assetCodeLabel,
             controller: _codeController,
-            validator: (value) =>
-                validateRequiredText(value, message: 'Kode aset wajib diisi.'),
+            validator: (value) => validateRequiredText(
+              value,
+              message: l10n.assetCodeRequired,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           DropdownButtonFormField<AssetCategory>(
             initialValue: _category,
-            decoration: const InputDecoration(labelText: 'Kategori'),
+            decoration: InputDecoration(labelText: l10n.commonCategoryLabel),
             items: AssetCategory.values
                 .map(
                   (category) => DropdownMenuItem(
@@ -130,7 +138,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
           if (!_isEditing) ...[
             const SizedBox(height: AppSpacing.lg),
             AppTextField(
-              label: 'Nilai awal',
+              label: l10n.initialValueLabel,
               controller: _valueController,
               keyboardType: TextInputType.number,
               prefixText: 'Rp',
@@ -141,19 +149,20 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
             InkWell(
               onTap: submitState.isLoading ? null : _selectDate,
               child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Tanggal pencatatan',
-                  suffixIcon: Icon(Icons.calendar_today_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.commonRecordedAtLabel,
+                  suffixIcon: const Icon(Icons.calendar_today_outlined),
                 ),
-                child: Text(formatFullDate(_recordedAt)),
+                child: Text(
+                  formatFullDate(_recordedAt, Localizations.localeOf(context)),
+                ),
               ),
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
-            label: 'Total modal (opsional)',
-            helperText:
-                'Total dana yang disetor, untuk menghitung untung/rugi.',
+            label: l10n.commonTotalCostOptionalLabel,
+            helperText: l10n.totalCostOptionalHelper,
             controller: _costController,
             keyboardType: TextInputType.number,
             prefixText: 'Rp',
@@ -162,7 +171,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
           ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
-            label: _isEditing ? 'Simpan perubahan' : 'Tambah aset',
+            label: _isEditing ? l10n.commonSaveChanges : l10n.addAssetTitle,
             isLoading: submitState.isLoading,
             onPressed: () => _submit(editingAsset),
           ),
@@ -175,7 +184,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: const Text('Hapus aset'),
+              child: Text(l10n.deleteAssetButton),
             ),
           ],
         ],
@@ -265,11 +274,12 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   }
 
   Future<void> _deleteAsset(Asset asset) async {
+    final l10n = context.l10n;
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Hapus aset?',
-      message: 'Aset ${asset.name} dan histori nilainya akan dihapus.',
-      confirmLabel: 'Hapus',
+      title: l10n.deleteAssetTitle,
+      message: l10n.deleteAssetMessage(asset.name),
+      confirmLabel: l10n.commonDelete,
       isDestructive: true,
     );
 
@@ -294,9 +304,13 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   }
 
   void _showError(Object error) {
-    final message = error is ArgumentError
-        ? error.message.toString()
-        : 'Aset belum berhasil disimpan. Coba lagi.';
+    final l10n = context.l10n;
+    final message = switch (error) {
+      InvalidCurrentValueException() => l10n.invalidCurrentValueMessage,
+      InvalidTotalCostException() => l10n.invalidTotalCostMessage,
+      ArgumentError() => error.message.toString(),
+      _ => l10n.assetSaveFailedMessage,
+    };
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));

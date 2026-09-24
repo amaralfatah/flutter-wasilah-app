@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
 /// Dialog konfirmasi tunggal untuk seluruh app.
 ///
@@ -10,7 +11,7 @@ Future<bool> showConfirmDialog(
   required String title,
   required String message,
   required String confirmLabel,
-  String cancelLabel = 'Batal',
+  String? cancelLabel,
   bool isDestructive = false,
 }) async {
   final confirmed = await showDialog<bool>(
@@ -24,7 +25,7 @@ Future<bool> showConfirmDialog(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(cancelLabel),
+            child: Text(cancelLabel ?? context.l10n.dialogCancel),
           ),
           FilledButton(
             style: isDestructive

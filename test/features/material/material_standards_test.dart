@@ -13,6 +13,7 @@ import 'package:flutter_wasilah_app/features/settings/presentation/pages/setting
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_detail_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 
 void main() {
@@ -132,6 +133,8 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.text('Tentang aplikasi'), findsOneWidget);
+    await tester.ensureVisible(find.text('Tentang aplikasi'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
 
@@ -149,7 +152,12 @@ Widget _buildApp({
       portfolioRepositoryProvider.overrideWithValue(repository),
       preferencesServiceProvider.overrideWithValue(_FakePreferencesService()),
     ],
-    child: MaterialApp(home: child),
+    child: MaterialApp(
+      locale: const Locale('id'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    ),
   );
 }
 
@@ -198,6 +206,16 @@ class _FakePreferencesService implements PreferencesService {
   @override
   Future<void> writeBackupAccountEmail(String? email) async {
     _backupAccountEmail = email;
+  }
+
+  Locale? _locale;
+
+  @override
+  Locale? readLocale() => _locale;
+
+  @override
+  Future<void> writeLocale(Locale? locale) async {
+    _locale = locale;
   }
 }
 

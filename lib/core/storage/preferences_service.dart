@@ -22,6 +22,10 @@ abstract interface class PreferencesService {
   String? readBackupAccountEmail();
 
   Future<void> writeBackupAccountEmail(String? email);
+
+  Locale? readLocale();
+
+  Future<void> writeLocale(Locale? locale);
 }
 
 class SharedPreferencesService implements PreferencesService {
@@ -32,6 +36,7 @@ class SharedPreferencesService implements PreferencesService {
   static const _autoBackupEnabledKey = 'auto_backup_enabled';
   static const _backupConnectedKey = 'backup_account_connected';
   static const _backupAccountEmailKey = 'backup_account_email';
+  static const _localeKey = 'locale';
 
   final SharedPreferences _preferences;
 
@@ -102,6 +107,23 @@ class SharedPreferencesService implements PreferencesService {
       return _preferences.remove(_backupAccountEmailKey);
     }
     return _preferences.setString(_backupAccountEmailKey, email);
+  }
+
+  @override
+  Locale? readLocale() {
+    final rawValue = _preferences.getString(_localeKey);
+    if (rawValue == null || rawValue.isEmpty) {
+      return null;
+    }
+    return Locale(rawValue);
+  }
+
+  @override
+  Future<void> writeLocale(Locale? locale) {
+    if (locale == null) {
+      return _preferences.remove(_localeKey);
+    }
+    return _preferences.setString(_localeKey, locale.languageCode);
   }
 }
 

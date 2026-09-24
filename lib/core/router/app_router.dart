@@ -12,6 +12,7 @@ import 'package:flutter_wasilah_app/features/settings/presentation/pages/setting
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_detail_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:go_router/go_router.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -129,33 +130,36 @@ class _AppShellScaffold extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const _destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home),
-      label: 'Beranda',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.history_outlined),
-      selectedIcon: Icon(Icons.history),
-      label: 'Histori',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.account_balance_wallet_outlined),
-      selectedIcon: Icon(Icons.account_balance_wallet),
-      label: 'Aset',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.flag_outlined),
-      selectedIcon: Icon(Icons.flag),
-      label: 'Target',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings),
-      label: 'Setelan',
-    ),
-  ];
+  static List<NavigationDestination> _destinations(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      NavigationDestination(
+        icon: const Icon(Icons.home_outlined),
+        selectedIcon: const Icon(Icons.home),
+        label: l10n.navDashboardLabel,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.history_outlined),
+        selectedIcon: const Icon(Icons.history),
+        label: l10n.historyTitle,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.account_balance_wallet_outlined),
+        selectedIcon: const Icon(Icons.account_balance_wallet),
+        label: l10n.assetsTitle,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.flag_outlined),
+        selectedIcon: const Icon(Icons.flag),
+        label: l10n.targetTitle,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.settings_outlined),
+        selectedIcon: const Icon(Icons.settings),
+        label: l10n.settingsTitle,
+      ),
+    ];
+  }
 
   void _onDestinationSelected(int index) {
     navigationShell.goBranch(
@@ -175,7 +179,7 @@ class _AppShellScaffold extends StatelessWidget {
         bottomNavigationBar: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
           onDestinationSelected: _onDestinationSelected,
-          destinations: _destinations,
+          destinations: _destinations(context),
         ),
       );
     }
@@ -188,7 +192,7 @@ class _AppShellScaffold extends StatelessWidget {
             onDestinationSelected: _onDestinationSelected,
             labelType: NavigationRailLabelType.all,
             destinations: [
-              for (final destination in _destinations)
+              for (final destination in _destinations(context))
                 NavigationRailDestination(
                   icon: destination.icon,
                   selectedIcon: destination.selectedIcon,

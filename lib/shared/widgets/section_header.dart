@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
@@ -24,7 +25,7 @@ class SectionHeader extends StatelessWidget {
         if (onInfoTap != null)
           IconButton(
             onPressed: onInfoTap,
-            tooltip: 'Info',
+            tooltip: context.l10n.sectionHeaderInfoTooltip,
             icon: const Icon(Icons.info_outline),
             visualDensity: VisualDensity.compact,
           ),

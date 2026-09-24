@@ -5,6 +5,8 @@ import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
 /// Baris aset bergaya tabel portofolio (ala Stockbit): kode, modal, nilai,
 /// dan untung/rugi terlihat sekaligus tanpa membuka detail.
@@ -20,6 +22,7 @@ class AssetListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final primaryStyle = textTheme.bodyMedium?.copyWith(
@@ -42,7 +45,7 @@ class AssetListItem extends StatelessWidget {
 
     return Semantics(
       button: onTap != null,
-      label: _semanticLabel(),
+      label: _semanticLabel(context, l10n),
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
@@ -69,7 +72,10 @@ class AssetListItem extends StatelessWidget {
           ),
           value: _Cell.number(
             primary: formatNumber(asset.currentValue),
-            secondary: formatDayMonth(asset.lastUpdatedAt),
+            secondary: formatDayMonth(
+              asset.lastUpdatedAt,
+              Localizations.localeOf(context),
+            ),
             primaryStyle: primaryStyle,
             secondaryStyle: captionStyle,
           ),
@@ -90,19 +96,23 @@ class AssetListItem extends StatelessWidget {
     );
   }
 
-  String _semanticLabel() {
+  String _semanticLabel(BuildContext context, AppLocalizations l10n) {
     final buffer = StringBuffer(
       '${asset.code}, ${asset.name}. '
-      'Nilai ${formatCurrency(asset.currentValue)}, '
-      'alokasi ${formatPercentage(asset.allocationPercentage)}.',
+      '${l10n.assetSemanticValueAllocation(
+        formatCurrency(asset.currentValue),
+        formatPercentage(asset.allocationPercentage),
+      )}.',
     );
     final cost = asset.totalCost;
     final profitLoss = asset.profitLoss;
     if (cost != null && profitLoss != null) {
       buffer.write(
-        ' Modal ${formatCurrency(cost)}, '
-        '${profitLoss < 0 ? 'rugi' : 'untung'} '
-        '${formatCurrency(profitLoss.abs())}.',
+        ' ${l10n.assetSemanticCostProfitLoss(
+          formatCurrency(cost),
+          profitLossLabel(context, profitLoss),
+          formatCurrency(profitLoss.abs()),
+        )}.',
       );
     }
     return buffer.toString();
@@ -116,6 +126,7 @@ class AssetTableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final primaryStyle = textTheme.labelMedium?.copyWith(
@@ -145,10 +156,20 @@ class AssetTableHeader extends StatelessWidget {
     return ExcludeSemantics(
       child: _AssetTableRow(
         verticalPadding: AppSpacing.sm,
-        code: cell('Kode', 'Nama', number: false),
-        cost: cell('Modal', 'Alokasi'),
-        value: cell('Nilai', 'Diperbarui'),
-        profitLoss: cell('U/R', 'Return'),
+        code: cell(
+          l10n.assetTableCodeHeader,
+          l10n.assetTableNameHeader,
+          number: false,
+        ),
+        cost: cell(
+          l10n.dashboardCapitalLabel,
+          l10n.assetTableAllocationHeader,
+        ),
+        value: cell(l10n.assetTableValueHeader, l10n.assetTableUpdatedHeader),
+        profitLoss: cell(
+          l10n.assetTableProfitLossHeader,
+          l10n.commonReturnLabel,
+        ),
       ),
     );
   }
@@ -174,7 +195,7 @@ class _AssetTableRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
+        horizontal: AppSpacing.xl,
         vertical: verticalPadding,
       ),
       child: Row(

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_management_controller.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
@@ -38,6 +40,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final targetId = widget.targetId;
     if (targetId != null) {
       final targetsValue = ref.watch(allocationTargetProvider);
@@ -45,14 +48,14 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
         data: (targets) {
           final target = _findTarget(targets, targetId);
           if (target == null) {
-            return const Scaffold(
-              body: AppErrorView(message: 'Target tidak ditemukan.'),
+            return Scaffold(
+              body: AppErrorView(message: l10n.targetNotFoundMessage),
             );
           }
 
           _populateFromTarget(target);
           return _TargetFormScaffold(
-            title: 'Edit target',
+            title: l10n.editTargetTitle,
             child: _buildForm(context, target),
           );
         },
@@ -62,13 +65,14 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
     }
 
     return _TargetFormScaffold(
-      title: 'Tambah target',
+      title: l10n.addTargetTitle,
       child: _buildForm(context, null),
     );
   }
 
   Widget _buildForm(BuildContext context, AllocationTarget? editingTarget) {
     final submitState = ref.watch(targetManagementControllerProvider);
+    final l10n = context.l10n;
 
     return Form(
       key: _formKey,
@@ -77,7 +81,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
         children: [
           DropdownButtonFormField<AssetCategory>(
             initialValue: _category,
-            decoration: const InputDecoration(labelText: 'Kategori'),
+            decoration: InputDecoration(labelText: l10n.commonCategoryLabel),
             items: AssetCategory.values
                 .map(
                   (category) => DropdownMenuItem(
@@ -99,7 +103,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
-            label: 'Target alokasi',
+            label: l10n.targetAllocationLabel,
             controller: _percentageController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             suffixIcon: const Padding(
@@ -110,7 +114,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
           ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
-            label: _isEditing ? 'Simpan perubahan' : 'Tambah target',
+            label: _isEditing ? l10n.commonSaveChanges : l10n.addTargetTitle,
             isLoading: submitState.isLoading,
             onPressed: () => _submit(editingTarget),
           ),
@@ -123,7 +127,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: const Text('Hapus target'),
+              child: Text(l10n.deleteTargetButton),
             ),
           ],
         ],
@@ -152,17 +156,18 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
   }
 
   String? _validatePercentage(String? value) {
+    final l10n = context.l10n;
     if (value == null || value.trim().isEmpty) {
-      return 'Target alokasi wajib diisi.';
+      return l10n.targetPercentageRequired;
     }
 
     final parsed = double.tryParse(value.trim().replaceAll(',', '.'));
     if (parsed == null) {
-      return 'Target alokasi tidak valid.';
+      return l10n.targetPercentageInvalid;
     }
 
     if (parsed < 0 || parsed > 100) {
-      return 'Target alokasi harus di antara 0 sampai 100%.';
+      return l10n.targetPercentageRange;
     }
 
     return null;
@@ -193,9 +198,14 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
       if (!mounted) {
         return;
       }
-      final message = error is ArgumentError
-          ? error.message.toString()
-          : 'Target belum berhasil disimpan. Coba lagi.';
+      final l10n = context.l10n;
+      final message = switch (error) {
+        InvalidTargetPercentageException() => l10n.targetPercentageRange,
+        TargetPercentageExceededException() =>
+          l10n.targetPercentageExceededMessage,
+        ArgumentError() => error.message.toString(),
+        _ => l10n.targetSaveFailedMessage,
+      };
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
@@ -203,11 +213,12 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
   }
 
   Future<void> _deleteTarget(AllocationTarget target) async {
+    final l10n = context.l10n;
     final confirmed = await showConfirmDialog(
       context,
-      title: 'Hapus target?',
-      message: 'Target ${target.category.label} akan dihapus.',
-      confirmLabel: 'Hapus',
+      title: l10n.deleteTargetTitle,
+      message: l10n.deleteTargetMessage(target.category.label),
+      confirmLabel: l10n.commonDelete,
       isDestructive: true,
     );
 
@@ -228,8 +239,8 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Target belum berhasil dihapus. Coba lagi.'),
+        SnackBar(
+          content: Text(l10n.targetDeleteFailedMessage),
         ),
       );
     }

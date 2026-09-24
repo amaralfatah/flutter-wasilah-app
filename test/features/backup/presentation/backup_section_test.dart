@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/features/backup/presentation/widgets/backup_section.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 
 void main() {
   group('BackupSection', () {
@@ -15,6 +16,9 @@ void main() {
             ),
           ],
           child: const MaterialApp(
+            locale: Locale('id'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(body: BackupSection()),
           ),
         ),
@@ -41,6 +45,9 @@ void main() {
             ),
           ],
           child: const MaterialApp(
+            locale: Locale('id'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(body: BackupSection()),
           ),
         ),
@@ -95,6 +102,9 @@ Widget _connectedSection() {
       ),
     ],
     child: const MaterialApp(
+      locale: Locale('id'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: BackupSection()),
     ),
   );

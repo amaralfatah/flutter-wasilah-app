@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('asset form formats initial value as rupiah input', (
@@ -14,7 +15,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: AssetFormPage()),
+        child: const MaterialApp(
+          locale: Locale('id'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AssetFormPage(),
+        ),
       ),
     );
 

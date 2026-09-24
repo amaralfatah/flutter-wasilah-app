@@ -3,6 +3,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
 class TargetAllocationItem extends StatelessWidget {
   const TargetAllocationItem({required this.item, super.key});
@@ -11,6 +12,7 @@ class TargetAllocationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final statusColor = item.statusColor(context);
     final progressValue = item.targetPercentage == 0
@@ -30,8 +32,10 @@ class TargetAllocationItem extends StatelessWidget {
                   Text(item.category.label, style: textTheme.titleMedium),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Aktual ${formatPercentage(item.actualPercentage)} '
-                    'dari target ${formatPercentage(item.targetPercentage)}',
+                    l10n.targetAllocationActualOfTarget(
+                      formatPercentage(item.actualPercentage),
+                      formatPercentage(item.targetPercentage),
+                    ),
                     style: textTheme.bodyMedium,
                   ),
                 ],
@@ -46,10 +50,13 @@ class TargetAllocationItem extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Semantics(
-          label: 'Progres alokasi ${item.category.label}',
-          value:
-              'Aktual ${formatPercentage(item.actualPercentage)} '
-              'dari target ${formatPercentage(item.targetPercentage)}',
+          label: l10n.targetAllocationProgressSemanticLabel(
+            item.category.label,
+          ),
+          value: l10n.targetAllocationActualOfTarget(
+            formatPercentage(item.actualPercentage),
+            formatPercentage(item.targetPercentage),
+          ),
           child: LinearProgressIndicator(
             value: progressValue,
             color: statusColor,

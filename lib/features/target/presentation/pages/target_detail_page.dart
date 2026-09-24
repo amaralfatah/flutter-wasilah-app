@@ -8,6 +8,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asse
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
@@ -25,13 +26,14 @@ class TargetDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final targetItemsValue = ref.watch(targetAllocationItemsProvider);
     final assetsValue = ref.watch(assetListProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail target'),
+        title: Text(l10n.targetDetailTitle),
         actions: [
           IconButton(
-            tooltip: 'Edit target',
+            tooltip: l10n.editTargetTooltip,
             onPressed: () =>
                 context.push('${RouteNames.target}/$targetId/edit'),
             icon: const Icon(Icons.edit_outlined),
@@ -44,9 +46,9 @@ class TargetDetailPage extends ConsumerWidget {
         data: (items) {
           final item = items.where((item) => item.id == targetId).firstOrNull;
           if (item == null) {
-            return const AppEmptyState(
-              title: 'Target tidak ditemukan',
-              message: 'Data target yang Anda buka tidak tersedia.',
+            return AppEmptyState(
+              title: l10n.targetNotFoundTitle,
+              message: l10n.targetNotFoundDetailMessage,
             );
           }
 
@@ -59,36 +61,55 @@ class TargetDetailPage extends ConsumerWidget {
               ref.invalidate(assetListProvider);
               return ref.refresh(targetAllocationItemsProvider.future);
             },
+            // Horizontal 0: AppListCard full-bleed sampai tepi layar. Konten
+            // lain mengatur padding horizontalnya sendiri.
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppCard(child: TargetAllocationItem(item: item)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                  ),
+                  child: AppCard(child: TargetAllocationItem(item: item)),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 AppListCard(
                   children: [
                     _TargetValueTile(
-                      label: 'Nilai aktual',
+                      label: l10n.actualValueLabel,
                       value: formatCurrency(item.actualValue),
                     ),
                     _TargetValueTile(
-                      label: 'Nilai target',
+                      label: l10n.targetValueLabel,
                       value: formatCurrency(item.targetValue),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                SectionHeader(
-                  title: 'Aset ${item.category.label}',
-                  onInfoTap: () => _showToleranceInfo(context, item),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                  ),
+                  child: SectionHeader(
+                    title: l10n.assetsInCategoryTitle(item.category.label),
+                    onInfoTap: () => _showToleranceInfo(context, item),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 if (categoryAssets.isEmpty)
-                  const AppEmptyState(
-                    title: 'Belum ada aset',
-                    message: 'Belum ada aset pada kategori ini.',
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                    child: AppEmptyState(
+                      title: l10n.commonEmptyAssetsTitle,
+                      message: l10n.emptyAssetsInCategoryMessage,
+                    ),
                   )
                 else
                   AppListCard(
+                    hasHeader: true,
                     children: [
                       const AssetTableHeader(),
                       ...categoryAssets.map(
@@ -119,7 +140,7 @@ class _TargetValueTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
+        horizontal: AppSpacing.xl,
         vertical: AppSpacing.xs,
       ),
       title: Text(label),
@@ -147,33 +168,36 @@ Future<void> _showToleranceInfo(
 ) {
   return showDialog<void>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Batas wajar'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${_formatPercent(item.lowerBound)} - '
-            '${_formatPercent(item.upperBound)} '
-            '(toleransi ±${_formatPercent(item.tolerance)})',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Mengikuti aturan 5/25: penyesuaian baru diperlukan saat alokasi '
-            'melewati 5 poin persen atau 25% dari target, mana yang lebih '
-            'kecil.',
-            style: Theme.of(context).textTheme.bodyMedium,
+    builder: (context) {
+      final l10n = context.l10n;
+      return AlertDialog(
+        title: Text(l10n.reasonableRangeTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.toleranceInfoText(
+                _formatPercent(item.lowerBound),
+                _formatPercent(item.upperBound),
+                _formatPercent(item.tolerance),
+              ),
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.toleranceRuleExplanation,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.commonClose),
           ),
         ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Tutup'),
-        ),
-      ],
-    ),
+      );
+    },
   );
 }

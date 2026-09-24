@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
@@ -62,9 +64,10 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   Widget build(BuildContext context) {
     final assetsValue = ref.watch(assetListProvider);
     final submitState = ref.watch(updateAssetValueControllerProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Update nilai aset')),
+      appBar: AppBar(title: Text(l10n.updateAssetValueTitle)),
       body: AsyncValueView(
         value: assetsValue,
         onRetry: () => ref.invalidate(assetListProvider),
@@ -89,7 +92,9 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 DropdownButtonFormField<String>(
                   key: ValueKey(_selectedAssetId),
                   initialValue: _selectedAssetId,
-                  decoration: const InputDecoration(labelText: 'Aset'),
+                  decoration: InputDecoration(
+                    labelText: l10n.assetDropdownLabel,
+                  ),
                   items: assets
                       .map(
                         (asset) => DropdownMenuItem<String>(
@@ -107,7 +112,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
-                  'Tipe pembaruan',
+                  l10n.updateTypeLabel,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -116,16 +121,16 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<AssetValueUpdateType>(
-                    segments: const [
+                    segments: [
                       ButtonSegment<AssetValueUpdateType>(
                         value: AssetValueUpdateType.override,
-                        label: Text('Ubah'),
-                        icon: Icon(Icons.edit_outlined),
+                        label: Text(l10n.updateTypeOverride),
+                        icon: const Icon(Icons.edit_outlined),
                       ),
                       ButtonSegment<AssetValueUpdateType>(
                         value: AssetValueUpdateType.increment,
-                        label: Text('Tambah'),
-                        icon: Icon(Icons.add_circle_outline),
+                        label: Text(l10n.updateTypeIncrement),
+                        icon: const Icon(Icons.add_circle_outline),
                       ),
                     ],
                     selected: {_updateType},
@@ -141,10 +146,12 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 AppTextField(
-                  label: isOverride ? 'Total nilai aset' : 'Penambahan nilai',
+                  label: isOverride
+                      ? l10n.totalValueFieldLabel
+                      : l10n.incrementValueFieldLabel,
                   helperText: isOverride
-                      ? 'Nilai aset akan disesuaikan menjadi nominal ini.'
-                      : 'Nominal ini akan ditambahkan ke nilai aset saat ini.',
+                      ? l10n.totalValueFieldHelper
+                      : l10n.incrementValueFieldHelper,
                   controller: _valueController,
                   keyboardType: TextInputType.number,
                   prefixText: 'Rp',
@@ -155,13 +162,11 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 const SizedBox(height: AppSpacing.lg),
                 AppTextField(
                   label: isOverride
-                      ? 'Total modal (opsional)'
-                      : 'Penambahan modal (opsional)',
+                      ? l10n.commonTotalCostOptionalLabel
+                      : l10n.incrementCostFieldLabel,
                   helperText: isOverride
-                      ? 'Total dana yang sudah disetor. Kosongkan bila '
-                            'modal tidak berubah.'
-                      : 'Dana yang baru disetor. Kosongkan bila penambahan '
-                            'berasal dari hasil investasi.',
+                      ? l10n.totalCostFieldHelper
+                      : l10n.incrementCostFieldHelper,
                   controller: _costController,
                   keyboardType: TextInputType.number,
                   prefixText: 'Rp',
@@ -183,14 +188,17 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                           : () => _selectDate(context, field),
                       child: InputDecorator(
                         decoration: InputDecoration(
-                          labelText: 'Tanggal pencatatan',
+                          labelText: l10n.commonRecordedAtLabel,
                           errorText: field.errorText,
                           suffixIcon: const Icon(Icons.calendar_today_outlined),
                         ),
                         child: Text(
                           hasValue
-                              ? formatFullDate(selectedDate)
-                              : 'Pilih tanggal',
+                              ? formatFullDate(
+                                  selectedDate,
+                                  Localizations.localeOf(context),
+                                )
+                              : l10n.commonSelectDatePlaceholder,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
                                 color: hasValue
@@ -206,7 +214,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 AppTextField(
-                  label: 'Catatan (opsional)',
+                  label: l10n.noteFieldLabel,
                   controller: _noteController,
                   maxLines: 2,
                   maxLength: 200,
@@ -218,30 +226,30 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Preview',
+                        l10n.previewLabel,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _PreviewRow(
-                        label: 'Nilai saat ini',
+                        label: l10n.commonCurrentValueLabel,
                         value: formatCurrency(previousValue),
                       ),
                       if (!isOverride) ...[
                         const SizedBox(height: AppSpacing.sm),
                         _PreviewRow(
-                          label: 'Tambahan nilai',
+                          label: l10n.addedValueLabel,
                           value: '+ ${formatCurrency(inputValue)}',
                         ),
                       ],
                       const SizedBox(height: AppSpacing.sm),
                       _PreviewRow(
-                        label: 'Nilai terbaru',
+                        label: l10n.latestValueLabel,
                         value: formatCurrency(latestValue),
                       ),
                       if (latestCost != null) ...[
                         const Divider(height: AppSpacing.xl),
                         _PreviewRow(
-                          label: 'Modal saat ini',
+                          label: l10n.currentCostLabel,
                           value: previousCost == null
                               ? '-'
                               : formatCurrency(previousCost),
@@ -249,18 +257,21 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                         if (!isOverride) ...[
                           const SizedBox(height: AppSpacing.sm),
                           _PreviewRow(
-                            label: 'Tambahan modal',
+                            label: l10n.addedCostLabel,
                             value: '+ ${formatCurrency(inputCost)}',
                           ),
                         ],
                         const SizedBox(height: AppSpacing.sm),
                         _PreviewRow(
-                          label: 'Modal terbaru',
+                          label: l10n.latestCostLabel,
                           value: formatCurrency(latestCost),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _PreviewRow(
-                          label: profitLossLabel(latestValue - latestCost),
+                          label: profitLossLabel(
+                            context,
+                            latestValue - latestCost,
+                          ),
                           value: formatProfitLoss(
                             latestValue - latestCost,
                             cost: latestCost,
@@ -276,7 +287,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 AppPrimaryButton(
-                  label: 'Simpan',
+                  label: l10n.commonSave,
                   onPressed: submitState.isLoading
                       ? null
                       : () => _submit(selectedAsset),
@@ -364,9 +375,12 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         return;
       }
 
-      final assetName = selectedAsset?.name ?? 'Aset';
+      final l10n = context.l10n;
+      final assetName = selectedAsset?.name ?? l10n.commonAsset;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Nilai $assetName berhasil diperbarui.')),
+        SnackBar(
+          content: Text(l10n.assetValueUpdatedMessage(assetName)),
+        ),
       );
       Navigator.of(context).pop();
     } catch (error) {
@@ -374,9 +388,13 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         return;
       }
 
-      final message = error is ArgumentError
-          ? error.message.toString()
-          : 'Pembaruan nilai aset belum berhasil. Coba lagi.';
+      final l10n = context.l10n;
+      final message = switch (error) {
+        InvalidCurrentValueException() => l10n.invalidCurrentValueMessage,
+        InvalidTotalCostException() => l10n.invalidTotalCostMessage,
+        ArgumentError() => error.message.toString(),
+        _ => l10n.updateAssetValueFailedMessage,
+      };
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));

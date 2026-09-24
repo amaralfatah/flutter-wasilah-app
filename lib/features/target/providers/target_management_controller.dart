@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -21,7 +22,7 @@ class TargetManagementController extends AsyncNotifier<void> {
     String? id,
   }) async {
     if (targetPercentage < 0 || targetPercentage > 100) {
-      throw ArgumentError('Target alokasi harus di antara 0 sampai 100%.');
+      throw const InvalidTargetPercentageException();
     }
 
     final existingTargets = await ref.read(allocationTargetProvider.future);
@@ -29,7 +30,7 @@ class TargetManagementController extends AsyncNotifier<void> {
         .where((target) => target.id != id && target.category != category)
         .fold<double>(0, (sum, target) => sum + target.targetPercentage);
     if (otherTotal + targetPercentage > 100) {
-      throw ArgumentError('Total target alokasi tidak boleh lebih dari 100%.');
+      throw const TargetPercentageExceededException();
     }
 
     state = const AsyncLoading();

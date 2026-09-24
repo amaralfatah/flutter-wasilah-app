@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
 import 'package:flutter_wasilah_app/features/backup/data/backup_snapshot.dart';
 import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.dart';
@@ -25,7 +26,7 @@ class BackupState {
     this.lastBackupAt,
     this.isBackingUp = false,
     this.isRestoring = false,
-    this.errorMessage,
+    this.error,
   });
 
   final BackupConnectionStatus connectionStatus;
@@ -34,7 +35,7 @@ class BackupState {
   final DateTime? lastBackupAt;
   final bool isBackingUp;
   final bool isRestoring;
-  final String? errorMessage;
+  final Object? error;
 
   bool get isConnected => connectionStatus == BackupConnectionStatus.connected;
 
@@ -47,7 +48,7 @@ class BackupState {
     DateTime? lastBackupAt,
     bool? isBackingUp,
     bool? isRestoring,
-    String? errorMessage,
+    Object? error,
     bool clearError = false,
     bool clearAccountEmail = false,
   }) {
@@ -60,7 +61,7 @@ class BackupState {
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       isBackingUp: isBackingUp ?? this.isBackingUp,
       isRestoring: isRestoring ?? this.isRestoring,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -190,7 +191,7 @@ class BackupController extends Notifier<BackupState> {
       }
       state = state.copyWith(
         connectionStatus: BackupConnectionStatus.disconnected,
-        errorMessage: 'Gagal menghubungkan akun Google.',
+        error: const GoogleConnectFailedException(),
       );
     }
   }
@@ -228,7 +229,7 @@ class BackupController extends Notifier<BackupState> {
     } catch (_) {
       state = state.copyWith(
         isBackingUp: false,
-        errorMessage: 'Backup gagal. Coba lagi nanti.',
+        error: const BackupFailedException(),
       );
     }
   }
@@ -299,7 +300,7 @@ class BackupController extends Notifier<BackupState> {
     final snapshotService = ref.read(backupSnapshotServiceProvider);
     if (!snapshotService.isValidSqliteFile(downloadFile)) {
       await downloadFile.delete();
-      throw StateError('File backup tidak valid.');
+      throw const InvalidBackupFileException();
     }
 
     await ref.read(appDatabaseProvider).close();
@@ -336,14 +337,14 @@ class BackupController extends Notifier<BackupState> {
     // terhubung (dari preferences), bukan keberadaan objek akun: token Drive
     // diambil dari grant yang sudah di-cache platform.
     if (!state.isConnected) {
-      throw StateError('Akun Google belum terhubung.');
+      throw const GoogleNotConnectedException();
     }
     final client = await authService.authenticatedHttpClient(
       account: _account,
       promptIfNecessary: promptIfNecessary,
     );
     if (client == null) {
-      throw StateError('Otorisasi Google Drive dibutuhkan.');
+      throw const GoogleAuthorizationRequiredException();
     }
     return (
       service: DriveBackupService(drive.DriveApi(client)),

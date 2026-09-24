@@ -3,6 +3,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class HistoryLineChart extends StatelessWidget {
@@ -24,6 +25,8 @@ class HistoryLineChart extends StatelessWidget {
       return const _ChartPlaceholder();
     }
 
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final values = history.map((item) => item.totalValue).toList();
@@ -54,12 +57,19 @@ class HistoryLineChart extends StatelessWidget {
           // Kanvasnya kosong bagi pembaca layar: angka sumbu di atas dan
           // bawah tidak menjelaskan bahwa keduanya batas sebuah grafik.
           Semantics(
-            label:
-                'Grafik nilai${hasCost ? ' dan modal' : ''} '
-                '${formatMonthYear(history.first.recordedAt)} sampai '
-                '${formatMonthYear(history.last.recordedAt)}, '
-                'terendah ${formatCurrency(minValue)}, '
-                'tertinggi ${formatCurrency(maxValue)}',
+            label: hasCost
+                ? l10n.historyChartSemanticLabelWithCost(
+                    formatMonthYear(history.first.recordedAt, locale),
+                    formatMonthYear(history.last.recordedAt, locale),
+                    formatCurrency(minValue),
+                    formatCurrency(maxValue),
+                  )
+                : l10n.historyChartSemanticLabelValueOnly(
+                    formatMonthYear(history.first.recordedAt, locale),
+                    formatMonthYear(history.last.recordedAt, locale),
+                    formatCurrency(minValue),
+                    formatCurrency(maxValue),
+                  ),
             child: SizedBox(
               height: 120,
               width: double.infinity,
@@ -83,17 +93,29 @@ class HistoryLineChart extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(formatMonthYear(history.first.recordedAt), style: axisStyle),
-              Text(formatMonthYear(history.last.recordedAt), style: axisStyle),
+              Text(
+                formatMonthYear(history.first.recordedAt, locale),
+                style: axisStyle,
+              ),
+              Text(
+                formatMonthYear(history.last.recordedAt, locale),
+                style: axisStyle,
+              ),
             ],
           ),
           if (hasCost) ...[
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                _LegendItem(color: colorScheme.primary, label: 'Nilai'),
+                _LegendItem(
+                  color: colorScheme.primary,
+                  label: l10n.assetTableValueHeader,
+                ),
                 const SizedBox(width: AppSpacing.lg),
-                _LegendItem(color: costColor, label: 'Modal'),
+                _LegendItem(
+                  color: costColor,
+                  label: l10n.dashboardCapitalLabel,
+                ),
               ],
             ),
           ],
@@ -146,7 +168,7 @@ class _ChartPlaceholder extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
-              'Grafik muncul setelah ada minimal dua pencatatan nilai.',
+              context.l10n.historyChartPlaceholderMessage,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),

@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/app_router.dart';
 import 'package:flutter_wasilah_app/core/theme/app_theme.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
+import 'package:flutter_wasilah_app/features/settings/providers/locale_provider.dart';
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -53,6 +55,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       title: 'Wasilah',
@@ -60,6 +63,9 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     );
   }

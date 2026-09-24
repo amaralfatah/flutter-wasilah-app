@@ -9,6 +9,7 @@ import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_port
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('dashboard shows total portfolio summary', (tester) async {
@@ -17,7 +18,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: DashboardPage()),
+        child: const MaterialApp(
+          locale: Locale('id'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: DashboardPage(),
+        ),
       ),
     );
 
@@ -47,7 +53,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: DashboardPage()),
+        child: const MaterialApp(
+          locale: Locale('id'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: DashboardPage(),
+        ),
       ),
     );
 
@@ -86,7 +97,12 @@ void main() {
           overrides: [
             portfolioRepositoryProvider.overrideWithValue(repository),
           ],
-          child: const MaterialApp(home: DashboardPage()),
+          child: const MaterialApp(
+            locale: Locale('id'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: DashboardPage(),
+          ),
         ),
       );
 

@@ -1,0 +1,313 @@
+{
+  "@@locale": "en",
+
+  "navDashboardLabel": "Home",
+  "settingsTitle": "Settings",
+  "settingsDisplaySection": "Display",
+  "settingsLanguageSection": "Language",
+  "settingsBackupSection": "Backup",
+  "settingsAppSection": "App",
+  "settingsAboutApp": "About app",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "languageIndonesian": "Indonesian",
+  "languageEnglish": "English",
+
+  "dialogCancel": "Cancel",
+
+  "commonSave": "Save",
+  "commonSaveChanges": "Save changes",
+  "commonDelete": "Delete",
+  "commonClose": "Close",
+  "commonAsset": "Asset",
+  "commonCategoryLabel": "Category",
+  "commonRecordedAtLabel": "Recording date",
+  "commonSelectDatePlaceholder": "Select date",
+  "commonCurrentValueLabel": "Current value",
+  "commonTotalCostOptionalLabel": "Total cost (optional)",
+  "commonReturnLabel": "Return",
+  "profitLossGainLabel": "Gain",
+  "profitLossLossLabel": "Loss",
+  "commonEmptyAssetsTitle": "No assets yet",
+  "commonAddAssetLabel": "Add asset",
+  "commonAddTargetLabel": "Add target",
+  "commonEmptyTargetsTitle": "No allocation targets yet",
+  "commonDeleteHistoryTitle": "Delete history?",
+  "commonDeleteHistoryMessage": "This month's history entry will be deleted.",
+  "commonHistoryDeletedMessage": "History deleted.",
+  "commonDeleteHistoryFailedMessage": "Failed to delete history.",
+  "commonEmptyHistoryTitle": "No history yet",
+
+  "updateAssetValueTitle": "Update asset value",
+  "assetDropdownLabel": "Asset",
+  "updateTypeLabel": "Update type",
+  "updateTypeOverride": "Override",
+  "updateTypeIncrement": "Add",
+  "totalValueFieldLabel": "Total asset value",
+  "incrementValueFieldLabel": "Value addition",
+  "totalValueFieldHelper": "The asset value will be set to this amount.",
+  "incrementValueFieldHelper": "This amount will be added to the current asset value.",
+  "totalCostFieldHelper": "Total funds already contributed. Leave blank if the cost is unchanged.",
+  "incrementCostFieldLabel": "Cost addition (optional)",
+  "incrementCostFieldHelper": "Newly contributed funds. Leave blank if the addition comes from investment gains.",
+  "noteFieldLabel": "Note (optional)",
+  "previewLabel": "Preview",
+  "addedValueLabel": "Added value",
+  "latestValueLabel": "Latest value",
+  "currentCostLabel": "Current cost",
+  "addedCostLabel": "Added cost",
+  "latestCostLabel": "Latest cost",
+  "assetValueUpdatedMessage": "{assetName} value updated successfully.",
+  "@assetValueUpdatedMessage": {
+    "placeholders": {"assetName": {"type": "String"}}
+  },
+  "updateAssetValueFailedMessage": "Failed to update asset value. Try again.",
+
+  "historyTitle": "History",
+  "emptyHistoryMessage": "History appears once an asset value is recorded.",
+  "allFilterLabel": "All",
+  "noFilteredDataTitle": "No data for this filter",
+  "noFilteredDataMessage": "Choose another year.",
+  "initialDataLabel": "Initial data",
+
+  "assetNotFoundTitle": "Asset not found",
+  "assetNotFoundMessage": "The asset you opened is not available.",
+  "totalCostLabel": "Total cost",
+  "allocationLabel": "Portfolio allocation",
+  "lastUpdatedLabel": "Last updated",
+  "updateValueButton": "Update value",
+  "historySectionTitle": "Value history",
+  "emptyAssetHistoryMessage": "History appears once the value is updated.",
+  "defaultAssetDetailTitle": "Asset detail",
+  "editAssetTooltip": "Edit asset",
+
+  "targetNotFoundMessage": "Target not found.",
+  "editTargetTitle": "Edit target",
+  "addTargetTitle": "Add target",
+  "targetAllocationLabel": "Allocation target",
+  "deleteTargetButton": "Delete target",
+  "targetPercentageRequired": "Allocation target is required.",
+  "targetPercentageInvalid": "Invalid allocation target.",
+  "targetPercentageRange": "Allocation target must be between 0 and 100%.",
+  "targetSaveFailedMessage": "Failed to save target. Try again.",
+  "deleteTargetTitle": "Delete target?",
+  "deleteTargetMessage": "The {category} target will be deleted.",
+  "@deleteTargetMessage": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+  "targetDeleteFailedMessage": "Failed to delete target. Try again.",
+  "targetPercentageExceededMessage": "Total allocation target cannot exceed 100%.",
+
+  "restoreTitle": "Restore from backup",
+  "backupListLoadFailedTitle": "Failed to load backup list",
+  "emptyBackupTitle": "No backups yet",
+  "emptyBackupMessage": "Your first backup will appear here.",
+  "restoreDataTitle": "Restore this data?",
+  "restoreDataMessage": "Your current portfolio data will be replaced with the backup from {date}. This action cannot be undone.",
+  "@restoreDataMessage": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "restoreLabel": "Restore",
+  "restoreSuccessMessage": "Data restored successfully.",
+  "restoreFailedMessage": "Restore failed. Try again.",
+
+  "assetNotFoundFormMessage": "Asset not found.",
+  "editAssetTitle": "Edit asset",
+  "addAssetTitle": "Add asset",
+  "assetNameLabel": "Asset name",
+  "assetNameRequired": "Asset name is required.",
+  "assetCodeLabel": "Asset code",
+  "assetCodeRequired": "Asset code is required.",
+  "initialValueLabel": "Initial value",
+  "totalCostOptionalHelper": "Total funds contributed, used to calculate profit/loss.",
+  "deleteAssetButton": "Delete asset",
+  "deleteAssetTitle": "Delete asset?",
+  "deleteAssetMessage": "The asset {assetName} and its value history will be deleted.",
+  "@deleteAssetMessage": {
+    "placeholders": {"assetName": {"type": "String"}}
+  },
+  "assetSaveFailedMessage": "Failed to save asset. Try again.",
+
+  "targetDetailTitle": "Target detail",
+  "editTargetTooltip": "Edit target",
+  "targetNotFoundTitle": "Target not found",
+  "targetNotFoundDetailMessage": "The target you opened is not available.",
+  "actualValueLabel": "Actual value",
+  "targetValueLabel": "Target value",
+  "assetsInCategoryTitle": "{category} assets",
+  "@assetsInCategoryTitle": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+  "emptyAssetsInCategoryMessage": "No assets in this category yet.",
+  "reasonableRangeTitle": "Reasonable range",
+  "toleranceInfoText": "{lower} - {upper} (tolerance ±{tolerance})",
+  "@toleranceInfoText": {
+    "placeholders": {
+      "lower": {"type": "String"},
+      "upper": {"type": "String"},
+      "tolerance": {"type": "String"}
+    }
+  },
+  "toleranceRuleExplanation": "Follows the 5/25 rule: a rebalance is needed once allocation drifts past 5 percentage points or 25% of the target, whichever is smaller.",
+
+  "assetsTitle": "Assets",
+  "addAssetTooltip": "Add asset",
+  "emptyAssetsListMessage": "Add your first asset to start tracking value.",
+  "inactiveAssetsLabel": "Inactive assets",
+
+  "targetTitle": "Target",
+  "addTargetTooltip": "Add target",
+  "emptyTargetsMessage": "Set the ideal share for each asset category so portfolio progress can be calculated.",
+
+  "connectGoogleMessage": "Connect a Google account to back up your portfolio data.",
+  "connectGoogleButton": "Connect Google account",
+  "connectedAccountFallback": "Google account connected",
+  "disconnectButton": "Disconnect",
+  "autoBackupLabel": "Automatic backup",
+  "restoringMessage": "Restoring data...",
+  "neverBackedUpMessage": "Never backed up.",
+  "lastBackupMessage": "Last backup: {date}",
+  "@lastBackupMessage": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "backupNowButton": "Back up now",
+  "restoreFromBackupButton": "Restore from backup",
+  "confirmBackupTitle": "Back up now?",
+  "confirmBackupMessage": "A copy of your current portfolio data will be uploaded to Google Drive and the next automatic backup schedule will be recalculated.",
+  "backupLabel": "Backup",
+  "confirmDisconnectTitle": "Disconnect Google account?",
+  "confirmDisconnectMessage": "Automatic backup will stop and the app will no longer have access to Google Drive. Data on this device and existing backups will not be deleted.",
+  "connectFailedMessage": "Failed to connect Google account.",
+  "backupFailedMessage": "Backup failed. Try again later.",
+  "googleNotConnectedMessage": "Google account is not connected.",
+  "googleAuthorizationRequiredMessage": "Google Drive authorization is required.",
+  "invalidBackupFileMessage": "Invalid backup file.",
+
+  "emptyAssetsDashboardMessage": "Record your first asset to see a summary.",
+  "noTargetsCardMessage": "Create an allocation target first so portfolio progress can be calculated correctly.",
+  "mainAssetsTitle": "Main assets",
+  "viewAllLabel": "View all",
+
+  "invalidCurrentValueMessage": "Asset value cannot be less than zero.",
+  "invalidTotalCostMessage": "Total cost cannot be less than zero.",
+
+  "dashboardPortfolioValueLabel": "Portfolio Value",
+  "dashboardCapitalLabel": "Capital",
+  "dashboardAssetCountLabel": "Asset Count",
+  "dashboardProfitLossFallbackLabel": "Profit/Loss",
+  "dashboardThisMonthLabel": "This Month",
+  "dashboardViewHistoryLabel": "View history",
+  "dashboardTotalPortfolioSemantic": "Total portfolio {totalValue}. {changeLabel}",
+  "@dashboardTotalPortfolioSemantic": {
+    "placeholders": {
+      "totalValue": {"type": "String"},
+      "changeLabel": {"type": "String"}
+    }
+  },
+  "dashboardProfitLossSemantic": "Capital {cost}. {profitLossLabel} {amount}",
+  "@dashboardProfitLossSemantic": {
+    "placeholders": {
+      "cost": {"type": "String"},
+      "profitLossLabel": {"type": "String"},
+      "amount": {"type": "String"}
+    }
+  },
+  "dashboardChangeUpLabel": "Up {percent}% this month",
+  "@dashboardChangeUpLabel": {
+    "placeholders": {"percent": {"type": "String"}}
+  },
+  "dashboardChangeDownLabel": "Down {percent}% this month",
+  "@dashboardChangeDownLabel": {
+    "placeholders": {"percent": {"type": "String"}}
+  },
+  "dashboardChangeStableLabel": "Stable this month",
+
+  "assetTableCodeHeader": "Code",
+  "assetTableNameHeader": "Name",
+  "assetTableAllocationHeader": "Allocation",
+  "assetTableValueHeader": "Value",
+  "assetTableUpdatedHeader": "Updated",
+  "assetTableProfitLossHeader": "P/L",
+  "assetSemanticValueAllocation": "Value {value}, allocation {allocation}",
+  "@assetSemanticValueAllocation": {
+    "placeholders": {
+      "value": {"type": "String"},
+      "allocation": {"type": "String"}
+    }
+  },
+  "assetSemanticCostProfitLoss": "Cost {cost}, {profitLossWord} {amount}",
+  "@assetSemanticCostProfitLoss": {
+    "placeholders": {
+      "cost": {"type": "String"},
+      "profitLossWord": {"type": "String"},
+      "amount": {"type": "String"}
+    }
+  },
+
+  "historyChartSemanticLabelWithCost": "Value and capital chart from {startMonth} to {endMonth}, lowest {minValue}, highest {maxValue}",
+  "@historyChartSemanticLabelWithCost": {
+    "placeholders": {
+      "startMonth": {"type": "String"},
+      "endMonth": {"type": "String"},
+      "minValue": {"type": "String"},
+      "maxValue": {"type": "String"}
+    }
+  },
+  "historyChartSemanticLabelValueOnly": "Value chart from {startMonth} to {endMonth}, lowest {minValue}, highest {maxValue}",
+  "@historyChartSemanticLabelValueOnly": {
+    "placeholders": {
+      "startMonth": {"type": "String"},
+      "endMonth": {"type": "String"},
+      "minValue": {"type": "String"},
+      "maxValue": {"type": "String"}
+    }
+  },
+  "historyChartPlaceholderMessage": "Chart appears once there are at least two recorded values.",
+
+  "allocationBadgeSemanticLabel": "Allocation {percentage} of portfolio",
+  "@allocationBadgeSemanticLabel": {
+    "placeholders": {"percentage": {"type": "String"}}
+  },
+
+  "targetProgressDefaultLabel": "Allocation Target",
+  "targetProgressDefaultSubtitle": "Ideal portfolio allocation",
+  "targetProgressSemanticLabel": "{label} {percentage} percent. {subtitle}",
+  "@targetProgressSemanticLabel": {
+    "placeholders": {
+      "label": {"type": "String"},
+      "percentage": {"type": "String"},
+      "subtitle": {"type": "String"}
+    }
+  },
+
+  "categoryDonutSemanticItem": "{category} {percentage} percent",
+  "@categoryDonutSemanticItem": {
+    "placeholders": {
+      "category": {"type": "String"},
+      "percentage": {"type": "String"}
+    }
+  },
+  "categoryDonutSemanticLabel": "Actual allocation chart by category: {summary}",
+  "@categoryDonutSemanticLabel": {
+    "placeholders": {"summary": {"type": "String"}}
+  },
+
+  "targetAllocationActualOfTarget": "Actual {actual} of target {target}",
+  "@targetAllocationActualOfTarget": {
+    "placeholders": {
+      "actual": {"type": "String"},
+      "target": {"type": "String"}
+    }
+  },
+  "targetAllocationProgressSemanticLabel": "Allocation progress {category}",
+  "@targetAllocationProgressSemanticLabel": {
+    "placeholders": {"category": {"type": "String"}}
+  },
+
+  "sectionHeaderInfoTooltip": "Info",
+
+  "appErrorDefaultTitle": "Data could not be loaded.",
+  "appErrorDefaultMessage": "Something went wrong while reading the data. Try again.",
+  "appErrorRetryButtonLabel": "Try again"
+}

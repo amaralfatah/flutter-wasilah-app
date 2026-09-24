@@ -12,6 +12,7 @@ abstract final class AppTheme {
         seedColor: AppColors.seed,
         brightness: brightness,
       ),
+      appBarTheme: const AppBarTheme(centerTitle: true),
     );
 
     return base.copyWith(textTheme: _tabularFigures(base.textTheme));

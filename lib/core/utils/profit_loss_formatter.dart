@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
 /// Format untung/rugi bertanda, misalnya `+Rp2.000.000 (+20%)`.
 ///
@@ -18,8 +19,9 @@ String formatProfitLoss(double profitLoss, {required double cost}) {
 
 /// `Untung` atau `Rugi` sesuai tanda [profitLoss]; rugi untuk impas juga,
 /// supaya label tetap tegas alih-alih ambigu "Untung/Rugi".
-String profitLossLabel(double profitLoss) {
-  return profitLoss < 0 ? 'Rugi' : 'Untung';
+String profitLossLabel(BuildContext context, double profitLoss) {
+  final l10n = context.l10n;
+  return profitLoss < 0 ? l10n.profitLossLossLabel : l10n.profitLossGainLabel;
 }
 
 /// Hijau untuk untung, merah untuk rugi, `null` (warna teks bawaan) untuk

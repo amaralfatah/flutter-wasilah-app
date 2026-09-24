@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
 class AllocationBadge extends StatelessWidget {
   const AllocationBadge({required this.percentage, super.key});
@@ -14,7 +15,9 @@ class AllocationBadge extends StatelessWidget {
     // Angka telanjang seperti "12%" tidak berarti apa-apa saat dibacakan;
     // konteksnya hanya terlihat dari posisinya di kartu.
     return Semantics(
-      label: 'Alokasi ${formatPercentage(percentage)} dari portofolio',
+      label: context.l10n.allocationBadgeSemanticLabel(
+        formatPercentage(percentage),
+      ),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.symmetric(

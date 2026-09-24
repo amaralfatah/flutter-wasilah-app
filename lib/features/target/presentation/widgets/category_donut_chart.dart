@@ -5,6 +5,7 @@ import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class CategoryDonutChart extends StatelessWidget {
@@ -14,6 +15,7 @@ class CategoryDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final segments = items
         .where((item) => item.actualPercentage > 0)
         .toList(growable: false);
@@ -29,8 +31,10 @@ class CategoryDonutChart extends StatelessWidget {
 
     final semanticsSummary = segments
         .map(
-          (item) => '${item.category.label} '
-              '${item.actualPercentage.toStringAsFixed(0)} persen',
+          (item) => l10n.categoryDonutSemanticItem(
+            item.category.label,
+            item.actualPercentage.toStringAsFixed(0),
+          ),
         )
         .join(', ');
 
@@ -40,7 +44,7 @@ class CategoryDonutChart extends StatelessWidget {
           // Grafiknya murni visual; tanpa label ini screen reader hanya
           // menemukan kotak kosong sebelum daftar legenda.
           Semantics(
-            label: 'Grafik alokasi aktual per kategori: $semanticsSummary',
+            label: l10n.categoryDonutSemanticLabel(semanticsSummary),
             child: SizedBox(
               height: 96,
               width: 96,

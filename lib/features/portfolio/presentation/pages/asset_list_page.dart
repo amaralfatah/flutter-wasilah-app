@@ -5,16 +5,20 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
 
+// Horizontal 0: daftar aset (AppListCard/_ArchivedAssetsSection) full-bleed
+// sampai tepi layar. Widget lain yang butuh jarak (mis. AppEmptyState)
+// mengatur padding horizontalnya sendiri.
 const _assetListPagePadding = EdgeInsets.fromLTRB(
+  0,
   AppSpacing.xl,
-  AppSpacing.xl,
-  AppSpacing.xl,
+  0,
   AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
 );
 
@@ -24,13 +28,14 @@ class AssetListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final assetsValue = ref.watch(assetListProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Aset')),
+      appBar: AppBar(title: Text(l10n.assetsTitle)),
       floatingActionButton: FloatingActionButton(
         heroTag: 'asset_list_create_asset_fab',
         onPressed: () => context.push(RouteNames.assetCreate),
-        tooltip: 'Tambah aset',
+        tooltip: l10n.addAssetTooltip,
         child: const Icon(Icons.add),
       ),
       body: AsyncValueView(
@@ -41,11 +46,14 @@ class AssetListPage extends ConsumerWidget {
             return RefreshablePageBody(
               onRefresh: () => ref.refresh(assetListProvider.future),
               padding: _assetListPagePadding,
-              child: AppEmptyState(
-                title: 'Belum ada aset',
-                message: 'Tambahkan aset pertama untuk mulai mencatat nilai.',
-                actionLabel: 'Tambah aset',
-                onAction: () => context.push(RouteNames.assetCreate),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                child: AppEmptyState(
+                  title: l10n.commonEmptyAssetsTitle,
+                  message: l10n.emptyAssetsListMessage,
+                  actionLabel: l10n.commonAddAssetLabel,
+                  onAction: () => context.push(RouteNames.assetCreate),
+                ),
               ),
             );
           }
@@ -70,6 +78,7 @@ class AssetListPage extends ConsumerWidget {
               children: [
                 if (activeAssets.isNotEmpty)
                   AppListCard(
+                    hasHeader: true,
                     children: [
                       const AssetTableHeader(),
                       ...activeAssets.map(
@@ -114,41 +123,37 @@ class _ArchivedAssetsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final mutedColor = colorScheme.onSurfaceVariant;
+    final l10n = context.l10n;
 
     // Sengaja tanpa Card/elevasi: dulu section ini sama menonjolnya dengan
     // daftar aset aktif, padahal isinya cuma arsip yang jarang dilihat.
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTileTheme(
-          data: ExpansionTileThemeData(
-            iconColor: mutedColor,
-            collapsedIconColor: mutedColor,
+    // Full-bleed (halaman sudah tanpa padding horizontal) supaya konsisten
+    // dengan daftar aktif.
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTileTheme(
+        data: ExpansionTileThemeData(
+          iconColor: mutedColor,
+          collapsedIconColor: mutedColor,
+        ),
+        child: ExpansionTile(
+          title: Text(
+            l10n.inactiveAssetsLabel,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: mutedColor),
           ),
-          child: ExpansionTile(
-            title: Text(
-              'Aset nonaktif',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: mutedColor),
-            ),
-            childrenPadding: EdgeInsets.zero,
-            children: [
-              const Divider(height: 1),
-              const AssetTableHeader(),
-              ...assets.map(
-                (asset) => AssetListItem(
-                  asset: asset,
-                  onTap: () => onTapAsset(asset),
-                ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          childrenPadding: EdgeInsets.zero,
+          children: [
+            const AssetTableHeader(),
+            ...assets.map(
+              (asset) => AssetListItem(
+                asset: asset,
+                onTap: () => onTapAsset(asset),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
