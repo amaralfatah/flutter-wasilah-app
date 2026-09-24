@@ -23,7 +23,6 @@ import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
-import 'package:flutter_wasilah_app/shared/widgets/section_header.dart';
 import 'package:go_router/go_router.dart';
 
 class AssetDetailPage extends ConsumerStatefulWidget {
@@ -99,36 +98,27 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 const AppSectionBand(),
-                const SizedBox(height: AppSpacing.lg),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: AppCard(
-                    padding: EdgeInsets.zero,
-                    child: AppListCard(
-                      children: [
-                        _MetricTile(
-                          label: l10n.commonCurrentValueLabel,
-                          value: formatCurrency(asset.currentValue),
-                        ),
-                        if (asset.totalCost case final totalCost?) ...[
-                          _MetricTile(
-                            label: l10n.totalCostLabel,
-                            value: formatCurrency(totalCost),
-                          ),
-                          _ProfitLossTile(asset: asset),
-                        ],
-                        _MetricTile(
-                          label: l10n.lastUpdatedLabel,
-                          value: formatFullDate(
-                            asset.lastUpdatedAt,
-                            Localizations.localeOf(context),
-                          ),
-                        ),
-                      ],
+                AppListCard(
+                  children: [
+                    _MetricTile(
+                      label: l10n.commonCurrentValueLabel,
+                      value: formatCurrency(asset.currentValue),
                     ),
-                  ),
+                    if (asset.totalCost case final totalCost?) ...[
+                      _MetricTile(
+                        label: l10n.totalCostLabel,
+                        value: formatCurrency(totalCost),
+                      ),
+                      _ProfitLossTile(asset: asset),
+                    ],
+                    _MetricTile(
+                      label: l10n.lastUpdatedLabel,
+                      value: formatFullDate(
+                        asset.lastUpdatedAt,
+                        Localizations.localeOf(context),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 const AppSectionBand(),
@@ -149,15 +139,8 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                const AppSectionBand(),
+                AppSectionBand(label: l10n.historySectionTitle),
                 const SizedBox(height: AppSpacing.lg),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: SectionHeader(title: l10n.historySectionTitle),
-                ),
-                const SizedBox(height: AppSpacing.sm),
                 historyValue.when(
                   data: (fullHistory) {
                     final history = fullHistory
@@ -187,35 +170,27 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                             history: history.reversed.toList(),
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                          ),
-                          child: AppCard(
-                            padding: EdgeInsets.zero,
-                            child: AppListCard(
-                              children: history
-                                  .map(
-                                    (snapshot) => Dismissible(
-                                      key: ValueKey(snapshot.id),
-                                      direction: DismissDirection.endToStart,
-                                      background:
-                                          const DeleteSwipeBackground(),
-                                      confirmDismiss: (_) =>
-                                          _confirmDeleteSnapshot(context),
-                                      onDismissed: (_) {
-                                        setState(
-                                          () => _removedIds.add(snapshot.id),
-                                        );
-                                        _deleteSnapshot(assetId, snapshot.id);
-                                      },
-                                      child: HistoryRow(snapshot: snapshot),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                            ),
-                          ),
+                        const SizedBox(height: AppSpacing.lg),
+                        const AppSectionBand(),
+                        AppListCard(
+                          children: history
+                              .map(
+                                (snapshot) => Dismissible(
+                                  key: ValueKey(snapshot.id),
+                                  direction: DismissDirection.endToStart,
+                                  background: const DeleteSwipeBackground(),
+                                  confirmDismiss: (_) =>
+                                      _confirmDeleteSnapshot(context),
+                                  onDismissed: (_) {
+                                    setState(
+                                      () => _removedIds.add(snapshot.id),
+                                    );
+                                    _deleteSnapshot(assetId, snapshot.id);
+                                  },
+                                  child: HistoryRow(snapshot: snapshot),
+                                ),
+                              )
+                              .toList(growable: false),
                         ),
                       ],
                     );
@@ -358,7 +333,8 @@ class _AssetHeader extends StatelessWidget {
             ],
           ),
         ),
-        Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+        if (asset.marketSymbol != null)
+          Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
       ],
     );
   }

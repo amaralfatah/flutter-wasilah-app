@@ -141,19 +141,10 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                     ],
                   ),
                 ),
-                // Dikelompokkan per tahun di bawah pita judul, seperti grup
-                // bulan di riwayat transaksi Stockbit. Pita tahun pertama
-                // sekaligus jadi pemisah dari blok chart/filter di atasnya
-                // — pita tebal tanpa label sebelumnya tumpuk dengan pita
-                // tahun sehingga terlihat menyatu.
-
-                for (final year in {
-                  for (final item in filteredHistory) item.recordedAt.year,
-                }) ...[
-                  AppSectionBand(label: '$year'),
+                if (filteredHistory.isNotEmpty) ...[
+                  const AppSectionBand(),
                   AppListCard(
                     children: filteredHistory
-                        .where((item) => item.recordedAt.year == year)
                         .map(
                           (item) => Dismissible(
                             key: ValueKey(item.id),
@@ -166,7 +157,6 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                             },
                             child: HistoryRow(
                               snapshot: item,
-                              showYear: false,
                               changeLabel: _formatChange(
                                 changeMap[item.id],
                                 isFirstSnapshot: item.id == firstSnapshotId,
