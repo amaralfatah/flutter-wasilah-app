@@ -13,6 +13,14 @@ import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 
+enum AssetValueUpdateType {
+  /// Penyesuaian total nilai aset (menimpa nilai lama).
+  override,
+
+  /// Penambahan ke nilai aset saat ini.
+  increment,
+}
+
 class UpdateAssetValuePage extends ConsumerStatefulWidget {
   const UpdateAssetValuePage({super.key, this.assetId});
 
@@ -29,6 +37,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   final _noteController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedAssetId;
+  AssetValueUpdateType _updateType = AssetValueUpdateType.override;
 
   @override
   void initState() {
@@ -58,8 +67,10 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         data: (assets) {
           final selectedAsset = _findSelectedAsset(assets);
           final previousValue = selectedAsset?.currentValue ?? 0;
-          final latestValue =
-              parseCurrencyInput(_valueController.text) ?? previousValue;
+          final inputValue = parseCurrencyInput(_valueController.text) ?? 0;
+          final latestValue = _updateType == AssetValueUpdateType.override
+              ? (parseCurrencyInput(_valueController.text) ?? previousValue)
+              : previousValue + inputValue;
 
           return Form(
             key: _formKey,
@@ -86,8 +97,44 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                   },
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'Tipe pembaruan',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<AssetValueUpdateType>(
+                    segments: const [
+                      ButtonSegment<AssetValueUpdateType>(
+                        value: AssetValueUpdateType.override,
+                        label: Text('Ubah Total'),
+                        icon: Icon(Icons.edit_outlined),
+                      ),
+                      ButtonSegment<AssetValueUpdateType>(
+                        value: AssetValueUpdateType.increment,
+                        label: Text('Tambah Nilai'),
+                        icon: Icon(Icons.add_circle_outline),
+                      ),
+                    ],
+                    selected: {_updateType},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        _updateType = newSelection.first;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 AppTextField(
-                  label: 'Total nilai aset saat ini',
+                  label: _updateType == AssetValueUpdateType.override
+                      ? 'Total nilai aset baru'
+                      : 'Nominal penambahan',
+                  helperText: _updateType == AssetValueUpdateType.override
+                      ? 'Nilai aset akan disesuaikan menjadi nominal ini.'
+                      : 'Nominal ini akan ditambahkan ke nilai aset saat ini.',
                   controller: _valueController,
                   keyboardType: TextInputType.number,
                   prefixText: 'Rp',
@@ -149,9 +196,16 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _PreviewRow(
-                        label: 'Nilai sebelumnya',
+                        label: 'Nilai saat ini',
                         value: formatCurrency(previousValue),
                       ),
+                      if (_updateType == AssetValueUpdateType.increment) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        _PreviewRow(
+                          label: 'Penambahan',
+                          value: '+ ${formatCurrency(inputValue)}',
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.sm),
                       _PreviewRow(
                         label: 'Nilai terbaru',
@@ -201,12 +255,16 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       return;
     }
 
+    final effectiveTotal = _updateType == AssetValueUpdateType.override
+        ? parsedValue
+        : (selectedAsset?.currentValue ?? 0) + parsedValue;
+
     try {
       await ref
           .read(updateAssetValueControllerProvider.notifier)
           .submit(
             assetId: selectedAssetId,
-            totalValue: parsedValue,
+            totalValue: effectiveTotal,
             recordedAt: selectedDate,
             note: _noteController.text,
           );
