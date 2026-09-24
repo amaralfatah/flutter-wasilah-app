@@ -30,11 +30,10 @@ class SettingsPage extends ConsumerWidget {
           SettingsTile(
             icon: Icons.contrast,
             title: l10n.settingsDarkMode,
-            trailing: Switch(
-              value: themeMode == ThemeMode.dark,
-              onChanged: (isDark) => _updateTheme(ref, isDark),
+            value: _themeModeLabel(l10n, themeMode),
+            onTap: () => unawaited(
+              _showThemeModePicker(context, ref, themeMode),
             ),
-            onTap: () => _updateTheme(ref, themeMode != ThemeMode.dark),
           ),
           const SettingsDivider(),
           SettingsTile(
@@ -60,11 +59,56 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _updateTheme(WidgetRef ref, bool isDark) {
-    unawaited(
-      ref
-          .read(themeModeProvider.notifier)
-          .updateThemeMode(isDark ? ThemeMode.dark : ThemeMode.light),
+  void _updateThemeMode(WidgetRef ref, ThemeMode mode) {
+    unawaited(ref.read(themeModeProvider.notifier).updateThemeMode(mode));
+  }
+
+  String _themeModeLabel(AppLocalizations l10n, ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.light => l10n.themeLight,
+      ThemeMode.dark => l10n.themeDark,
+      ThemeMode.system => l10n.themeSystem,
+    };
+  }
+
+  Future<void> _showThemeModePicker(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeMode current,
+  ) async {
+    final l10n = context.l10n;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: RadioGroup<ThemeMode>(
+            groupValue: current,
+            onChanged: (value) {
+              if (value == null) return;
+              _updateThemeMode(ref, value);
+              Navigator.pop(sheetContext);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<ThemeMode>(
+                  title: Text(l10n.themeSystem),
+                  value: ThemeMode.system,
+                ),
+                RadioListTile<ThemeMode>(
+                  title: Text(l10n.themeLight),
+                  value: ThemeMode.light,
+                ),
+                RadioListTile<ThemeMode>(
+                  title: Text(l10n.themeDark),
+                  value: ThemeMode.dark,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

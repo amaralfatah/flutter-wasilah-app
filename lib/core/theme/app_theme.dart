@@ -18,6 +18,7 @@ abstract final class AppTheme {
 
     final base = ThemeData(
       colorScheme: colorScheme,
+      fontFamily: 'Inter',
       visualDensity: VisualDensity.compact,
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -49,6 +50,7 @@ abstract final class AppTheme {
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: colorScheme.surface,
         indicatorColor: Colors.transparent,
         selectedIconTheme: IconThemeData(color: colorScheme.primary),
         selectedLabelTextStyle: _compactTextTheme(
@@ -60,7 +62,7 @@ abstract final class AppTheme {
         color: colorScheme.surface,
         margin: EdgeInsets.zero,
         shape: _compactShape.copyWith(
-          side: BorderSide(color: colorScheme.outlineVariant, width: 0),
+          side: BorderSide(color: colorScheme.outlineVariant, width: 0.3),
         ),
       ),
       // Chip filter Stockbit berbentuk pil bergaris tanpa centang; status
@@ -79,6 +81,26 @@ abstract final class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: _compactShape,
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
         ),
       ),
       dividerTheme: DividerThemeData(
