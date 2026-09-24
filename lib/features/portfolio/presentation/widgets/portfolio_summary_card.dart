@@ -3,6 +3,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
@@ -22,7 +23,12 @@ class PortfolioSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final change = summary.monthlyChangePercentage;
-    final profitLoss = _totalProfitLoss();
+    // Aset bernilai 0 sudah nonaktif/diarsipkan; historinya tetap tersimpan
+    // tapi tidak lagi ikut dihitung sebagai kepemilikan aktif.
+    final activeAssets = summary.assets
+        .where((asset) => asset.currentValue != 0)
+        .toList(growable: false);
+    final profitLoss = _totalProfitLoss(activeAssets);
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -58,7 +64,7 @@ class PortfolioSummaryCard extends StatelessWidget {
                       Expanded(
                         child: _SummaryMetric(
                           label: 'Jumlah Aset',
-                          value: '${summary.assets.length}',
+                          value: '${activeAssets.length}',
                         ),
                       ),
                     ],
@@ -144,17 +150,20 @@ class PortfolioSummaryCard extends StatelessWidget {
     );
   }
 
-  /// Untung/rugi gabungan; `null` bila belum ada aset yang punya modal.
-  /// Aset tanpa modal dianggap impas (modal = nilai) supaya tidak terbaca
-  /// sebagai untung — sama dengan perhitungan histori portofolio.
-  ({double amount, double cost, double? percentage})? _totalProfitLoss() {
-    if (summary.assets.every((asset) => asset.totalCost == null)) {
+  /// Untung/rugi gabungan dari [activeAssets]; `null` bila belum ada aset
+  /// yang punya modal. Aset tanpa modal dianggap impas (modal = nilai)
+  /// supaya tidak terbaca sebagai untung — sama dengan perhitungan histori
+  /// portofolio.
+  ({double amount, double cost, double? percentage})? _totalProfitLoss(
+    List<Asset> activeAssets,
+  ) {
+    if (activeAssets.every((asset) => asset.totalCost == null)) {
       return null;
     }
 
     var value = 0.0;
     var cost = 0.0;
-    for (final asset in summary.assets) {
+    for (final asset in activeAssets) {
       value += asset.currentValue;
       cost += asset.totalCost ?? asset.currentValue;
     }

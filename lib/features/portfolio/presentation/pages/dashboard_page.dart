@@ -40,6 +40,12 @@ class DashboardPage extends ConsumerWidget {
             );
           }
 
+          // Aset bernilai 0 sudah nonaktif/diarsipkan (lihat tab Aset);
+          // beranda hanya menonjolkan kepemilikan yang masih aktif.
+          final activeAssets = summary.assets
+              .where((asset) => asset.currentValue != 0)
+              .toList(growable: false);
+
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
             child: Column(
@@ -83,28 +89,30 @@ class DashboardPage extends ConsumerWidget {
                     onTap: () => context.go(RouteNames.target),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                SectionHeader(
-                  title: 'Aset utama',
-                  actionLabel: 'Lihat semua',
-                  onAction: () => context.go(RouteNames.assets),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppListCard(
-                  children: [
-                    const AssetTableHeader(),
-                    ...summary.assets
-                        .take(4)
-                        .map(
-                          (asset) => AssetListItem(
-                            asset: asset,
-                            onTap: () => context.push(
-                              '${RouteNames.assets}/${asset.id}',
+                if (activeAssets.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xl),
+                  SectionHeader(
+                    title: 'Aset utama',
+                    actionLabel: 'Lihat semua',
+                    onAction: () => context.go(RouteNames.assets),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppListCard(
+                    children: [
+                      const AssetTableHeader(),
+                      ...activeAssets
+                          .take(4)
+                          .map(
+                            (asset) => AssetListItem(
+                              asset: asset,
+                              onTap: () => context.push(
+                                '${RouteNames.assets}/${asset.id}',
+                              ),
                             ),
                           ),
-                        ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           );
