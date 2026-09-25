@@ -9,6 +9,7 @@ import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
@@ -226,6 +227,7 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                                       isFirstSnapshot:
                                           snapshot.id == firstSnapshotId,
                                     ),
+                                    detail: _fxDetail(context, snapshot),
                                   ),
                                 ),
                               )
@@ -278,6 +280,15 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
         SnackBar(content: Text(l10n.updateAssetValueFailedMessage)),
       );
     }
+  }
+
+  String? _fxDetail(BuildContext context, AssetSnapshot snapshot) {
+    final currency = snapshot.fxCurrency;
+    final rate = snapshot.fxRate;
+    if (currency == null || rate == null) {
+      return null;
+    }
+    return context.l10n.fxRateHistoryLabel(currency, formatCurrency(rate));
   }
 
   Future<void> _deleteSnapshot(String assetId, String snapshotId) async {

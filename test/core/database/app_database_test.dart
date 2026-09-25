@@ -167,6 +167,31 @@ void main() {
       expect(portfolio.read<double>('total_cost'), 15000000);
     });
 
+    test(
+      'adds empty exchange-rate columns to asset_snapshots on upgrade from '
+      'version 9',
+      () async {
+        final fresh = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        await fresh.customSelect('SELECT 1').get();
+        await fresh.close();
+        _downgradeToVersionNine(databaseFile);
+
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+
+        final snapshot = await database
+            .customSelect('SELECT * FROM asset_snapshots')
+            .getSingle();
+        expect(snapshot.read<double>('total_value'), 18200000);
+        expect(snapshot.readNullable<String>('fx_currency'), isNull);
+        expect(snapshot.readNullable<double>('fx_rate'), isNull);
+      },
+    );
+
     test('enforces foreign keys between holdings and assets', () async {
       final database = AppDatabase.forTesting(
         NativeDatabase.createInBackground(databaseFile),
@@ -305,6 +330,36 @@ void _seedFractionalVersionEight(File file) {
         NULL);
 
       PRAGMA user_version = 8;
+    ''');
+  } finally {
+    database.dispose();
+  }
+}
+
+/// Bentuk ulang `asset_snapshots` seperti skema v9 (tanpa kolom kurs), isi
+/// satu baris, lalu turunkan versinya ke 9.
+void _downgradeToVersionNine(File file) {
+  final database = sqlite3.sqlite3.open(file.path);
+  try {
+    database.execute('''
+      DROP TABLE asset_snapshots;
+      CREATE TABLE asset_snapshots (
+        id TEXT PRIMARY KEY NOT NULL,
+        asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
+        total_value REAL NOT NULL,
+        recorded_at INTEGER NOT NULL,
+        note TEXT,
+        total_cost REAL
+      );
+
+      INSERT INTO assets (id, name, code, category)
+      VALUES ('btc', 'Bitcoin', 'BTC', 'crypto');
+
+      INSERT INTO asset_snapshots (
+        id, asset_id, total_value, recorded_at, note, total_cost
+      ) VALUES ('btc-2026-07', 'btc', 18200000, 1784055600, NULL, NULL);
+
+      PRAGMA user_version = 9;
     ''');
   } finally {
     database.dispose();

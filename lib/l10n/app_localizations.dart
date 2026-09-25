@@ -1425,8 +1425,26 @@ abstract class AppLocalizations {
   /// Pesan saat kurs konversi ke IDR gagal dimuat
   ///
   /// In id, this message translates to:
-  /// **'Kurs tidak tersedia. Periksa koneksi atau pilih IDR.'**
+  /// **'Kurs tidak tersedia. Isi kurs manual atau pilih IDR.'**
   String get fxRateUnavailableMessage;
+
+  /// Label field kurs manual pada form update nilai
+  ///
+  /// In id, this message translates to:
+  /// **'Kurs 1 {currency} (Rp)'**
+  String fxRateFieldLabel(String currency);
+
+  /// Helper field kurs saat kurs Yahoo gagal dimuat
+  ///
+  /// In id, this message translates to:
+  /// **'Kurs pasar tidak tersedia. Isi kurs secara manual.'**
+  String get fxRateManualHint;
+
+  /// Kurs yang dipakai pada satu baris histori aset
+  ///
+  /// In id, this message translates to:
+  /// **'1 {currency} = {rate}'**
+  String fxRateHistoryLabel(String currency, String rate);
 
   /// Pemisahan master aset & portofolio
   ///

@@ -128,6 +128,39 @@ void main() {
       },
     );
 
+    test('stores the exchange rate used with each asset snapshot', () async {
+      final database = openDatabase();
+      addTearDown(database.close);
+      await DriftAssetRepository(database).createAsset(_btc);
+      final repository = DriftPortfolioRepository(database);
+
+      await repository.updateAssetValue(
+        assetId: 'btc',
+        totalValue: 16400000,
+        recordedAt: DateTime(2026, 6),
+        fxCurrency: 'usd',
+        fxRate: 16400,
+      );
+      await repository.updateAssetValue(
+        assetId: 'btc',
+        totalValue: 17000000,
+        recordedAt: DateTime(2026, 7),
+      );
+
+      final history = await repository.getAssetHistory('btc');
+      final june = history.firstWhere(
+        (item) => item.recordedAt == DateTime(2026, 6),
+      );
+      final july = history.firstWhere(
+        (item) => item.recordedAt == DateTime(2026, 7),
+      );
+
+      expect(june.fxCurrency, 'USD');
+      expect(june.fxRate, 16400);
+      expect(july.fxCurrency, isNull);
+      expect(july.fxRate, isNull);
+    });
+
     test(
       'replaces same-day asset history when updated twice on one date',
       () async {

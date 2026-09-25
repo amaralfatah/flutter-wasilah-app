@@ -757,7 +757,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get fxRateUnavailableMessage =>
-      'Kurs tidak tersedia. Periksa koneksi atau pilih IDR.';
+      'Kurs tidak tersedia. Isi kurs manual atau pilih IDR.';
+
+  @override
+  String fxRateFieldLabel(String currency) {
+    return 'Kurs 1 $currency (Rp)';
+  }
+
+  @override
+  String get fxRateManualHint =>
+      'Kurs pasar tidak tersedia. Isi kurs secara manual.';
+
+  @override
+  String fxRateHistoryLabel(String currency, String rate) {
+    return '1 $currency = $rate';
+  }
 
   @override
   String get assetHasHoldingMessage =>

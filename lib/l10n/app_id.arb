@@ -576,8 +576,23 @@
   },
   "fxRateLoadingMessage": "Mengambil kurs…",
   "@fxRateLoadingMessage": {"description": "Helper saat kurs konversi sedang dimuat"},
-  "fxRateUnavailableMessage": "Kurs tidak tersedia. Periksa koneksi atau pilih IDR.",
+  "fxRateUnavailableMessage": "Kurs tidak tersedia. Isi kurs manual atau pilih IDR.",
   "@fxRateUnavailableMessage": {"description": "Pesan saat kurs konversi ke IDR gagal dimuat"},
+  "fxRateFieldLabel": "Kurs 1 {currency} (Rp)",
+  "@fxRateFieldLabel": {
+    "description": "Label field kurs manual pada form update nilai",
+    "placeholders": {"currency": {"type": "String"}}
+  },
+  "fxRateManualHint": "Kurs pasar tidak tersedia. Isi kurs secara manual.",
+  "@fxRateManualHint": {"description": "Helper field kurs saat kurs Yahoo gagal dimuat"},
+  "fxRateHistoryLabel": "1 {currency} = {rate}",
+  "@fxRateHistoryLabel": {
+    "description": "Kurs yang dipakai pada satu baris histori aset",
+    "placeholders": {
+      "currency": {"type": "String"},
+      "rate": {"type": "String"}
+    }
+  },
 
   "assetHasHoldingMessage": "Aset masih ada di portofolio. Keluarkan dari portofolio dulu sebelum menghapus.",
   "@assetHasHoldingMessage": {"description": "Pemisahan master aset & portofolio"},

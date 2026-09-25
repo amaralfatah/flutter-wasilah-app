@@ -14,6 +14,11 @@ abstract class AssetSnapshot with _$AssetSnapshot implements ValueSnapshot {
 
     /// Total modal per tanggal pencatatan; `null` bila belum diisi.
     double? totalCost,
+
+    /// Kurs yang dipakai saat nilai dikonversi ke IDR (1 [fxCurrency] =
+    /// [fxRate] rupiah); `null` bila input sepenuhnya dalam IDR.
+    String? fxCurrency,
+    double? fxRate,
   }) = _AssetSnapshot;
   const AssetSnapshot._();
 
@@ -25,6 +30,8 @@ abstract class AssetSnapshot with _$AssetSnapshot implements ValueSnapshot {
       recordedAt: DateTime.parse(json['recordedAt'] as String),
       note: json['note'] as String?,
       totalCost: (json['totalCost'] as num?)?.toDouble(),
+      fxCurrency: json['fxCurrency'] as String?,
+      fxRate: (json['fxRate'] as num?)?.toDouble(),
     );
   }
 
@@ -36,6 +43,8 @@ abstract class AssetSnapshot with _$AssetSnapshot implements ValueSnapshot {
       'recordedAt': recordedAt.toIso8601String(),
       'note': note,
       'totalCost': totalCost,
+      'fxCurrency': fxCurrency,
+      'fxRate': fxRate,
     };
   }
 

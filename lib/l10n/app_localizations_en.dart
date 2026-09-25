@@ -758,7 +758,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fxRateUnavailableMessage =>
-      'Exchange rate unavailable. Check your connection or choose IDR.';
+      'Exchange rate unavailable. Enter the rate manually or choose IDR.';
+
+  @override
+  String fxRateFieldLabel(String currency) {
+    return '1 $currency rate (IDR)';
+  }
+
+  @override
+  String get fxRateManualHint =>
+      'Market rate unavailable. Enter the rate manually.';
+
+  @override
+  String fxRateHistoryLabel(String currency, String rate) {
+    return '1 $currency = $rate';
+  }
 
   @override
   String get assetHasHoldingMessage =>

@@ -326,6 +326,8 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
     double? quantity,
     double? avgBuyPrice,
     String? priceCurrency,
+    String? fxCurrency,
+    double? fxRate,
   }) async {
     await _wait();
 
@@ -359,6 +361,8 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
           recordedAt: recordedAt,
           note: note,
           totalCost: cost,
+          fxCurrency: fxCurrency,
+          fxRate: fxRate,
         ),
       )
       ..sort((left, right) => right.recordedAt.compareTo(left.recordedAt));

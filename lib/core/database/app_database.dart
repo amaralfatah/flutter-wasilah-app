@@ -9,7 +9,7 @@ import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 /// Versi skema saat ini. Dipisah dari [AppDatabase.schemaVersion] supaya bisa
 /// dibaca (mis. untuk validasi file backup) tanpa membuka koneksi database.
-const int appDatabaseSchemaVersion = 9;
+const int appDatabaseSchemaVersion = 10;
 
 class AppDatabase extends GeneratedDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openConnection());
@@ -75,7 +75,9 @@ class AppDatabase extends GeneratedDatabase {
           total_value REAL NOT NULL,
           recorded_at INTEGER NOT NULL,
           note TEXT,
-          total_cost REAL
+          total_cost REAL,
+          fx_currency TEXT,
+          fx_rate REAL
         );
       ''');
 
@@ -243,6 +245,10 @@ class AppDatabase extends GeneratedDatabase {
           UPDATE portfolio_snapshots
           SET total_value = ROUND(total_value), total_cost = ROUND(total_cost);
         ''');
+      }
+      if (from < 10) {
+        await _addColumnIfMissing('asset_snapshots', 'fx_currency', 'TEXT');
+        await _addColumnIfMissing('asset_snapshots', 'fx_rate', 'REAL');
       }
     },
     beforeOpen: (details) async {

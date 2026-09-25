@@ -24,13 +24,18 @@ Future<void> _pumpPage(
   WidgetTester tester,
   MockPortfolioRepository repository, {
   String? assetId,
+  bool marketRateAvailable = true,
 }) {
   return tester.pumpWidget(
     ProviderScope(
       overrides: [
         portfolioRepositoryProvider.overrideWithValue(repository),
         assetRepositoryProvider.overrideWithValue(repository),
-        fxRateToIdrProvider.overrideWith((ref, currency) => 16000),
+        fxRateToIdrProvider.overrideWith(
+          (ref, currency) => marketRateAvailable
+              ? 16000
+              : throw Exception('offline'),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('id'),
@@ -43,6 +48,22 @@ Future<void> _pumpPage(
 }
 
 Finder _field(String label) => find.widgetWithText(TextFormField, label);
+
+const _spy = Asset(
+  id: 'spy',
+  name: 'S&P 500',
+  code: 'SPY',
+  category: AssetCategory.stock,
+);
+
+Future<void> _switchValueToUsd(WidgetTester tester) async {
+  await tester.tap(
+    find.descendant(of: _field('Total nilai aset'), matching: find.text('IDR')),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('USD').last);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   testWidgets('update asset value form validates required fields', (
@@ -222,6 +243,66 @@ void main() {
       () => repository.getPositionByAssetId('spy'),
     );
     expect(position?.currentValue, 1608000);
+  });
+
+  testWidgets('manual USD rate overrides the market rate and is stored', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(() => repository.createAsset(_spy));
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+    await _switchValueToUsd(tester);
+
+    expect(find.text('Otomatis: Rp16.000'), findsOneWidget);
+    await tester.enterText(_field('Total nilai aset'), '100');
+    await tester.enterText(_field('Kurs 1 USD (Rp)'), '16500');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('≈ Rp1.650.000'), findsOneWidget);
+
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final history = await tester.runAsync(
+      () => repository.getAssetHistory('spy'),
+    );
+    expect(history!.first.totalValue, 1650000);
+    expect(history.first.fxCurrency, 'USD');
+    expect(history.first.fxRate, 16500);
+  });
+
+  testWidgets('manual USD rate unblocks saving when market rate is down', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(() => repository.createAsset(_spy));
+
+    await _pumpPage(
+      tester,
+      repository,
+      assetId: 'spy',
+      marketRateAvailable: false,
+    );
+    await tester.pumpAndSettle();
+    await _switchValueToUsd(tester);
+
+    expect(
+      find.text('Kurs pasar tidak tersedia. Isi kurs secara manual.'),
+      findsOneWidget,
+    );
+    await tester.enterText(_field('Total nilai aset'), '10');
+    await tester.enterText(_field('Kurs 1 USD (Rp)'), '15000');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('spy'),
+    );
+    expect(position?.currentValue, 150000);
   });
 
   testWidgets('quantity and avg price alone derive cost and value', (

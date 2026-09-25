@@ -47,6 +47,9 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   final _valueController = TextEditingController();
   final _noteController = TextEditingController();
 
+  /// Kurs USD manual; kosong berarti memakai kurs pasar (Yahoo).
+  final _rateController = TextEditingController();
+
   /// Nilai IDR persis untuk teks yang diisi program (prefill/konversi mata
   /// uang). Selama teksnya tidak disentuh, nilai asli dipakai supaya tidak
   /// bergeser akibat pembulatan kurs bolak-balik.
@@ -59,7 +62,10 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   String _avgCurrency = 'IDR';
   String _costCurrency = 'IDR';
   String _valueCurrency = 'IDR';
-  double? _usdRate;
+  double? _marketUsdRate;
+
+  /// Mata uang harga pasar aset terpilih (mis. `USD` untuk BTC-USD).
+  String? _marketQuoteCurrency;
 
   /// Nilai pasar (IDR) dari jumlah unit × harga terkini; dipakai otomatis
   /// bila field nilai kosong.
@@ -81,6 +87,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _costController.dispose();
     _valueController.dispose();
     _noteController.dispose();
+    _rateController.dispose();
     super.dispose();
   }
 
@@ -89,7 +96,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     final assetsValue = ref.watch(assetOverviewProvider);
     final submitState = ref.watch(updateAssetValueControllerProvider);
     final usdRate = ref.watch(fxRateToIdrProvider('USD'));
-    _usdRate = usdRate.valueOrNull;
+    _marketUsdRate = usdRate.valueOrNull;
     final l10n = context.l10n;
 
     return Scaffold(
@@ -262,6 +269,24 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                           }),
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  if (_usesUsd) ...[
+                    AppTextField(
+                      label: l10n.fxRateFieldLabel('USD'),
+                      helperText: _rateHelper(),
+                      controller: _rateController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: const [
+                        DecimalInputFormatter(maxDecimals: 2),
+                      ],
+                      validator: _validateDecimal,
+                      // Nominal hasil prefill dihitung ulang dengan kurs
+                      // baru, bukan memakai nilai IDR lamanya.
+                      onChanged: (_) => setState(_exactIdr.clear),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                   FormField<DateTime>(
                     initialValue: _selectedDate,
                     validator: validateSelectedDate,
@@ -443,10 +468,21 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     );
   }
 
+  String? _rateHelper() {
+    if (_rateController.text.trim().isNotEmpty) {
+      return null;
+    }
+    final marketRate = _marketUsdRate;
+    return marketRate == null
+        ? context.l10n.fxRateManualHint
+        : context.l10n.autoValueHelper(formatCurrency(marketRate));
+  }
+
   /// Nilai pasar dari jumlah unit (field) × harga terkini, dikonversi ke
   /// IDR. Harga non-IDR (mis. SPY/BTC dalam USD) dikonversi via kurs Yahoo
   /// `{cur}IDR=X`; nilai portofolio selalu disimpan IDR.
   double? _watchMarketValue(PortfolioPosition? asset) {
+    _marketQuoteCurrency = null;
     final symbol = asset?.marketSymbol;
     final quantity = _parseDecimalInput(_quantityController.text);
     if (symbol == null || quantity == null || quantity <= 0) {
@@ -456,7 +492,10 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     if (quote == null) {
       return null;
     }
-    final rate = ref.watch(fxRateToIdrProvider(quote.currency)).valueOrNull;
+    _marketQuoteCurrency = quote.currency.toUpperCase();
+    final rate = _marketQuoteCurrency == 'USD'
+        ? _rateOf('USD')
+        : ref.watch(fxRateToIdrProvider(quote.currency)).valueOrNull;
     if (rate == null) {
       return null;
     }
@@ -468,7 +507,21 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   double _lotToShareFactor(String? symbol) =>
       symbol != null && symbol.toUpperCase().endsWith('.JK') ? 100 : 1;
 
-  double? _rateOf(String currency) => currency == 'IDR' ? 1 : _usdRate;
+  double? _rateOf(String currency) =>
+      currency == 'IDR' ? 1 : _manualUsdRate ?? _marketUsdRate;
+
+  double? get _manualUsdRate {
+    final rate = _parseDecimalInput(_rateController.text);
+    return rate == null || rate <= 0 ? null : rate;
+  }
+
+  /// Kurs USD ikut menentukan hasil bila salah satu field nominal dalam USD
+  /// atau nilai pasar dihitung dari harga ber-USD.
+  bool get _usesUsd =>
+      _avgCurrency == 'USD' ||
+      _costCurrency == 'USD' ||
+      _valueCurrency == 'USD' ||
+      _marketQuoteCurrency == 'USD';
 
   String _formatMoney(double amount, String currency) => currency == 'IDR'
       ? formatNumber(amount)
@@ -747,6 +800,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             // Kas tak punya harga beli; mata uang nilainya yang disimpan
             // supaya kas USD (mis. saldo Gotrade) tetap USD saat dibuka lagi.
             priceCurrency: isCash ? _valueCurrency : _avgCurrency,
+            fxCurrency: _usesUsd ? 'USD' : null,
+            fxRate: _usesUsd ? _rateOf('USD') : null,
           );
 
       if (!mounted) {

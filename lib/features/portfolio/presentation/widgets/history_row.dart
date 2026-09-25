@@ -14,7 +14,11 @@ class HistoryRow extends StatelessWidget {
     this.changeLabel,
     this.changeColor,
     this.showYear = true,
+    this.detail,
   });
+
+  /// Keterangan kecil di bawah bulan, mis. kurs yang dipakai.
+  final String? detail;
 
   final ValueSnapshot snapshot;
 
@@ -53,6 +57,13 @@ class HistoryRow extends StatelessWidget {
                 if (showYear)
                   Text(
                     '${snapshot.recordedAt.year}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                if (detail != null)
+                  Text(
+                    detail!,
                     style: textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

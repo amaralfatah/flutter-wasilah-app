@@ -352,7 +352,10 @@
   "quantityLabel": "Quantity",
   "foreignValueHelper": "≈ {idrValue} (1 {currency} = {rate})",
   "fxRateLoadingMessage": "Fetching exchange rate…",
-  "fxRateUnavailableMessage": "Exchange rate unavailable. Check your connection or choose IDR.",
+  "fxRateUnavailableMessage": "Exchange rate unavailable. Enter the rate manually or choose IDR.",
+  "fxRateFieldLabel": "1 {currency} rate (IDR)",
+  "fxRateManualHint": "Market rate unavailable. Enter the rate manually.",
+  "fxRateHistoryLabel": "1 {currency} = {rate}",
 
   "assetHasHoldingMessage": "This asset is still in your portfolio. Remove it from the portfolio before deleting.",
   "removeFromPortfolioButton": "Remove from portfolio",

@@ -23,6 +23,8 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
     double? quantity,
     double? avgBuyPrice,
     String? priceCurrency,
+    String? fxCurrency,
+    double? fxRate,
   }) async {
     final assetError = validateSelectedAsset(assetId);
     if (assetError != null) {
@@ -56,6 +58,8 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             quantity: quantity,
             avgBuyPrice: avgBuyPrice,
             priceCurrency: priceCurrency,
+            fxCurrency: fxCurrency,
+            fxRate: fxRate,
           );
 
       invalidatePortfolioReads(ref, assetId);

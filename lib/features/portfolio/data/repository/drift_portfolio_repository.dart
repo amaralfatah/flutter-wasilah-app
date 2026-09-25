@@ -84,7 +84,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     final rows = await _database
         .customSelect(
           '''
-      SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note, total_cost
+      SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note,
+        total_cost, fx_currency, fx_rate
       FROM asset_snapshots
       WHERE asset_id = ?
       ORDER BY recorded_at DESC, row_id DESC
@@ -123,7 +124,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
       final row = await _database
           .customSelect(
             '''
-        SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note, total_cost
+        SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note,
+        total_cost, fx_currency, fx_rate
         FROM asset_snapshots
         WHERE id = ?
         LIMIT 1
@@ -247,6 +249,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     double? quantity,
     double? avgBuyPrice,
     String? priceCurrency,
+    String? fxCurrency,
+    double? fxRate,
   }) async {
     await _database.transaction(() async {
       final assetRow = await _database
@@ -271,6 +275,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
             totalCost ??
             await _historicalAssetCost(assetId, recordedAt) ??
             existing?.totalCost,
+        fxCurrency: fxRate == null ? null : _normalizePriceCurrency(fxCurrency),
+        fxRate: fxRate,
       );
 
       // current_value/last_updated_at harus mengikuti snapshot paling baru
@@ -420,7 +426,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     final row = await _database
         .customSelect(
           '''
-      SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note, total_cost
+      SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note,
+        total_cost, fx_currency, fx_rate
       FROM asset_snapshots
       WHERE asset_id = ?
       ORDER BY recorded_at DESC, row_id DESC
@@ -543,6 +550,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
       recordedAt: row.read<DateTime>('recorded_at'),
       note: row.readNullable<String>('note'),
       totalCost: row.readNullable<double>('total_cost'),
+      fxCurrency: row.readNullable<String>('fx_currency'),
+      fxRate: row.readNullable<double>('fx_rate'),
     );
   }
 
@@ -552,6 +561,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     required DateTime recordedAt,
     String? note,
     double? totalCost,
+    String? fxCurrency,
+    double? fxRate,
   }) async {
     // Nominal rupiah disimpan bulat: hasil konversi kurs menghasilkan pecahan,
     // sedangkan bilangan bulat dalam double selalu eksak saat dijumlahkan.
@@ -565,8 +576,9 @@ class DriftPortfolioRepository implements PortfolioRepository {
     await _database.customStatement(
       '''
       INSERT OR REPLACE INTO asset_snapshots (
-        id, asset_id, total_value, recorded_at, note, total_cost
-      ) VALUES (?, ?, ?, ?, ?, ?)
+        id, asset_id, total_value, recorded_at, note, total_cost,
+        fx_currency, fx_rate
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       [
         _buildSnapshotId(assetId, recordedAt),
@@ -575,6 +587,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
         _dateToSql(recordedAt),
         note,
         totalCost?.roundToDouble(),
+        fxCurrency,
+        fxRate,
       ],
     );
   }

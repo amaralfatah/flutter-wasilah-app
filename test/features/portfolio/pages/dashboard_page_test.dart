@@ -186,6 +186,8 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
     double? quantity,
     double? avgBuyPrice,
     String? priceCurrency,
+    String? fxCurrency,
+    double? fxRate,
   }) {
     throw UnimplementedError();
   }

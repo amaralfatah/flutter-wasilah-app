@@ -38,6 +38,10 @@ abstract interface class PortfolioRepository {
     double? quantity,
     double? avgBuyPrice,
     String? priceCurrency,
+
+    /// Kurs konversi ke IDR yang dipakai input ini; disimpan di histori.
+    String? fxCurrency,
+    double? fxRate,
   });
 
   /// Mengeluarkan aset dari portofolio: holding dan seluruh histori per-aset
