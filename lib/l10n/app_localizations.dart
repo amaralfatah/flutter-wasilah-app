@@ -242,12 +242,6 @@ abstract class AppLocalizations {
   /// **'Nilai saat ini'**
   String get commonCurrentValueLabel;
 
-  /// Label field total modal opsional
-  ///
-  /// In id, this message translates to:
-  /// **'Total modal (opsional)'**
-  String get commonTotalCostOptionalLabel;
-
   /// Label generik 'Return' (persentase imbal hasil)
   ///
   /// In id, this message translates to:
@@ -332,12 +326,6 @@ abstract class AppLocalizations {
   /// **'Aset'**
   String get assetDropdownLabel;
 
-  /// Label segmented button tipe pembaruan nilai
-  ///
-  /// In id, this message translates to:
-  /// **'Tipe pembaruan'**
-  String get updateTypeLabel;
-
   /// Opsi tipe pembaruan: menimpa nilai
   ///
   /// In id, this message translates to:
@@ -362,40 +350,10 @@ abstract class AppLocalizations {
   /// **'Penambahan nilai'**
   String get incrementValueFieldLabel;
 
-  /// Helper text field total nilai aset
-  ///
-  /// In id, this message translates to:
-  /// **'Nilai aset akan disesuaikan menjadi nominal ini.'**
-  String get totalValueFieldHelper;
-
-  /// Helper text field penambahan nilai
-  ///
-  /// In id, this message translates to:
-  /// **'Nominal ini akan ditambahkan ke nilai aset saat ini.'**
-  String get incrementValueFieldHelper;
-
-  /// Helper text field total modal (mode ubah)
-  ///
-  /// In id, this message translates to:
-  /// **'Total dana yang sudah disetor. Kosongkan bila modal tidak berubah.'**
-  String get totalCostFieldHelper;
-
-  /// Label field penambahan modal (mode tambah)
-  ///
-  /// In id, this message translates to:
-  /// **'Penambahan modal (opsional)'**
-  String get incrementCostFieldLabel;
-
-  /// Helper text field penambahan modal
-  ///
-  /// In id, this message translates to:
-  /// **'Dana yang baru disetor. Kosongkan bila penambahan berasal dari hasil investasi.'**
-  String get incrementCostFieldHelper;
-
   /// Label field catatan opsional
   ///
   /// In id, this message translates to:
-  /// **'Catatan (opsional)'**
+  /// **'Catatan'**
   String get noteFieldLabel;
 
   /// Judul kartu preview
@@ -421,12 +379,6 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Modal saat ini'**
   String get currentCostLabel;
-
-  /// Label baris preview tambahan modal
-  ///
-  /// In id, this message translates to:
-  /// **'Tambahan modal'**
-  String get addedCostLabel;
 
   /// Label baris preview modal terbaru
   ///
@@ -1452,59 +1404,29 @@ abstract class AppLocalizations {
   /// **'Harga rata-rata beli'**
   String get avgBuyPriceLabel;
 
-  /// Label field harga rata-rata beli per unit di form aset
-  ///
-  /// In id, this message translates to:
-  /// **'Harga rata-rata beli (opsional)'**
-  String get avgBuyPriceOptionalLabel;
-
-  /// Helper text field harga rata-rata beli
-  ///
-  /// In id, this message translates to:
-  /// **'Harga per unit di mata uang aslinya. Contoh: BMRI dalam IDR, SPY dalam USD.'**
-  String get avgBuyPriceHelper;
-
-  /// Label field jumlah unit yang dimiliki di form aset
-  ///
-  /// In id, this message translates to:
-  /// **'Jumlah unit (opsional)'**
-  String get quantityOptionalLabel;
-
   /// Label metrik jumlah unit
   ///
   /// In id, this message translates to:
   /// **'Jumlah unit'**
   String get quantityLabel;
 
-  /// Helper text field jumlah unit
+  /// Helper field nilai non-IDR: hasil konversi ke Rupiah
   ///
   /// In id, this message translates to:
-  /// **'Jumlah lot, lembar, koin, atau gram yang dimiliki.'**
-  String get quantityHelper;
+  /// **'≈ {idrValue} (1 {currency} = {rate})'**
+  String foreignValueHelper(String idrValue, String currency, String rate);
 
-  /// Label dropdown mata uang harga rata-rata beli
+  /// Helper saat kurs konversi sedang dimuat
   ///
   /// In id, this message translates to:
-  /// **'Mata uang harga beli'**
-  String get priceCurrencyLabel;
+  /// **'Mengambil kurs…'**
+  String get fxRateLoadingMessage;
 
-  /// Label chip saran nilai total aset dari jumlah unit x harga terkini
+  /// Pesan saat kurs konversi ke IDR gagal dimuat
   ///
   /// In id, this message translates to:
-  /// **'Pakai saran: {value}'**
-  String valueSuggestionChip(String value);
-
-  /// Rincian perhitungan saran nilai total aset
-  ///
-  /// In id, this message translates to:
-  /// **'{quantity} unit × {price} (harga terkini)'**
-  String valueSuggestionDetail(String quantity, String price);
-
-  /// Baris kurs konversi ke IDR pada saran nilai total aset
-  ///
-  /// In id, this message translates to:
-  /// **'Kurs: 1 {currency} = {rate}'**
-  String valueSuggestionFxDetail(String currency, String rate);
+  /// **'Kurs tidak tersedia. Periksa koneksi atau pilih IDR.'**
+  String get fxRateUnavailableMessage;
 
   /// Pemisahan master aset & portofolio
   ///
@@ -1589,6 +1511,30 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Catat nilai aset'**
   String get addToPortfolioLabel;
+
+  /// Helper field nominal kosong: nilai yang dipakai otomatis
+  ///
+  /// In id, this message translates to:
+  /// **'Otomatis: {value}'**
+  String autoValueHelper(String value);
+
+  /// Validasi minimal satu field nilai terisi
+  ///
+  /// In id, this message translates to:
+  /// **'Isi minimal salah satu: jumlah unit, harga beli, modal, atau nilai.'**
+  String get atLeastOneValueMessage;
+
+  /// Validasi angka tidak valid
+  ///
+  /// In id, this message translates to:
+  /// **'Angka tidak valid.'**
+  String get invalidNumberMessage;
+
+  /// Pesan saat nilai total tidak bisa diturunkan dari field lain
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai aset belum bisa dihitung. Isi nilai total atau jumlah unit.'**
+  String get valueUnresolvedMessage;
 }
 
 class _AppLocalizationsDelegate

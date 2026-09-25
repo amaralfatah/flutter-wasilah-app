@@ -64,6 +64,7 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
         }
 
         final asset = position.asset;
+        final isCash = asset.category == AssetCategory.cash;
 
         return Scaffold(
           appBar: _HoldingDetailAppBar(
@@ -108,7 +109,10 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                       label: l10n.commonCurrentValueLabel,
                       value: formatCurrency(position.currentValue),
                     ),
-                    if (position.totalCost case final totalCost?) ...[
+                    // Kas tak untung/rugi (modal = nilai), jadi modal &
+                    // untung/rugi hanya mengulang nilai.
+                    if (position.totalCost case final totalCost?
+                        when !isCash) ...[
                       _MetricTile(
                         label: l10n.totalCostLabel,
                         value: formatCurrency(totalCost),
@@ -188,6 +192,7 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                           ),
                           child: HistoryLineChart(
                             history: history.reversed.toList(),
+                            showCost: !isCash,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.lg),

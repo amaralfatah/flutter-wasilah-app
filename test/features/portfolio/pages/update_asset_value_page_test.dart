@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
@@ -18,6 +19,30 @@ void _useTallView(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
+Future<void> _pumpPage(
+  WidgetTester tester,
+  MockPortfolioRepository repository, {
+  String? assetId,
+}) {
+  return tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        portfolioRepositoryProvider.overrideWithValue(repository),
+        assetRepositoryProvider.overrideWithValue(repository),
+        fxRateToIdrProvider.overrideWith((ref, currency) => 16000),
+      ],
+      child: MaterialApp(
+        locale: const Locale('id'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: UpdateAssetValuePage(assetId: assetId),
+      ),
+    ),
+  );
+}
+
+Finder _field(String label) => find.widgetWithText(TextFormField, label);
+
 void main() {
   testWidgets('update asset value form validates required fields', (
     tester,
@@ -25,155 +50,108 @@ void main() {
     _useTallView(tester);
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          portfolioRepositoryProvider.overrideWithValue(repository),
-          assetRepositoryProvider.overrideWithValue(repository),
-        ],
-        child: const MaterialApp(
-          locale: Locale('id'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: UpdateAssetValuePage(),
-        ),
-      ),
-    );
-
+    await _pumpPage(tester, repository);
     await tester.pumpAndSettle();
     await tester.tap(find.byType(AppPrimaryButton));
     await tester.pumpAndSettle();
 
+    expect(find.text('Aset wajib dipilih.'), findsOneWidget);
     expect(
-      find.text('Aset wajib dipilih.', skipOffstage: false),
+      find.text(
+        'Isi minimal salah satu: jumlah unit, harga beli, modal, atau nilai.',
+      ),
       findsOneWidget,
     );
-    expect(
-      find.text('Nilai aset wajib diisi.', skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Tanggal wajib dipilih.', skipOffstage: false),
-      findsNothing,
-    );
+    expect(find.text('Tanggal wajib dipilih.'), findsNothing);
   });
 
   testWidgets('update asset value form defaults date to today', (tester) async {
+    _useTallView(tester);
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          portfolioRepositoryProvider.overrideWithValue(repository),
-          assetRepositoryProvider.overrideWithValue(repository),
-        ],
-        child: const MaterialApp(
-          locale: Locale('id'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: UpdateAssetValuePage(),
-        ),
-      ),
-    );
-
+    await _pumpPage(tester, repository);
     await tester.pumpAndSettle();
 
     expect(
-      find.text(
-        formatFullDate(DateTime.now(), const Locale('id')),
-        skipOffstage: false,
-      ),
+      find.text(formatFullDate(DateTime.now(), const Locale('id'))),
       findsOneWidget,
     );
-    expect(find.text('Pilih tanggal', skipOffstage: false), findsNothing);
+    expect(find.text('Pilih tanggal'), findsNothing);
   });
 
-  testWidgets(
-    'update asset value allows switching between Ubah and Tambah',
-    (tester) async {
-      final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            portfolioRepositoryProvider.overrideWithValue(repository),
-            assetRepositoryProvider.overrideWithValue(repository),
-          ],
-          child: const MaterialApp(
-            locale: Locale('id'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: UpdateAssetValuePage(assetId: 'btc'),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Defaults to 'Ubah'
-      expect(find.text('Total nilai aset'), findsOneWidget);
-      expect(
-        find.text('Nilai aset akan disesuaikan menjadi nominal ini.'),
-        findsOneWidget,
-      );
-
-      // Switch to 'Tambah'
-      await tester.tap(find.text('Tambah'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Penambahan nilai'), findsOneWidget);
-      expect(
-        find.text('Nominal ini akan ditambahkan ke nilai aset saat ini.'),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets('update asset value calculates increment correctly on submit', (
-    tester,
-  ) async {
+  testWidgets('cash can switch between Ubah and Tambah', (tester) async {
+    _useTallView(tester);
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          portfolioRepositoryProvider.overrideWithValue(repository),
-          assetRepositoryProvider.overrideWithValue(repository),
-        ],
-        child: const MaterialApp(
-          locale: Locale('id'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: UpdateAssetValuePage(assetId: 'btc'),
-        ),
-      ),
-    );
-
+    await _pumpPage(tester, repository, assetId: 'cash');
     await tester.pumpAndSettle();
 
-    // Switch to 'Tambah'
+    expect(find.text('Total nilai aset'), findsOneWidget);
+    // Kas cukup satu input.
+    expect(find.text('Total modal'), findsNothing);
+    expect(find.text('Jumlah unit'), findsNothing);
+
     await tester.tap(find.text('Tambah'));
     await tester.pumpAndSettle();
 
-    // Enter 1,000,000
-    final inputField = find.byType(TextFormField).first;
-    await tester.enterText(inputField, '1.000.000');
+    expect(find.text('Penambahan nilai'), findsOneWidget);
+  });
+
+  testWidgets('non-cash asset has no Tambah option', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+
+    await _pumpPage(tester, repository, assetId: 'btc');
     await tester.pumpAndSettle();
 
-    // BTC original value is 18,200,000 -> Latest should be 19,200,000 in
-    // preview
-    expect(find.text('Tambahan nilai'), findsOneWidget);
+    expect(find.text('Tambah'), findsNothing);
+    expect(find.text('Jumlah unit'), findsOneWidget);
+  });
 
-    // Scroll to and tap 'Simpan'
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
-    await tester.pumpAndSettle();
-    final saveButton = find.text('Simpan', skipOffstage: false).last;
-    await tester.tap(saveButton);
+  testWidgets('cash increment is added to the current value', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+
+    await _pumpPage(tester, repository, assetId: 'cash');
     await tester.pumpAndSettle();
 
-    // Verify asset value updated: 18,200,000 + 1,000,000 = 19,200,000
-    final btcPosition = await repository.getPositionByAssetId('btc');
-    expect(btcPosition?.currentValue, 19200000.0);
+    await tester.tap(find.text('Tambah'));
+    await tester.pumpAndSettle();
+    await tester.enterText(_field('Penambahan nilai'), '1.000.000');
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('cash'),
+    );
+    expect(position?.currentValue, 7600000);
+    // Modal kas mengikuti nilainya.
+    expect(position?.totalCost, 7600000);
+  });
+
+  testWidgets('cash in USD keeps its currency', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+
+    await _pumpPage(tester, repository, assetId: 'cash');
+    await tester.pumpAndSettle();
+
+    final valueField = _field('Total nilai aset');
+    await tester.tap(
+      find.descendant(of: valueField, matching: find.text('IDR')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USD').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(valueField, '20');
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('cash'),
+    );
+    expect(position?.currentValue, 320000);
+    expect(position?.priceCurrency, 'USD');
   });
 
   testWidgets('first update of an asset outside the portfolio adds it', (
@@ -193,23 +171,10 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          portfolioRepositoryProvider.overrideWithValue(repository),
-          assetRepositoryProvider.overrideWithValue(repository),
-        ],
-        child: const MaterialApp(
-          locale: Locale('id'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: UpdateAssetValuePage(assetId: 'gold'),
-        ),
-      ),
-    );
+    await _pumpPage(tester, repository, assetId: 'gold');
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField).first, '5.000.000');
+    await tester.enterText(_field('Total nilai aset'), '5.000.000');
     await tester.tap(find.byType(AppPrimaryButton));
     await tester.pumpAndSettle();
 
@@ -218,5 +183,87 @@ void main() {
     );
     expect(position?.currentValue, 5000000);
     expect(position?.priceCurrency, 'IDR');
+  });
+
+  testWidgets('value filled in USD is stored in IDR', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(
+      () => repository.createAsset(
+        const Asset(
+          id: 'spy',
+          name: 'S&P 500',
+          code: 'SPY',
+          category: AssetCategory.stock,
+        ),
+      ),
+    );
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+
+    final valueField = _field('Total nilai aset');
+    await tester.tap(
+      find.descendant(of: valueField, matching: find.text('IDR')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USD').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(valueField, '100.5');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('≈ Rp1.608.000'), findsOneWidget);
+
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('spy'),
+    );
+    expect(position?.currentValue, 1608000);
+  });
+
+  testWidgets('quantity and avg price alone derive cost and value', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(
+      () => repository.createAsset(
+        const Asset(
+          id: 'spy',
+          name: 'S&P 500',
+          code: 'SPY',
+          category: AssetCategory.stock,
+        ),
+      ),
+    );
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+
+    final avgField = _field('Harga rata-rata beli');
+    await tester.tap(find.descendant(of: avgField, matching: find.text('IDR')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USD').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_field('Jumlah unit'), '2');
+    await tester.enterText(avgField, '500');
+    await tester.pumpAndSettle();
+    // 2 × $500 × 16.000
+    expect(find.text('Otomatis: Rp16.000.000'), findsNWidgets(2));
+
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('spy'),
+    );
+    expect(position?.totalCost, 16000000);
+    // Tanpa simbol pasar, nilai mengikuti modal.
+    expect(position?.currentValue, 16000000);
+    expect(position?.avgBuyPrice, 500);
+    expect(position?.priceCurrency, 'USD');
   });
 }

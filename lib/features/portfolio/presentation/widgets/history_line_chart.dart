@@ -7,10 +7,18 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
 class HistoryLineChart extends StatelessWidget {
-  const HistoryLineChart({required this.history, super.key});
+  const HistoryLineChart({
+    required this.history,
+    super.key,
+    this.showCost = true,
+  });
 
   /// Snapshots ordered oldest to newest.
   final List<ValueSnapshot> history;
+
+  /// `false` untuk aset yang modalnya selalu sama dengan nilai (kas),
+  /// supaya garis modal tidak menimpa garis nilai.
+  final bool showCost;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +41,7 @@ class HistoryLineChart extends StatelessWidget {
     // Satu titik modal tidak membentuk garis dan hanya tampak seperti titik
     // nyasar, jadi garis modal baru digambar mulai dua pencatatan.
     final recordedCosts = history.map((item) => item.totalCost).toList();
-    final hasCost = recordedCosts.nonNulls.length >= 2;
+    final hasCost = showCost && recordedCosts.nonNulls.length >= 2;
     final costs = hasCost
         ? recordedCosts
         : List<double?>.filled(history.length, null);

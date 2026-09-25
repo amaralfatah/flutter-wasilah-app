@@ -81,9 +81,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get commonCurrentValueLabel => 'Nilai saat ini';
 
   @override
-  String get commonTotalCostOptionalLabel => 'Total modal (opsional)';
-
-  @override
   String get commonReturnLabel => 'Return';
 
   @override
@@ -127,9 +124,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get assetDropdownLabel => 'Aset';
 
   @override
-  String get updateTypeLabel => 'Tipe pembaruan';
-
-  @override
   String get updateTypeOverride => 'Ubah';
 
   @override
@@ -142,26 +136,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get incrementValueFieldLabel => 'Penambahan nilai';
 
   @override
-  String get totalValueFieldHelper =>
-      'Nilai aset akan disesuaikan menjadi nominal ini.';
-
-  @override
-  String get incrementValueFieldHelper =>
-      'Nominal ini akan ditambahkan ke nilai aset saat ini.';
-
-  @override
-  String get totalCostFieldHelper =>
-      'Total dana yang sudah disetor. Kosongkan bila modal tidak berubah.';
-
-  @override
-  String get incrementCostFieldLabel => 'Penambahan modal (opsional)';
-
-  @override
-  String get incrementCostFieldHelper =>
-      'Dana yang baru disetor. Kosongkan bila penambahan berasal dari hasil investasi.';
-
-  @override
-  String get noteFieldLabel => 'Catatan (opsional)';
+  String get noteFieldLabel => 'Catatan';
 
   @override
   String get previewLabel => 'Preview';
@@ -174,9 +149,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get currentCostLabel => 'Modal saat ini';
-
-  @override
-  String get addedCostLabel => 'Tambahan modal';
 
   @override
   String get latestCostLabel => 'Modal terbaru';
@@ -773,39 +745,19 @@ class AppLocalizationsId extends AppLocalizations {
   String get avgBuyPriceLabel => 'Harga rata-rata beli';
 
   @override
-  String get avgBuyPriceOptionalLabel => 'Harga rata-rata beli (opsional)';
-
-  @override
-  String get avgBuyPriceHelper =>
-      'Harga per unit di mata uang aslinya. Contoh: BMRI dalam IDR, SPY dalam USD.';
-
-  @override
-  String get quantityOptionalLabel => 'Jumlah unit (opsional)';
-
-  @override
   String get quantityLabel => 'Jumlah unit';
 
   @override
-  String get quantityHelper =>
-      'Jumlah lot, lembar, koin, atau gram yang dimiliki.';
-
-  @override
-  String get priceCurrencyLabel => 'Mata uang harga beli';
-
-  @override
-  String valueSuggestionChip(String value) {
-    return 'Pakai saran: $value';
+  String foreignValueHelper(String idrValue, String currency, String rate) {
+    return '≈ $idrValue (1 $currency = $rate)';
   }
 
   @override
-  String valueSuggestionDetail(String quantity, String price) {
-    return '$quantity unit × $price (harga terkini)';
-  }
+  String get fxRateLoadingMessage => 'Mengambil kurs…';
 
   @override
-  String valueSuggestionFxDetail(String currency, String rate) {
-    return 'Kurs: 1 $currency = $rate';
-  }
+  String get fxRateUnavailableMessage =>
+      'Kurs tidak tersedia. Periksa koneksi atau pilih IDR.';
 
   @override
   String get assetHasHoldingMessage =>
@@ -855,4 +807,20 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get addToPortfolioLabel => 'Catat nilai aset';
+
+  @override
+  String autoValueHelper(String value) {
+    return 'Otomatis: $value';
+  }
+
+  @override
+  String get atLeastOneValueMessage =>
+      'Isi minimal salah satu: jumlah unit, harga beli, modal, atau nilai.';
+
+  @override
+  String get invalidNumberMessage => 'Angka tidak valid.';
+
+  @override
+  String get valueUnresolvedMessage =>
+      'Nilai aset belum bisa dihitung. Isi nilai total atau jumlah unit.';
 }

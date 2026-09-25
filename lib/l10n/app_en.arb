@@ -27,7 +27,6 @@
   "commonRecordedAtLabel": "Recording date",
   "commonSelectDatePlaceholder": "Select date",
   "commonCurrentValueLabel": "Current value",
-  "commonTotalCostOptionalLabel": "Total cost (optional)",
   "commonReturnLabel": "Return",
   "profitLossGainLabel": "Gain",
   "profitLossLossLabel": "Loss",
@@ -43,22 +42,15 @@
 
   "updateAssetValueTitle": "Update asset value",
   "assetDropdownLabel": "Asset",
-  "updateTypeLabel": "Update type",
   "updateTypeOverride": "Override",
   "updateTypeIncrement": "Add",
   "totalValueFieldLabel": "Total asset value",
   "incrementValueFieldLabel": "Value addition",
-  "totalValueFieldHelper": "The asset value will be set to this amount.",
-  "incrementValueFieldHelper": "This amount will be added to the current asset value.",
-  "totalCostFieldHelper": "Total funds already contributed. Leave blank if the cost is unchanged.",
-  "incrementCostFieldLabel": "Cost addition (optional)",
-  "incrementCostFieldHelper": "Newly contributed funds. Leave blank if the addition comes from investment gains.",
-  "noteFieldLabel": "Note (optional)",
+  "noteFieldLabel": "Note",
   "previewLabel": "Preview",
   "addedValueLabel": "Added value",
   "latestValueLabel": "Latest value",
   "currentCostLabel": "Current cost",
-  "addedCostLabel": "Added cost",
   "latestCostLabel": "Latest cost",
   "assetValueUpdatedMessage": "{assetName} value updated successfully.",
   "@assetValueUpdatedMessage": {
@@ -357,16 +349,11 @@
   "chartPeriodPastFiveYears": "Past 5 Years",
 
   "avgBuyPriceLabel": "Average buy price",
-  "avgBuyPriceOptionalLabel": "Average buy price (optional)",
-  "avgBuyPriceHelper": "Price per unit in its native currency. E.g. BMRI in IDR, SPY in USD.",
-  "quantityOptionalLabel": "Quantity (optional)",
   "quantityLabel": "Quantity",
-  "quantityHelper": "Number of lots, shares, coins, or grams held.",
-  "priceCurrencyLabel": "Buy price currency",
+  "foreignValueHelper": "≈ {idrValue} (1 {currency} = {rate})",
+  "fxRateLoadingMessage": "Fetching exchange rate…",
+  "fxRateUnavailableMessage": "Exchange rate unavailable. Check your connection or choose IDR.",
 
-  "valueSuggestionChip": "Use suggestion: {value}",
-  "valueSuggestionDetail": "{quantity} units × {price} (latest price)",
-  "valueSuggestionFxDetail": "Rate: 1 {currency} = {rate}",
   "assetHasHoldingMessage": "This asset is still in your portfolio. Remove it from the portfolio before deleting.",
   "removeFromPortfolioButton": "Remove from portfolio",
   "removeFromPortfolioTitle": "Remove from portfolio?",
@@ -381,5 +368,10 @@
   "emptyPortfolioMessage": "Pick an asset from the master list and record its value.",
   "emptyPortfolioNoMasterMessage": "Create a master asset in Settings first, then record its value here.",
   "openMasterAssetsLabel": "Manage master assets",
-  "addToPortfolioLabel": "Record asset value"
+  "addToPortfolioLabel": "Record asset value",
+
+  "autoValueHelper": "Automatic: {value}",
+  "atLeastOneValueMessage": "Fill in at least one: quantity, buy price, cost, or value.",
+  "invalidNumberMessage": "Invalid number.",
+  "valueUnresolvedMessage": "Asset value cannot be calculated yet. Enter the total value or quantity."
 }

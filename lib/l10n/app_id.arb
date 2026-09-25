@@ -51,8 +51,6 @@
   "@commonSelectDatePlaceholder": {"description": "Placeholder saat tanggal belum dipilih"},
   "commonCurrentValueLabel": "Nilai saat ini",
   "@commonCurrentValueLabel": {"description": "Label nilai aset saat ini"},
-  "commonTotalCostOptionalLabel": "Total modal (opsional)",
-  "@commonTotalCostOptionalLabel": {"description": "Label field total modal opsional"},
   "commonReturnLabel": "Return",
   "@commonReturnLabel": {"description": "Label generik 'Return' (persentase imbal hasil)"},
   "profitLossGainLabel": "Untung",
@@ -82,8 +80,6 @@
   "@updateAssetValueTitle": {"description": "Judul halaman update nilai aset"},
   "assetDropdownLabel": "Aset",
   "@assetDropdownLabel": {"description": "Label dropdown pemilihan aset"},
-  "updateTypeLabel": "Tipe pembaruan",
-  "@updateTypeLabel": {"description": "Label segmented button tipe pembaruan nilai"},
   "updateTypeOverride": "Ubah",
   "@updateTypeOverride": {"description": "Opsi tipe pembaruan: menimpa nilai"},
   "updateTypeIncrement": "Tambah",
@@ -92,17 +88,7 @@
   "@totalValueFieldLabel": {"description": "Label field total nilai aset (mode ubah)"},
   "incrementValueFieldLabel": "Penambahan nilai",
   "@incrementValueFieldLabel": {"description": "Label field penambahan nilai (mode tambah)"},
-  "totalValueFieldHelper": "Nilai aset akan disesuaikan menjadi nominal ini.",
-  "@totalValueFieldHelper": {"description": "Helper text field total nilai aset"},
-  "incrementValueFieldHelper": "Nominal ini akan ditambahkan ke nilai aset saat ini.",
-  "@incrementValueFieldHelper": {"description": "Helper text field penambahan nilai"},
-  "totalCostFieldHelper": "Total dana yang sudah disetor. Kosongkan bila modal tidak berubah.",
-  "@totalCostFieldHelper": {"description": "Helper text field total modal (mode ubah)"},
-  "incrementCostFieldLabel": "Penambahan modal (opsional)",
-  "@incrementCostFieldLabel": {"description": "Label field penambahan modal (mode tambah)"},
-  "incrementCostFieldHelper": "Dana yang baru disetor. Kosongkan bila penambahan berasal dari hasil investasi.",
-  "@incrementCostFieldHelper": {"description": "Helper text field penambahan modal"},
-  "noteFieldLabel": "Catatan (opsional)",
+  "noteFieldLabel": "Catatan",
   "@noteFieldLabel": {"description": "Label field catatan opsional"},
   "previewLabel": "Preview",
   "@previewLabel": {"description": "Judul kartu preview"},
@@ -112,8 +98,6 @@
   "@latestValueLabel": {"description": "Label baris preview nilai terbaru"},
   "currentCostLabel": "Modal saat ini",
   "@currentCostLabel": {"description": "Label baris preview modal saat ini"},
-  "addedCostLabel": "Tambahan modal",
-  "@addedCostLabel": {"description": "Label baris preview tambahan modal"},
   "latestCostLabel": "Modal terbaru",
   "@latestCostLabel": {"description": "Label baris preview modal terbaru"},
   "assetValueUpdatedMessage": "Nilai {assetName} berhasil diperbarui.",
@@ -579,40 +563,22 @@
 
   "avgBuyPriceLabel": "Harga rata-rata beli",
   "@avgBuyPriceLabel": {"description": "Label metrik/field harga rata-rata beli per unit"},
-  "avgBuyPriceOptionalLabel": "Harga rata-rata beli (opsional)",
-  "@avgBuyPriceOptionalLabel": {"description": "Label field harga rata-rata beli per unit di form aset"},
-  "avgBuyPriceHelper": "Harga per unit di mata uang aslinya. Contoh: BMRI dalam IDR, SPY dalam USD.",
-  "@avgBuyPriceHelper": {"description": "Helper text field harga rata-rata beli"},
-  "quantityOptionalLabel": "Jumlah unit (opsional)",
-  "@quantityOptionalLabel": {"description": "Label field jumlah unit yang dimiliki di form aset"},
   "quantityLabel": "Jumlah unit",
   "@quantityLabel": {"description": "Label metrik jumlah unit"},
-  "quantityHelper": "Jumlah lot, lembar, koin, atau gram yang dimiliki.",
-  "@quantityHelper": {"description": "Helper text field jumlah unit"},
-  "priceCurrencyLabel": "Mata uang harga beli",
-  "@priceCurrencyLabel": {"description": "Label dropdown mata uang harga rata-rata beli"},
-
-  "valueSuggestionChip": "Pakai saran: {value}",
-  "@valueSuggestionChip": {
-    "description": "Label chip saran nilai total aset dari jumlah unit x harga terkini",
-    "placeholders": {"value": {"type": "String"}}
-  },
-  "valueSuggestionDetail": "{quantity} unit × {price} (harga terkini)",
-  "@valueSuggestionDetail": {
-    "description": "Rincian perhitungan saran nilai total aset",
+  "foreignValueHelper": "≈ {idrValue} (1 {currency} = {rate})",
+  "@foreignValueHelper": {
+    "description": "Helper field nilai non-IDR: hasil konversi ke Rupiah",
     "placeholders": {
-      "quantity": {"type": "String"},
-      "price": {"type": "String"}
-    }
-  },
-  "valueSuggestionFxDetail": "Kurs: 1 {currency} = {rate}",
-  "@valueSuggestionFxDetail": {
-    "description": "Baris kurs konversi ke IDR pada saran nilai total aset",
-    "placeholders": {
+      "idrValue": {"type": "String"},
       "currency": {"type": "String"},
       "rate": {"type": "String"}
     }
   },
+  "fxRateLoadingMessage": "Mengambil kurs…",
+  "@fxRateLoadingMessage": {"description": "Helper saat kurs konversi sedang dimuat"},
+  "fxRateUnavailableMessage": "Kurs tidak tersedia. Periksa koneksi atau pilih IDR.",
+  "@fxRateUnavailableMessage": {"description": "Pesan saat kurs konversi ke IDR gagal dimuat"},
+
   "assetHasHoldingMessage": "Aset masih ada di portofolio. Keluarkan dari portofolio dulu sebelum menghapus.",
   "@assetHasHoldingMessage": {"description": "Pemisahan master aset & portofolio"},
   "removeFromPortfolioButton": "Keluarkan dari portofolio",
@@ -640,5 +606,14 @@
   "openMasterAssetsLabel": "Kelola master aset",
   "@openMasterAssetsLabel": {"description": "Pemisahan halaman master aset & portofolio"},
   "addToPortfolioLabel": "Catat nilai aset",
-  "@addToPortfolioLabel": {"description": "Pemisahan halaman master aset & portofolio"}
+  "@addToPortfolioLabel": {"description": "Pemisahan halaman master aset & portofolio"},
+
+  "autoValueHelper": "Otomatis: {value}",
+  "@autoValueHelper": {"description": "Helper field nominal kosong: nilai yang dipakai otomatis", "placeholders": {"value": {"type": "String"}}},
+  "atLeastOneValueMessage": "Isi minimal salah satu: jumlah unit, harga beli, modal, atau nilai.",
+  "@atLeastOneValueMessage": {"description": "Validasi minimal satu field nilai terisi"},
+  "invalidNumberMessage": "Angka tidak valid.",
+  "@invalidNumberMessage": {"description": "Validasi angka tidak valid"},
+  "valueUnresolvedMessage": "Nilai aset belum bisa dihitung. Isi nilai total atau jumlah unit.",
+  "@valueUnresolvedMessage": {"description": "Pesan saat nilai total tidak bisa diturunkan dari field lain"}
 }

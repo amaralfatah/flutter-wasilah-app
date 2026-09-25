@@ -81,9 +81,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCurrentValueLabel => 'Current value';
 
   @override
-  String get commonTotalCostOptionalLabel => 'Total cost (optional)';
-
-  @override
   String get commonReturnLabel => 'Return';
 
   @override
@@ -127,9 +124,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetDropdownLabel => 'Asset';
 
   @override
-  String get updateTypeLabel => 'Update type';
-
-  @override
   String get updateTypeOverride => 'Override';
 
   @override
@@ -142,26 +136,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incrementValueFieldLabel => 'Value addition';
 
   @override
-  String get totalValueFieldHelper =>
-      'The asset value will be set to this amount.';
-
-  @override
-  String get incrementValueFieldHelper =>
-      'This amount will be added to the current asset value.';
-
-  @override
-  String get totalCostFieldHelper =>
-      'Total funds already contributed. Leave blank if the cost is unchanged.';
-
-  @override
-  String get incrementCostFieldLabel => 'Cost addition (optional)';
-
-  @override
-  String get incrementCostFieldHelper =>
-      'Newly contributed funds. Leave blank if the addition comes from investment gains.';
-
-  @override
-  String get noteFieldLabel => 'Note (optional)';
+  String get noteFieldLabel => 'Note';
 
   @override
   String get previewLabel => 'Preview';
@@ -174,9 +149,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentCostLabel => 'Current cost';
-
-  @override
-  String get addedCostLabel => 'Added cost';
 
   @override
   String get latestCostLabel => 'Latest cost';
@@ -774,38 +746,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get avgBuyPriceLabel => 'Average buy price';
 
   @override
-  String get avgBuyPriceOptionalLabel => 'Average buy price (optional)';
-
-  @override
-  String get avgBuyPriceHelper =>
-      'Price per unit in its native currency. E.g. BMRI in IDR, SPY in USD.';
-
-  @override
-  String get quantityOptionalLabel => 'Quantity (optional)';
-
-  @override
   String get quantityLabel => 'Quantity';
 
   @override
-  String get quantityHelper => 'Number of lots, shares, coins, or grams held.';
-
-  @override
-  String get priceCurrencyLabel => 'Buy price currency';
-
-  @override
-  String valueSuggestionChip(String value) {
-    return 'Use suggestion: $value';
+  String foreignValueHelper(String idrValue, String currency, String rate) {
+    return '≈ $idrValue (1 $currency = $rate)';
   }
 
   @override
-  String valueSuggestionDetail(String quantity, String price) {
-    return '$quantity units × $price (latest price)';
-  }
+  String get fxRateLoadingMessage => 'Fetching exchange rate…';
 
   @override
-  String valueSuggestionFxDetail(String currency, String rate) {
-    return 'Rate: 1 $currency = $rate';
-  }
+  String get fxRateUnavailableMessage =>
+      'Exchange rate unavailable. Check your connection or choose IDR.';
 
   @override
   String get assetHasHoldingMessage =>
@@ -855,4 +808,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addToPortfolioLabel => 'Record asset value';
+
+  @override
+  String autoValueHelper(String value) {
+    return 'Automatic: $value';
+  }
+
+  @override
+  String get atLeastOneValueMessage =>
+      'Fill in at least one: quantity, buy price, cost, or value.';
+
+  @override
+  String get invalidNumberMessage => 'Invalid number.';
+
+  @override
+  String get valueUnresolvedMessage =>
+      'Asset value cannot be calculated yet. Enter the total value or quantity.';
 }
