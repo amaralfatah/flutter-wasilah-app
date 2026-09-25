@@ -4,6 +4,7 @@ import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
@@ -25,7 +26,7 @@ class TargetDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final targetItemsValue = ref.watch(targetAllocationItemsProvider);
-    final assetsValue = ref.watch(assetListProvider);
+    final assetsValue = ref.watch(positionListProvider);
     final l10n = context.l10n;
 
     return Scaffold(
@@ -53,7 +54,8 @@ class TargetDetailPage extends ConsumerWidget {
               );
             }
 
-            final assets = assetsValue.asData?.value ?? const <Asset>[];
+            final assets =
+                assetsValue.asData?.value ?? const <PortfolioPosition>[];
             // Aset bernilai 0 sudah nonaktif/diarsipkan, sama seperti
             // perlakuan di Dashboard: tidak ikut dihitung sebagai kepemilikan
             // aktif dalam kategori ini.
@@ -66,7 +68,7 @@ class TargetDetailPage extends ConsumerWidget {
                 .toList(growable: false);
             return RefreshablePageBody(
               onRefresh: () {
-                ref.invalidate(assetListProvider);
+                ref.invalidate(positionListProvider);
                 return ref.refresh(targetAllocationItemsProvider.future);
               },
               // Horizontal 0: AppListCard full-bleed sampai tepi layar. Konten
@@ -123,7 +125,7 @@ class TargetDetailPage extends ConsumerWidget {
                           (asset) => AssetListItem(
                             asset: asset,
                             onTap: () => context.push(
-                              '${RouteNames.assets}/${asset.id}',
+                              '${RouteNames.portfolio}/${asset.id}',
                             ),
                           ),
                         ),

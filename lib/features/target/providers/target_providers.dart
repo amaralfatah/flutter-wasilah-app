@@ -58,7 +58,7 @@ final targetAllocationItemsProvider =
       final actualByCategory = <AssetCategory, double>{};
       final actualValueByCategory = <AssetCategory, double>{};
 
-      for (final asset in summary.assets) {
+      for (final asset in summary.positions) {
         actualByCategory.update(
           asset.category,
           (value) => value + asset.allocationPercentage,

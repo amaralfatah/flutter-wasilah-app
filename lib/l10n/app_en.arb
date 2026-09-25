@@ -128,11 +128,10 @@
   "assetNameRequired": "Asset name is required.",
   "assetCodeLabel": "Asset code",
   "assetCodeRequired": "Asset code is required.",
-  "initialValueLabel": "Initial value",
   "totalCostOptionalHelper": "Total funds contributed, used to calculate profit/loss.",
   "deleteAssetButton": "Delete asset",
   "deleteAssetTitle": "Delete asset?",
-  "deleteAssetMessage": "The asset {assetName} and its value history will be deleted.",
+  "deleteAssetMessage": "The asset {assetName} will be deleted.",
   "@deleteAssetMessage": {
     "placeholders": {"assetName": {"type": "String"}}
   },
@@ -160,9 +159,7 @@
   },
   "toleranceRuleExplanation": "Follows the 5/25 rule: a rebalance is needed once allocation drifts past 5 percentage points or 25% of the target, whichever is smaller.",
 
-  "assetsTitle": "Assets",
   "addAssetTooltip": "Add asset",
-  "emptyAssetsListMessage": "Add your first asset to start tracking value.",
   "inactiveAssetsLabel": "Inactive assets",
 
   "targetTitle": "Target",
@@ -369,5 +366,20 @@
 
   "valueSuggestionChip": "Use suggestion: {value}",
   "valueSuggestionDetail": "{quantity} units × {price} (latest price)",
-  "valueSuggestionFxDetail": "Rate: 1 {currency} = {rate}"
+  "valueSuggestionFxDetail": "Rate: 1 {currency} = {rate}",
+  "assetHasHoldingMessage": "This asset is still in your portfolio. Remove it from the portfolio before deleting.",
+  "removeFromPortfolioButton": "Remove from portfolio",
+  "removeFromPortfolioTitle": "Remove from portfolio?",
+  "removeFromPortfolioMessage": "The value and history of {assetName} will be removed from the portfolio. The asset itself is kept.",
+  "@removeFromPortfolioMessage": {"placeholders": {"assetName": {"type": "String"}}},
+  "portfolioTitle": "Portfolio",
+  "masterAssetsTitle": "Master assets",
+  "settingsDataSection": "Data",
+  "masterAssetsSettingsSubtitle": "Name, code, category, and market symbol",
+  "emptyMasterAssetsMessage": "Add assets (e.g. stocks, crypto, cash) before recording their value in the portfolio.",
+  "emptyPortfolioTitle": "Your portfolio is empty",
+  "emptyPortfolioMessage": "Pick an asset from the master list and record its value.",
+  "emptyPortfolioNoMasterMessage": "Create a master asset in Settings first, then record its value here.",
+  "openMasterAssetsLabel": "Manage master assets",
+  "addToPortfolioLabel": "Record asset value"
 }

@@ -5,7 +5,7 @@ import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
@@ -18,7 +18,7 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 class AssetListItem extends ConsumerWidget {
   const AssetListItem({required this.asset, super.key, this.onTap});
 
-  final Asset asset;
+  final PortfolioPosition asset;
   final VoidCallback? onTap;
 
   @override
@@ -92,7 +92,7 @@ class AssetListItem extends ConsumerWidget {
   }
 
   /// Harga pasar terkini via Yahoo Finance; `-` bila aset tidak punya
-  /// [Asset.marketSymbol] atau quote belum/gagal dimuat.
+  /// simbol pasar atau quote belum/gagal dimuat.
   String _currentPriceText(WidgetRef ref) {
     final marketSymbol = asset.marketSymbol;
     if (marketSymbol == null) {

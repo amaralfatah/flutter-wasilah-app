@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
@@ -10,7 +10,7 @@ class HistoryLineChart extends StatelessWidget {
   const HistoryLineChart({required this.history, super.key});
 
   /// Snapshots ordered oldest to newest.
-  final List<AssetSnapshot> history;
+  final List<ValueSnapshot> history;
 
   @override
   Widget build(BuildContext context) {

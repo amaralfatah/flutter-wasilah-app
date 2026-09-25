@@ -41,3 +41,10 @@ class MarketSymbolNotFoundException implements Exception {
 class MarketDataUnavailableException implements Exception {
   const MarketDataUnavailableException();
 }
+
+/// Dilempar saat menghapus master aset yang masih punya holding portofolio
+/// dan/atau histori snapshot (`asset_snapshots`). Aset harus dikeluarkan
+/// dari portofolio dulu sebelum bisa dihapus (RESTRICT).
+class AssetHasHoldingException implements Exception {
+  const AssetHasHoldingException();
+}

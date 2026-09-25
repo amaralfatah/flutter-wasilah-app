@@ -32,19 +32,24 @@ void main() {
       expect(await _countRows(database, 'allocation_targets'), 0);
     });
 
-    test('adds empty total_cost to assets on upgrade from version 3', () async {
-      _createVersionOneDatabase(databaseFile, userVersion: 3);
+    test(
+      'carries empty total_cost into holdings on upgrade from version 3',
+      () async {
+        _createVersionOneDatabase(databaseFile, userVersion: 3);
 
-      final database = AppDatabase.forTesting(
-        NativeDatabase.createInBackground(databaseFile),
-      );
-      addTearDown(database.close);
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
 
-      final row = await database
-          .customSelect("SELECT total_cost FROM assets WHERE id = 'btc'")
-          .getSingle();
-      expect(row.readNullable<double>('total_cost'), isNull);
-    });
+        final row = await database
+            .customSelect(
+              "SELECT total_cost FROM holdings WHERE asset_id = 'btc'",
+            )
+            .getSingle();
+        expect(row.readNullable<double>('total_cost'), isNull);
+      },
+    );
 
     test(
       'adds market_symbol column and market_quotes table on upgrade from '
@@ -71,6 +76,77 @@ void main() {
         expect(await _countRows(database, 'market_quotes'), 0);
       },
     );
+
+    test(
+      'splits assets into master data and holdings on upgrade from version 7',
+      () async {
+        _createVersionOneDatabase(databaseFile, userVersion: 7);
+        _seedVersionSevenColumns(databaseFile);
+
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+
+        final assetColumns = await _columnNames(database, 'assets');
+        expect(assetColumns, {
+          'id',
+          'name',
+          'code',
+          'category',
+          'market_symbol',
+        });
+
+        final master = await database
+            .customSelect("SELECT * FROM assets WHERE id = 'btc'")
+            .getSingle();
+        expect(master.read<String>('name'), 'Bitcoin');
+        expect(master.readNullable<String>('market_symbol'), 'BTC-USD');
+
+        final holding = await database
+            .customSelect("SELECT * FROM holdings WHERE asset_id = 'btc'")
+            .getSingle();
+        expect(holding.read<double>('current_value'), 18200000);
+        expect(holding.read<double>('total_cost'), 15000000);
+        expect(holding.read<double>('quantity'), 0.02);
+        expect(holding.read<double>('avg_buy_price'), 60000);
+        expect(holding.read<String>('price_currency'), 'USD');
+        expect(holding.read<int>('last_updated_at'), 1784055600);
+
+        // Riwayat porto pindah dari baris sentinel ke tabel sendiri.
+        final portfolioRows = await database
+            .customSelect('SELECT * FROM portfolio_snapshots')
+            .get();
+        expect(portfolioRows, hasLength(1));
+        expect(portfolioRows.single.read<String>('id'), 'portfolio-2026-07');
+        expect(portfolioRows.single.read<double>('total_value'), 18200000);
+        expect(portfolioRows.single.read<double>('total_cost'), 15000000);
+
+        final sentinelRows = await database
+            .customSelect(
+              'SELECT COUNT(*) AS count FROM asset_snapshots '
+              "WHERE asset_id = 'portfolio'",
+            )
+            .getSingle();
+        expect(sentinelRows.read<int>('count'), 0);
+        expect(await _countRows(database, 'asset_snapshots'), 1);
+      },
+    );
+
+    test('enforces foreign keys between holdings and assets', () async {
+      final database = AppDatabase.forTesting(
+        NativeDatabase.createInBackground(databaseFile),
+      );
+      addTearDown(database.close);
+
+      await expectLater(
+        database.customStatement(
+          'INSERT INTO holdings (asset_id, current_value, last_updated_at) '
+          "VALUES ('ghost', 1, 0)",
+        ),
+        throwsA(anything),
+      );
+    });
 
     test('creates market_quotes on a brand-new database', () async {
       final database = AppDatabase.forTesting(
@@ -131,6 +207,48 @@ void _createVersionOneDatabase(File file, {int userVersion = 1}) {
   } finally {
     database.dispose();
   }
+}
+
+/// Lengkapi database versi 1 dengan kolom v5-v7 dan baris snapshot
+/// sentinel `portfolio`, sehingga menyerupai database v7 sungguhan.
+void _seedVersionSevenColumns(File file) {
+  final database = sqlite3.sqlite3.open(file.path);
+  try {
+    database.execute('''
+      ALTER TABLE assets ADD COLUMN total_cost REAL;
+      ALTER TABLE assets ADD COLUMN market_symbol TEXT;
+      ALTER TABLE assets ADD COLUMN quantity REAL;
+      ALTER TABLE assets ADD COLUMN avg_buy_price REAL;
+      ALTER TABLE assets ADD COLUMN price_currency TEXT;
+      ALTER TABLE asset_snapshots ADD COLUMN total_cost REAL;
+
+      CREATE TABLE market_quotes (
+        symbol TEXT PRIMARY KEY NOT NULL,
+        currency TEXT NOT NULL,
+        price REAL NOT NULL,
+        previous_close REAL,
+        market_time INTEGER NOT NULL,
+        fetched_at INTEGER NOT NULL
+      );
+
+      UPDATE assets SET total_cost = 15000000, market_symbol = 'BTC-USD',
+        quantity = 0.02, avg_buy_price = 60000, price_currency = 'USD'
+      WHERE id = 'btc';
+
+      INSERT INTO asset_snapshots (
+        id, asset_id, total_value, recorded_at, note, total_cost
+      ) VALUES (
+        'portfolio-2026-07', 'portfolio', 18200000, 1784055600, NULL, 15000000
+      );
+    ''');
+  } finally {
+    database.dispose();
+  }
+}
+
+Future<Set<String>> _columnNames(AppDatabase database, String table) async {
+  final rows = await database.customSelect('PRAGMA table_info($table)').get();
+  return {for (final row in rows) row.read<String>('name')};
 }
 
 Future<int> _countRows(AppDatabase database, String tableName) async {

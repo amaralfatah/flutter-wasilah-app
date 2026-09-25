@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/holding.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
@@ -17,7 +20,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+        ],
         child: const MaterialApp(
           locale: Locale('id'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -46,7 +52,7 @@ void main() {
         totalValue: 0,
         monthlyChangePercentage: 0,
         targetProgressPercentage: 0,
-        assets: const [],
+        positions: const [],
         lastUpdatedAt: DateTime(2026, 7, 16),
       ),
     );
@@ -73,14 +79,19 @@ void main() {
     'dashboard shows target setup prompt when allocation targets are empty',
     (tester) async {
       final assets = [
-        Asset(
-          id: 'bbri',
-          name: 'Bank Rakyat Indonesia',
-          code: 'BBRI',
-          category: AssetCategory.stock,
-          currentValue: 12000000,
+        PortfolioPosition(
+          asset: const Asset(
+            id: 'bbri',
+            name: 'Bank Rakyat Indonesia',
+            code: 'BBRI',
+            category: AssetCategory.stock,
+          ),
+          holding: Holding(
+            assetId: 'bbri',
+            currentValue: 12000000,
+            lastUpdatedAt: DateTime(2026, 7, 16),
+          ),
           allocationPercentage: 100,
-          lastUpdatedAt: DateTime(2026, 7, 16),
         ),
       ];
       final repository = _DashboardNoTargetRepository(
@@ -88,7 +99,7 @@ void main() {
           totalValue: 12000000,
           monthlyChangePercentage: 2.5,
           targetProgressPercentage: 0,
-          assets: assets,
+          positions: assets,
           lastUpdatedAt: DateTime(2026, 7, 16),
         ),
       );
@@ -124,25 +135,20 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
   Future<List<AllocationTarget>> getAllocationTargets() async => const [];
 
   @override
-  Future<Asset?> getAssetById(String assetId) async =>
-      summary.assets.firstOrNull;
+  Future<List<PortfolioPosition>> getPositions() async => summary.positions;
 
   @override
-  Future<List<Asset>> getAssets() async => summary.assets;
+  Future<PortfolioPosition?> getPositionByAssetId(String assetId) async =>
+      summary.positions.where((position) => position.id == assetId).firstOrNull;
 
   @override
   Future<PortfolioSummary> getPortfolioSummary() async => summary;
 
   @override
-  Future<List<AssetSnapshot>> getPortfolioHistory() async => const [];
+  Future<List<PortfolioSnapshot>> getPortfolioHistory() async => const [];
 
   @override
   Future<List<AssetSnapshot>> getAssetHistory(String assetId) async => const [];
-
-  @override
-  Future<void> createAsset(Asset asset) {
-    throw UnimplementedError();
-  }
 
   @override
   Future<void> deleteAllocationTarget(String targetId) {
@@ -150,22 +156,22 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
   }
 
   @override
-  Future<void> deleteAsset(String assetId) {
+  Future<void> deleteAssetSnapshot(String snapshotId) {
     throw UnimplementedError();
   }
 
   @override
-  Future<void> deleteSnapshot(String snapshotId) {
+  Future<void> deletePortfolioSnapshot(String snapshotId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> removeFromPortfolio(String assetId) {
     throw UnimplementedError();
   }
 
   @override
   Future<void> saveAllocationTarget(AllocationTarget target) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> updateAsset(Asset asset) {
     throw UnimplementedError();
   }
 

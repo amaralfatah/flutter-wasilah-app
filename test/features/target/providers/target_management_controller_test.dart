@@ -11,7 +11,10 @@ void main() {
   test('saveTarget updates a valid target allocation', () async {
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
     final container = ProviderContainer(
-      overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        portfolioRepositoryProvider.overrideWithValue(repository),
+        assetRepositoryProvider.overrideWithValue(repository),
+      ],
     );
     addTearDown(container.dispose);
 
@@ -34,7 +37,10 @@ void main() {
   test('saveTarget rejects allocations above 100 percent total', () async {
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
     final container = ProviderContainer(
-      overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        portfolioRepositoryProvider.overrideWithValue(repository),
+        assetRepositoryProvider.overrideWithValue(repository),
+      ],
     );
     addTearDown(container.dispose);
 
@@ -53,7 +59,10 @@ void main() {
   test('target allocation items include actual and target values', () async {
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
     final container = ProviderContainer(
-      overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        portfolioRepositoryProvider.overrideWithValue(repository),
+        assetRepositoryProvider.overrideWithValue(repository),
+      ],
     );
     addTearDown(container.dispose);
 

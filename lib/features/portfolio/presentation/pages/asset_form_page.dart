@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
-import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/market/data/market_symbol_suggestion.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
@@ -31,14 +28,9 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
-  final _valueController = TextEditingController();
   final _marketSymbolController = TextEditingController();
-  late DateTime _recordedAt;
   AssetCategory _category = AssetCategory.other;
-  String _priceCurrency = 'IDR';
   bool _didPopulate = false;
-
-  static const _priceCurrencies = ['IDR', 'USD'];
 
   // Prefill simbol Yahoo berhenti begitu user pernah mengetik di field itu
   // sendiri (termasuk mengosongkannya), supaya tidak menimpa pilihan user.
@@ -47,17 +39,9 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   bool get _isEditing => widget.assetId != null;
 
   @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    _recordedAt = DateTime(now.year, now.month, now.day);
-  }
-
-  @override
   void dispose() {
     _nameController.dispose();
     _codeController.dispose();
-    _valueController.dispose();
     _marketSymbolController.dispose();
     super.dispose();
   }
@@ -151,53 +135,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                     _maybeSuggestMarketSymbol();
                   },
           ),
-          if (!_isEditing) ...[
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              label: l10n.initialValueLabel,
-              controller: _valueController,
-              keyboardType: TextInputType.number,
-              prefixText: 'Rp',
-              inputFormatters: const [RupiahInputFormatter()],
-              validator: validateCurrencyValue,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            InkWell(
-              onTap: submitState.isLoading ? null : _selectDate,
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: l10n.commonRecordedAtLabel,
-                  suffixIcon: const Icon(Icons.calendar_today_outlined),
-                ),
-                child: Text(
-                  formatFullDate(_recordedAt, Localizations.localeOf(context)),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.lg),
-          DropdownButtonFormField<String>(
-            initialValue: _priceCurrency,
-            decoration: InputDecoration(labelText: l10n.priceCurrencyLabel),
-            items: _priceCurrencies
-                .map(
-                  (currency) => DropdownMenuItem(
-                    value: currency,
-                    child: Text(currency),
-                  ),
-                )
-                .toList(),
-            onChanged: submitState.isLoading
-                ? null
-                : (value) {
-                    if (value == null) {
-                      return;
-                    }
-                    setState(() {
-                      _priceCurrency = value;
-                    });
-                  },
-          ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
             label: _isEditing ? l10n.commonSaveChanges : l10n.addAssetTitle,
@@ -230,7 +167,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _codeController.text = asset.code;
     _category = asset.category;
     _marketSymbolController.text = asset.marketSymbol ?? '';
-    _priceCurrency = asset.effectivePriceCurrency;
     // Mode edit menampilkan nilai tersimpan apa adanya, tanpa prefill
     // otomatis menimpanya saat kategori/kode di form ini diubah.
     _marketSymbolEditedByUser = true;
@@ -247,23 +183,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _marketSymbolController.text = suggestion ?? '';
   }
 
-  Future<void> _selectDate() async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _recordedAt,
-      firstDate: DateTime(_recordedAt.year - 10),
-      lastDate: DateTime(_recordedAt.year + 1),
-    );
-
-    if (pickedDate == null) {
-      return;
-    }
-
-    setState(() {
-      _recordedAt = pickedDate;
-    });
-  }
-
   Future<void> _submit(Asset? editingAsset) async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -271,21 +190,13 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
 
     try {
       if (editingAsset == null) {
-        final value = parseCurrencyInput(_valueController.text);
-        if (value == null) {
-          return;
-        }
-
         await ref
             .read(assetManagementControllerProvider.notifier)
             .createAsset(
               name: _nameController.text,
               code: _codeController.text,
               category: _category,
-              currentValue: value,
-              recordedAt: _recordedAt,
               marketSymbol: _marketSymbolController.text,
-              priceCurrency: _priceCurrency,
             );
       } else {
         await ref
@@ -296,7 +207,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                 code: _codeController.text,
                 category: _category,
                 marketSymbol: _marketSymbolController.text,
-                priceCurrency: _priceCurrency,
               ),
             );
       }
@@ -334,7 +244,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
       if (!mounted) {
         return;
       }
-      context.go(RouteNames.assets);
+      context.pop();
     } catch (error) {
       if (!mounted) {
         return;
@@ -346,8 +256,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   void _showError(Object error) {
     final l10n = context.l10n;
     final message = switch (error) {
-      InvalidCurrentValueException() => l10n.invalidCurrentValueMessage,
-      InvalidTotalCostException() => l10n.invalidTotalCostMessage,
+      AssetHasHoldingException() => l10n.assetHasHoldingMessage,
       ArgumentError() => error.message.toString(),
       _ => l10n.assetSaveFailedMessage,
     };

@@ -5,9 +5,9 @@ import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_list_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_history_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_detail_page.dart';
@@ -47,12 +47,12 @@ void main() {
     expect(find.byType(RefreshIndicator), findsOneWidget);
   });
 
-  testWidgets('asset list uses pull-to-refresh for top-level content', (
+  testWidgets('portfolio page uses pull-to-refresh for top-level content', (
     tester,
   ) async {
     await tester.pumpWidget(
       _buildApp(
-        child: const AssetListPage(),
+        child: const PortfolioPage(),
         repository: MockPortfolioRepository(simulatedDelay: Duration.zero),
       ),
     );
@@ -132,6 +132,8 @@ void main() {
     );
 
     await tester.pumpAndSettle();
+    // Master aset dikelola dari Setelan, terpisah dari tab Portofolio.
+    expect(find.text('Master aset'), findsOneWidget);
     expect(find.text('Tentang aplikasi'), findsOneWidget);
     await tester.ensureVisible(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
@@ -150,6 +152,7 @@ Widget _buildApp({
   return ProviderScope(
     overrides: [
       portfolioRepositoryProvider.overrideWithValue(repository),
+      assetRepositoryProvider.overrideWithValue(repository),
       preferencesServiceProvider.overrideWithValue(_FakePreferencesService()),
     ],
     child: MaterialApp(

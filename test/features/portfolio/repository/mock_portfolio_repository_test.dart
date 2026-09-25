@@ -8,7 +8,7 @@ void main() {
       final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
       final beforeSummary = await repository.getPortfolioSummary();
-      final beforeBitcoin = await repository.getAssetById('btc');
+      final beforeBitcoin = await repository.getPositionByAssetId('btc');
       final beforeHistory = await repository.getAssetHistory('btc');
 
       expect(beforeSummary.totalValue, 55000000);
@@ -24,7 +24,7 @@ void main() {
       );
 
       final afterSummary = await repository.getPortfolioSummary();
-      final afterBitcoin = await repository.getAssetById('btc');
+      final afterBitcoin = await repository.getPositionByAssetId('btc');
       final afterHistory = await repository.getAssetHistory('btc');
 
       expect(afterSummary.totalValue, 86800000);
@@ -58,7 +58,7 @@ void main() {
         note: 'Update pertengahan bulan',
       );
 
-      final asset = await repository.getAssetById('btc');
+      final asset = await repository.getPositionByAssetId('btc');
       final history = await repository.getAssetHistory('btc');
 
       expect(asset, isNotNull);

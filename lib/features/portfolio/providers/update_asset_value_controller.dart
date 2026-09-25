@@ -58,12 +58,22 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             priceCurrency: priceCurrency,
           );
 
-      ref.invalidate(portfolioSummaryProvider);
-      ref.invalidate(assetListProvider);
-      ref.invalidate(portfolioHistoryProvider);
-      ref.invalidate(assetDetailProvider(assetId));
-      ref.invalidate(assetHistoryProvider(assetId));
+      invalidatePortfolioReads(ref, assetId);
 
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Mengeluarkan aset dari portofolio; master aset tetap ada.
+  Future<void> removeFromPortfolio(String assetId) async {
+    state = const AsyncLoading();
+
+    try {
+      await ref.read(portfolioRepositoryProvider).removeFromPortfolio(assetId);
+      invalidatePortfolioReads(ref, assetId);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

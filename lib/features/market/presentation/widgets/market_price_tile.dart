@@ -31,7 +31,7 @@ class MarketPriceTile extends ConsumerWidget {
 
     return AppCard(
       onTap: () => context.push(
-        '${RouteNames.assets}/$assetId/${RouteNames.assetMarketSegment}',
+        '${RouteNames.portfolio}/$assetId/${RouteNames.portfolioMarketSegment}',
       ),
       child: Row(
         children: [

@@ -349,9 +349,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assetCodeRequired => 'Asset code is required.';
 
   @override
-  String get initialValueLabel => 'Initial value';
-
-  @override
   String get totalCostOptionalHelper =>
       'Total funds contributed, used to calculate profit/loss.';
 
@@ -363,7 +360,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteAssetMessage(String assetName) {
-    return 'The asset $assetName and its value history will be deleted.';
+    return 'The asset $assetName will be deleted.';
   }
 
   @override
@@ -409,14 +406,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Follows the 5/25 rule: a rebalance is needed once allocation drifts past 5 percentage points or 25% of the target, whichever is smaller.';
 
   @override
-  String get assetsTitle => 'Assets';
-
-  @override
   String get addAssetTooltip => 'Add asset';
-
-  @override
-  String get emptyAssetsListMessage =>
-      'Add your first asset to start tracking value.';
 
   @override
   String get inactiveAssetsLabel => 'Inactive assets';
@@ -816,4 +806,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String valueSuggestionFxDetail(String currency, String rate) {
     return 'Rate: 1 $currency = $rate';
   }
+
+  @override
+  String get assetHasHoldingMessage =>
+      'This asset is still in your portfolio. Remove it from the portfolio before deleting.';
+
+  @override
+  String get removeFromPortfolioButton => 'Remove from portfolio';
+
+  @override
+  String get removeFromPortfolioTitle => 'Remove from portfolio?';
+
+  @override
+  String removeFromPortfolioMessage(String assetName) {
+    return 'The value and history of $assetName will be removed from the portfolio. The asset itself is kept.';
+  }
+
+  @override
+  String get portfolioTitle => 'Portfolio';
+
+  @override
+  String get masterAssetsTitle => 'Master assets';
+
+  @override
+  String get settingsDataSection => 'Data';
+
+  @override
+  String get masterAssetsSettingsSubtitle =>
+      'Name, code, category, and market symbol';
+
+  @override
+  String get emptyMasterAssetsMessage =>
+      'Add assets (e.g. stocks, crypto, cash) before recording their value in the portfolio.';
+
+  @override
+  String get emptyPortfolioTitle => 'Your portfolio is empty';
+
+  @override
+  String get emptyPortfolioMessage =>
+      'Pick an asset from the master list and record its value.';
+
+  @override
+  String get emptyPortfolioNoMasterMessage =>
+      'Create a master asset in Settings first, then record its value here.';
+
+  @override
+  String get openMasterAssetsLabel => 'Manage master assets';
+
+  @override
+  String get addToPortfolioLabel => 'Record asset value';
 }

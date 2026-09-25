@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PortfolioSummary {
 
- double get totalValue; double get monthlyChangePercentage; double get targetProgressPercentage; List<Asset> get assets; DateTime get lastUpdatedAt;
+ double get totalValue; double get monthlyChangePercentage; double get targetProgressPercentage; List<PortfolioPosition> get positions; DateTime get lastUpdatedAt;
 /// Create a copy of PortfolioSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PortfolioSummaryCopyWith<PortfolioSummary> get copyWith => _$PortfolioSummaryCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortfolioSummary&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.monthlyChangePercentage, monthlyChangePercentage) || other.monthlyChangePercentage == monthlyChangePercentage)&&(identical(other.targetProgressPercentage, targetProgressPercentage) || other.targetProgressPercentage == targetProgressPercentage)&&const DeepCollectionEquality().equals(other.assets, assets)&&(identical(other.lastUpdatedAt, lastUpdatedAt) || other.lastUpdatedAt == lastUpdatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortfolioSummary&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.monthlyChangePercentage, monthlyChangePercentage) || other.monthlyChangePercentage == monthlyChangePercentage)&&(identical(other.targetProgressPercentage, targetProgressPercentage) || other.targetProgressPercentage == targetProgressPercentage)&&const DeepCollectionEquality().equals(other.positions, positions)&&(identical(other.lastUpdatedAt, lastUpdatedAt) || other.lastUpdatedAt == lastUpdatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,totalValue,monthlyChangePercentage,targetProgressPercentage,const DeepCollectionEquality().hash(assets),lastUpdatedAt);
+int get hashCode => Object.hash(runtimeType,totalValue,monthlyChangePercentage,targetProgressPercentage,const DeepCollectionEquality().hash(positions),lastUpdatedAt);
 
 @override
 String toString() {
-  return 'PortfolioSummary(totalValue: $totalValue, monthlyChangePercentage: $monthlyChangePercentage, targetProgressPercentage: $targetProgressPercentage, assets: $assets, lastUpdatedAt: $lastUpdatedAt)';
+  return 'PortfolioSummary(totalValue: $totalValue, monthlyChangePercentage: $monthlyChangePercentage, targetProgressPercentage: $targetProgressPercentage, positions: $positions, lastUpdatedAt: $lastUpdatedAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PortfolioSummaryCopyWith<$Res>  {
   factory $PortfolioSummaryCopyWith(PortfolioSummary value, $Res Function(PortfolioSummary) _then) = _$PortfolioSummaryCopyWithImpl;
 @useResult
 $Res call({
- double totalValue, double monthlyChangePercentage, double targetProgressPercentage, List<Asset> assets, DateTime lastUpdatedAt
+ double totalValue, double monthlyChangePercentage, double targetProgressPercentage, List<PortfolioPosition> positions, DateTime lastUpdatedAt
 });
 
 
@@ -62,13 +62,13 @@ class _$PortfolioSummaryCopyWithImpl<$Res>
 
 /// Create a copy of PortfolioSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? totalValue = null,Object? monthlyChangePercentage = null,Object? targetProgressPercentage = null,Object? assets = null,Object? lastUpdatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? totalValue = null,Object? monthlyChangePercentage = null,Object? targetProgressPercentage = null,Object? positions = null,Object? lastUpdatedAt = null,}) {
   return _then(_self.copyWith(
 totalValue: null == totalValue ? _self.totalValue : totalValue // ignore: cast_nullable_to_non_nullable
 as double,monthlyChangePercentage: null == monthlyChangePercentage ? _self.monthlyChangePercentage : monthlyChangePercentage // ignore: cast_nullable_to_non_nullable
 as double,targetProgressPercentage: null == targetProgressPercentage ? _self.targetProgressPercentage : targetProgressPercentage // ignore: cast_nullable_to_non_nullable
-as double,assets: null == assets ? _self.assets : assets // ignore: cast_nullable_to_non_nullable
-as List<Asset>,lastUpdatedAt: null == lastUpdatedAt ? _self.lastUpdatedAt : lastUpdatedAt // ignore: cast_nullable_to_non_nullable
+as double,positions: null == positions ? _self.positions : positions // ignore: cast_nullable_to_non_nullable
+as List<PortfolioPosition>,lastUpdatedAt: null == lastUpdatedAt ? _self.lastUpdatedAt : lastUpdatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -154,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double totalValue,  double monthlyChangePercentage,  double targetProgressPercentage,  List<Asset> assets,  DateTime lastUpdatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double totalValue,  double monthlyChangePercentage,  double targetProgressPercentage,  List<PortfolioPosition> positions,  DateTime lastUpdatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PortfolioSummary() when $default != null:
-return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgressPercentage,_that.assets,_that.lastUpdatedAt);case _:
+return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgressPercentage,_that.positions,_that.lastUpdatedAt);case _:
   return orElse();
 
 }
@@ -175,10 +175,10 @@ return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgr
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double totalValue,  double monthlyChangePercentage,  double targetProgressPercentage,  List<Asset> assets,  DateTime lastUpdatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double totalValue,  double monthlyChangePercentage,  double targetProgressPercentage,  List<PortfolioPosition> positions,  DateTime lastUpdatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _PortfolioSummary():
-return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgressPercentage,_that.assets,_that.lastUpdatedAt);case _:
+return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgressPercentage,_that.positions,_that.lastUpdatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +195,10 @@ return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgr
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double totalValue,  double monthlyChangePercentage,  double targetProgressPercentage,  List<Asset> assets,  DateTime lastUpdatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double totalValue,  double monthlyChangePercentage,  double targetProgressPercentage,  List<PortfolioPosition> positions,  DateTime lastUpdatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PortfolioSummary() when $default != null:
-return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgressPercentage,_that.assets,_that.lastUpdatedAt);case _:
+return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgressPercentage,_that.positions,_that.lastUpdatedAt);case _:
   return null;
 
 }
@@ -210,17 +210,17 @@ return $default(_that.totalValue,_that.monthlyChangePercentage,_that.targetProgr
 
 
 class _PortfolioSummary extends PortfolioSummary {
-  const _PortfolioSummary({required this.totalValue, required this.monthlyChangePercentage, required this.targetProgressPercentage, required final  List<Asset> assets, required this.lastUpdatedAt}): _assets = assets,super._();
+  const _PortfolioSummary({required this.totalValue, required this.monthlyChangePercentage, required this.targetProgressPercentage, required final  List<PortfolioPosition> positions, required this.lastUpdatedAt}): _positions = positions,super._();
   
 
 @override final  double totalValue;
 @override final  double monthlyChangePercentage;
 @override final  double targetProgressPercentage;
- final  List<Asset> _assets;
-@override List<Asset> get assets {
-  if (_assets is EqualUnmodifiableListView) return _assets;
+ final  List<PortfolioPosition> _positions;
+@override List<PortfolioPosition> get positions {
+  if (_positions is EqualUnmodifiableListView) return _positions;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_assets);
+  return EqualUnmodifiableListView(_positions);
 }
 
 @override final  DateTime lastUpdatedAt;
@@ -235,16 +235,16 @@ _$PortfolioSummaryCopyWith<_PortfolioSummary> get copyWith => __$PortfolioSummar
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortfolioSummary&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.monthlyChangePercentage, monthlyChangePercentage) || other.monthlyChangePercentage == monthlyChangePercentage)&&(identical(other.targetProgressPercentage, targetProgressPercentage) || other.targetProgressPercentage == targetProgressPercentage)&&const DeepCollectionEquality().equals(other._assets, _assets)&&(identical(other.lastUpdatedAt, lastUpdatedAt) || other.lastUpdatedAt == lastUpdatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortfolioSummary&&(identical(other.totalValue, totalValue) || other.totalValue == totalValue)&&(identical(other.monthlyChangePercentage, monthlyChangePercentage) || other.monthlyChangePercentage == monthlyChangePercentage)&&(identical(other.targetProgressPercentage, targetProgressPercentage) || other.targetProgressPercentage == targetProgressPercentage)&&const DeepCollectionEquality().equals(other._positions, _positions)&&(identical(other.lastUpdatedAt, lastUpdatedAt) || other.lastUpdatedAt == lastUpdatedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,totalValue,monthlyChangePercentage,targetProgressPercentage,const DeepCollectionEquality().hash(_assets),lastUpdatedAt);
+int get hashCode => Object.hash(runtimeType,totalValue,monthlyChangePercentage,targetProgressPercentage,const DeepCollectionEquality().hash(_positions),lastUpdatedAt);
 
 @override
 String toString() {
-  return 'PortfolioSummary(totalValue: $totalValue, monthlyChangePercentage: $monthlyChangePercentage, targetProgressPercentage: $targetProgressPercentage, assets: $assets, lastUpdatedAt: $lastUpdatedAt)';
+  return 'PortfolioSummary(totalValue: $totalValue, monthlyChangePercentage: $monthlyChangePercentage, targetProgressPercentage: $targetProgressPercentage, positions: $positions, lastUpdatedAt: $lastUpdatedAt)';
 }
 
 
@@ -255,7 +255,7 @@ abstract mixin class _$PortfolioSummaryCopyWith<$Res> implements $PortfolioSumma
   factory _$PortfolioSummaryCopyWith(_PortfolioSummary value, $Res Function(_PortfolioSummary) _then) = __$PortfolioSummaryCopyWithImpl;
 @override @useResult
 $Res call({
- double totalValue, double monthlyChangePercentage, double targetProgressPercentage, List<Asset> assets, DateTime lastUpdatedAt
+ double totalValue, double monthlyChangePercentage, double targetProgressPercentage, List<PortfolioPosition> positions, DateTime lastUpdatedAt
 });
 
 
@@ -272,13 +272,13 @@ class __$PortfolioSummaryCopyWithImpl<$Res>
 
 /// Create a copy of PortfolioSummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? totalValue = null,Object? monthlyChangePercentage = null,Object? targetProgressPercentage = null,Object? assets = null,Object? lastUpdatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? totalValue = null,Object? monthlyChangePercentage = null,Object? targetProgressPercentage = null,Object? positions = null,Object? lastUpdatedAt = null,}) {
   return _then(_PortfolioSummary(
 totalValue: null == totalValue ? _self.totalValue : totalValue // ignore: cast_nullable_to_non_nullable
 as double,monthlyChangePercentage: null == monthlyChangePercentage ? _self.monthlyChangePercentage : monthlyChangePercentage // ignore: cast_nullable_to_non_nullable
 as double,targetProgressPercentage: null == targetProgressPercentage ? _self.targetProgressPercentage : targetProgressPercentage // ignore: cast_nullable_to_non_nullable
-as double,assets: null == assets ? _self._assets : assets // ignore: cast_nullable_to_non_nullable
-as List<Asset>,lastUpdatedAt: null == lastUpdatedAt ? _self.lastUpdatedAt : lastUpdatedAt // ignore: cast_nullable_to_non_nullable
+as double,positions: null == positions ? _self._positions : positions // ignore: cast_nullable_to_non_nullable
+as List<PortfolioPosition>,lastUpdatedAt: null == lastUpdatedAt ? _self.lastUpdatedAt : lastUpdatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

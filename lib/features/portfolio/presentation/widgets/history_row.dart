@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 
 /// Satu baris histori: bulan di kiri, nilai dan perubahannya dari bulan
 /// sebelumnya di kanan (nilai di atas, persentase di bawahnya) — nilai dan
@@ -16,7 +16,7 @@ class HistoryRow extends StatelessWidget {
     this.showYear = true,
   });
 
-  final AssetSnapshot snapshot;
+  final ValueSnapshot snapshot;
 
   /// `false` bila tahun sudah tampil di pita grup di atas baris.
   final bool showYear;

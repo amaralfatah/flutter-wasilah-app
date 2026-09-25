@@ -1,26 +1,30 @@
 import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'asset_snapshot.freezed.dart';
+part 'portfolio_snapshot.freezed.dart';
 
+/// Satu titik histori bulanan portofolio gabungan (bukan per aset -- lihat
+/// `AssetSnapshot` untuk itu). Menggantikan baris sentinel
+/// `asset_id = 'portfolio'` yang dulu numpang di `asset_snapshots`.
 @freezed
-abstract class AssetSnapshot with _$AssetSnapshot implements ValueSnapshot {
-  const factory AssetSnapshot({
+abstract class PortfolioSnapshot
+    with _$PortfolioSnapshot
+    implements ValueSnapshot {
+  const factory PortfolioSnapshot({
     required String id,
-    required String assetId,
     required double totalValue,
     required DateTime recordedAt,
     String? note,
 
-    /// Total modal per tanggal pencatatan; `null` bila belum diisi.
+    /// Total modal gabungan per tanggal pencatatan; `null` bila belum ada
+    /// satu aset pun yang punya modal.
     double? totalCost,
-  }) = _AssetSnapshot;
-  const AssetSnapshot._();
+  }) = _PortfolioSnapshot;
+  const PortfolioSnapshot._();
 
-  factory AssetSnapshot.fromJson(Map<String, dynamic> json) {
-    return AssetSnapshot(
+  factory PortfolioSnapshot.fromJson(Map<String, dynamic> json) {
+    return PortfolioSnapshot(
       id: json['id'] as String,
-      assetId: json['assetId'] as String,
       totalValue: (json['totalValue'] as num).toDouble(),
       recordedAt: DateTime.parse(json['recordedAt'] as String),
       note: json['note'] as String?,
@@ -31,7 +35,6 @@ abstract class AssetSnapshot with _$AssetSnapshot implements ValueSnapshot {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'assetId': assetId,
       'totalValue': totalValue,
       'recordedAt': recordedAt.toIso8601String(),
       'note': note,

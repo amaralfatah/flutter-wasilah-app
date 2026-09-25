@@ -3,7 +3,11 @@ import 'package:flutter_wasilah_app/core/database/app_database.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/holding.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_asset_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 
 class DriftPortfolioRepository implements PortfolioRepository {
@@ -11,9 +15,14 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   final AppDatabase _database;
 
+  static const _positionColumns = '''
+    a.id, a.name, a.code, a.category, a.market_symbol,
+    h.current_value, h.total_cost, h.quantity, h.avg_buy_price,
+    h.price_currency, h.last_updated_at
+  ''';
+
   @override
   Future<List<AllocationTarget>> getAllocationTargets() async {
-    await _ensureInitialized();
     final rows = await _database.customSelect('''
       SELECT id, category, target_percentage
       FROM allocation_targets
@@ -35,138 +44,43 @@ class DriftPortfolioRepository implements PortfolioRepository {
   }
 
   @override
-  Future<Asset?> getAssetById(String assetId) async {
-    await _ensureInitialized();
-    final row = await _database
-        .customSelect(
-          '''
-      SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost, market_symbol, quantity, avg_buy_price, price_currency
-      FROM assets
-      WHERE id = ?
-      LIMIT 1
-      ''',
-          variables: [Variable.withString(assetId)],
-        )
-        .getSingleOrNull();
-
-    return row == null ? null : _mapAsset(row);
-  }
-
-  @override
-  Future<List<Asset>> getAssets() async {
-    await _ensureInitialized();
+  Future<List<PortfolioPosition>> getPositions() async {
     final rows = await _database.customSelect('''
-      SELECT id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost, market_symbol, quantity, avg_buy_price, price_currency
-      FROM assets
-      ORDER BY current_value DESC, name ASC
+      SELECT $_positionColumns
+      FROM holdings h
+      JOIN assets a ON a.id = h.asset_id
+      ORDER BY h.current_value DESC, a.name ASC
       ''').get();
 
-    return rows.map(_mapAsset).toList(growable: false);
+    final entries = rows
+        .map((row) => (asset: mapAssetRow(row), holding: _mapHolding(row)))
+        .toList(growable: false);
+    final total = entries.fold<double>(
+      0,
+      (sum, entry) => sum + entry.holding.currentValue,
+    );
+
+    return entries
+        .map(
+          (entry) => PortfolioPosition(
+            asset: entry.asset,
+            holding: entry.holding,
+            allocationPercentage: total == 0
+                ? 0
+                : entry.holding.currentValue / total * 100,
+          ),
+        )
+        .toList(growable: false);
   }
 
   @override
-  Future<void> createAsset(Asset asset) async {
-    await _ensureInitialized();
-
-    await _database.transaction(() async {
-      await _database.customStatement(
-        '''
-        INSERT INTO assets (
-          id, name, code, category, current_value, allocation_percentage, last_updated_at, total_cost, market_symbol, quantity, avg_buy_price, price_currency
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
-        [
-          asset.id,
-          asset.name,
-          asset.code,
-          asset.category.name,
-          asset.currentValue,
-          asset.allocationPercentage,
-          _dateToSql(asset.lastUpdatedAt),
-          asset.totalCost,
-          _normalizeMarketSymbol(asset.marketSymbol),
-          asset.quantity,
-          asset.avgBuyPrice,
-          _normalizePriceCurrency(asset.priceCurrency),
-        ],
-      );
-
-      await _saveSnapshot(
-        assetId: asset.id,
-        totalValue: asset.currentValue,
-        recordedAt: asset.lastUpdatedAt,
-        totalCost: asset.totalCost,
-      );
-      await _recalculateAllocations();
-      await _savePortfolioSnapshot(asset.lastUpdatedAt);
-    });
-  }
-
-  @override
-  Future<void> updateAsset(Asset asset) async {
-    await _ensureInitialized();
-
-    await _database.transaction(() async {
-      await _database.customUpdate(
-        '''
-        UPDATE assets
-        SET name = ?, code = ?, category = ?, total_cost = ?, market_symbol = ?, quantity = ?, avg_buy_price = ?, price_currency = ?
-        WHERE id = ?
-        ''',
-        variables: [
-          Variable.withString(asset.name),
-          Variable.withString(asset.code),
-          Variable.withString(asset.category.name),
-          Variable<double>(asset.totalCost),
-          Variable<String>(_normalizeMarketSymbol(asset.marketSymbol)),
-          Variable<double>(asset.quantity),
-          Variable<double>(asset.avgBuyPrice),
-          Variable<String>(_normalizePriceCurrency(asset.priceCurrency)),
-          Variable.withString(asset.id),
-        ],
-      );
-
-      // Modal di form edit adalah modal terkini, jadi ikut mengoreksi
-      // snapshot terakhir supaya histori PnL tidak menyimpang dari detail.
-      final latest = await _latestSnapshotOrNull(asset.id);
-      if (latest == null || latest.totalCost == asset.totalCost) {
-        return;
-      }
-      await _database.customStatement(
-        'UPDATE asset_snapshots SET total_cost = ? WHERE id = ?',
-        [asset.totalCost, latest.id],
-      );
-      await _refreshPortfolioCosts(from: latest.recordedAt);
-    });
-  }
-
-  @override
-  Future<void> deleteAsset(String assetId) async {
-    await _ensureInitialized();
-
-    await _database.transaction(() async {
-      await _database.customStatement(
-        'DELETE FROM asset_snapshots WHERE asset_id = ?',
-        [assetId],
-      );
-      await _database.customStatement('DELETE FROM assets WHERE id = ?', [
-        assetId,
-      ]);
-      await _recalculateAllocations();
-
-      final remainingAssets = await getAssets();
-      if (remainingAssets.isNotEmpty) {
-        final lastUpdatedAt = remainingAssets
-            .map((asset) => asset.lastUpdatedAt)
-            .reduce((latest, next) => latest.isAfter(next) ? latest : next);
-        await _savePortfolioSnapshot(lastUpdatedAt);
-      }
-    });
+  Future<PortfolioPosition?> getPositionByAssetId(String assetId) async {
+    final positions = await getPositions();
+    return positions.where((position) => position.id == assetId).firstOrNull;
   }
 
   @override
   Future<List<AssetSnapshot>> getAssetHistory(String assetId) async {
-    await _ensureInitialized();
     final rows = await _database
         .customSelect(
           '''
@@ -183,9 +97,28 @@ class DriftPortfolioRepository implements PortfolioRepository {
   }
 
   @override
-  Future<void> deleteSnapshot(String snapshotId) async {
-    await _ensureInitialized();
+  Future<List<PortfolioSnapshot>> getPortfolioHistory() async {
+    final rows = await _database.customSelect('''
+      SELECT rowid AS row_id, id, total_value, recorded_at, note, total_cost
+      FROM portfolio_snapshots
+      ORDER BY recorded_at DESC, row_id DESC
+      ''').get();
 
+    return rows
+        .map(
+          (row) => PortfolioSnapshot(
+            id: row.read<String>('id'),
+            totalValue: row.read<double>('total_value'),
+            recordedAt: row.read<DateTime>('recorded_at'),
+            note: row.readNullable<String>('note'),
+            totalCost: row.readNullable<double>('total_cost'),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> deleteAssetSnapshot(String snapshotId) async {
     await _database.transaction(() async {
       final row = await _database
           .customSelect(
@@ -210,43 +143,28 @@ class DriftPortfolioRepository implements PortfolioRepository {
         [snapshotId],
       );
 
-      if (deleted.assetId == _portfolioAssetId) {
-        return;
+      final remaining = await _latestSnapshotOrNull(deleted.assetId);
+      if (remaining == null) {
+        // Tanpa histori, aset tidak lagi punya nilai di portofolio.
+        await _database.customStatement(
+          'DELETE FROM holdings WHERE asset_id = ?',
+          [deleted.assetId],
+        );
+      } else {
+        await _database.customUpdate(
+          '''
+          UPDATE holdings
+          SET current_value = ?, last_updated_at = ?, total_cost = ?
+          WHERE asset_id = ?
+          ''',
+          variables: [
+            Variable.withReal(remaining.totalValue),
+            Variable.withDateTime(remaining.recordedAt),
+            Variable<double>(remaining.totalCost),
+            Variable.withString(deleted.assetId),
+          ],
+        );
       }
-
-      final remainingRow = await _database
-          .customSelect(
-            '''
-        SELECT rowid AS row_id, id, asset_id, total_value, recorded_at, note, total_cost
-        FROM asset_snapshots
-        WHERE asset_id = ?
-        ORDER BY recorded_at DESC, row_id DESC
-        LIMIT 1
-        ''',
-            variables: [Variable.withString(deleted.assetId)],
-          )
-          .getSingleOrNull();
-      final remaining = remainingRow == null
-          ? null
-          : _mapSnapshot(remainingRow);
-
-      await _database.customUpdate(
-        '''
-        UPDATE assets
-        SET current_value = ?, last_updated_at = ?, total_cost = ?
-        WHERE id = ?
-        ''',
-        variables: [
-          Variable.withReal(remaining?.totalValue ?? 0),
-          Variable.withDateTime(
-            remaining?.recordedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
-          ),
-          Variable<double>(remaining?.totalCost),
-          Variable.withString(deleted.assetId),
-        ],
-      );
-
-      await _recalculateAllocations();
 
       // The portfolio's monthly history snapshot for that month baked in
       // the now-deleted value, so it must be regenerated from what's left.
@@ -255,31 +173,59 @@ class DriftPortfolioRepository implements PortfolioRepository {
   }
 
   @override
-  Future<List<AssetSnapshot>> getPortfolioHistory() async {
-    return getAssetHistory(_portfolioAssetId);
+  Future<void> deletePortfolioSnapshot(String snapshotId) async {
+    await _database.customStatement(
+      'DELETE FROM portfolio_snapshots WHERE id = ?',
+      [snapshotId],
+    );
+  }
+
+  @override
+  Future<void> removeFromPortfolio(String assetId) async {
+    await _database.transaction(() async {
+      final months = await _database
+          .customSelect(
+            'SELECT recorded_at FROM asset_snapshots WHERE asset_id = ?',
+            variables: [Variable.withString(assetId)],
+          )
+          .get();
+
+      await _database.customStatement(
+        'DELETE FROM asset_snapshots WHERE asset_id = ?',
+        [assetId],
+      );
+      await _database.customStatement(
+        'DELETE FROM holdings WHERE asset_id = ?',
+        [assetId],
+      );
+
+      // Setiap bulan yang dulu memuat nilai aset ini dihitung ulang.
+      for (final row in months) {
+        await _savePortfolioSnapshot(row.read<DateTime>('recorded_at'));
+      }
+    });
   }
 
   @override
   Future<PortfolioSummary> getPortfolioSummary() async {
-    await _ensureInitialized();
-    final assets = await getAssets();
+    final positions = await getPositions();
     final history = await getPortfolioHistory();
     final targets = await getAllocationTargets();
-    final totalValue = assets.fold<double>(
+    final totalValue = positions.fold<double>(
       0,
-      (sum, asset) => sum + asset.currentValue,
+      (sum, position) => sum + position.currentValue,
     );
-    final lastUpdatedAt = assets.isEmpty
+    final lastUpdatedAt = positions.isEmpty
         ? DateTime.fromMillisecondsSinceEpoch(0)
-        : assets
-              .map((asset) => asset.lastUpdatedAt)
+        : positions
+              .map((position) => position.lastUpdatedAt)
               .reduce((latest, next) => latest.isAfter(next) ? latest : next);
 
     return PortfolioSummary(
       totalValue: totalValue,
       monthlyChangePercentage: _calculateMonthlyChange(history),
-      targetProgressPercentage: _calculateTargetProgress(assets, targets),
-      assets: assets,
+      targetProgressPercentage: _calculateTargetProgress(positions, targets),
+      positions: positions,
       lastUpdatedAt: lastUpdatedAt,
     );
   }
@@ -295,13 +241,17 @@ class DriftPortfolioRepository implements PortfolioRepository {
     double? avgBuyPrice,
     String? priceCurrency,
   }) async {
-    await _ensureInitialized();
-
     await _database.transaction(() async {
-      final existingAsset = await getAssetById(assetId);
-      if (existingAsset == null) {
+      final assetRow = await _database
+          .customSelect(
+            'SELECT id FROM assets WHERE id = ? LIMIT 1',
+            variables: [Variable.withString(assetId)],
+          )
+          .getSingleOrNull();
+      if (assetRow == null) {
         throw StateError('Asset tidak ditemukan.');
       }
+      final existing = await _holdingOrNull(assetId);
 
       await _saveSnapshot(
         assetId: assetId,
@@ -313,52 +263,45 @@ class DriftPortfolioRepository implements PortfolioRepository {
         totalCost:
             totalCost ??
             await _historicalAssetCost(assetId, recordedAt) ??
-            existingAsset.totalCost,
+            existing?.totalCost,
       );
 
       // current_value/last_updated_at harus mengikuti snapshot paling baru
       // secara kronologis, bukan nilai yang baru saja diinput -- input bisa
       // saja backdate (tanggal mundur) dan tidak boleh menimpa nilai terkini.
-      final latestSnapshot = await _latestSnapshot(assetId);
-      await _database.customUpdate(
+      final latestSnapshot = (await _latestSnapshotOrNull(assetId))!;
+      await _database.customStatement(
         '''
-        UPDATE assets
-        SET current_value = ?, last_updated_at = ?, total_cost = ?,
-            quantity = ?, avg_buy_price = ?, price_currency = ?
-        WHERE id = ?
+        INSERT INTO holdings (
+          asset_id, current_value, total_cost, quantity, avg_buy_price,
+          price_currency, last_updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (asset_id) DO UPDATE SET
+          current_value = excluded.current_value,
+          total_cost = excluded.total_cost,
+          quantity = excluded.quantity,
+          avg_buy_price = excluded.avg_buy_price,
+          price_currency = excluded.price_currency,
+          last_updated_at = excluded.last_updated_at
         ''',
-        variables: [
-          Variable.withReal(latestSnapshot.totalValue),
-          Variable.withDateTime(latestSnapshot.recordedAt),
-          Variable<double>(latestSnapshot.totalCost),
+        [
+          assetId,
+          latestSnapshot.totalValue,
+          latestSnapshot.totalCost,
           // null berarti field tak diubah di form ini: pertahankan nilai lama.
-          Variable<double>(quantity ?? existingAsset.quantity),
-          Variable<double>(avgBuyPrice ?? existingAsset.avgBuyPrice),
-          Variable<String>(
-            _normalizePriceCurrency(priceCurrency) ??
-                existingAsset.priceCurrency,
-          ),
-          Variable.withString(assetId),
+          quantity ?? existing?.quantity,
+          avgBuyPrice ?? existing?.avgBuyPrice,
+          _normalizePriceCurrency(priceCurrency) ?? existing?.priceCurrency,
+          _dateToSql(latestSnapshot.recordedAt),
         ],
       );
 
-      await _recalculateAllocations();
-
-      final portfolioTotal = await _historicalPortfolioTotal(recordedAt);
-      await _saveSnapshot(
-        assetId: _portfolioAssetId,
-        totalValue: portfolioTotal.value,
-        recordedAt: recordedAt,
-        note: note,
-        totalCost: portfolioTotal.cost,
-      );
+      await _savePortfolioSnapshot(recordedAt, note: note);
     });
   }
 
   @override
   Future<void> saveAllocationTarget(AllocationTarget target) async {
-    await _ensureInitialized();
-
     await _database.transaction(() async {
       await _database.customStatement(
         'DELETE FROM allocation_targets WHERE id = ? OR category = ?',
@@ -376,71 +319,49 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   @override
   Future<void> deleteAllocationTarget(String targetId) async {
-    await _ensureInitialized();
-
     await _database.customStatement(
       'DELETE FROM allocation_targets WHERE id = ?',
       [targetId],
     );
   }
 
-  Future<void> _ensureInitialized() async {}
-
-  Future<void> _recalculateAllocations() async {
-    final assets = await getAssets();
-    final portfolioTotal = assets.fold<double>(
-      0,
-      (sum, asset) => sum + asset.currentValue,
-    );
-
-    for (final asset in assets) {
-      final allocationPercentage = portfolioTotal == 0
-          ? 0.0
-          : (asset.currentValue / portfolioTotal) * 100;
-      await _database.customStatement(
-        'UPDATE assets SET allocation_percentage = ? WHERE id = ?',
-        [allocationPercentage, asset.id],
-      );
-    }
-  }
-
-  Future<void> _savePortfolioSnapshot(DateTime recordedAt) async {
-    final portfolioTotal = await _historicalPortfolioTotal(recordedAt);
-
-    await _saveSnapshot(
-      assetId: _portfolioAssetId,
-      totalValue: portfolioTotal.value,
-      recordedAt: recordedAt,
-      totalCost: portfolioTotal.cost,
-    );
-  }
-
-  /// Menghitung ulang modal di snapshot portofolio sejak [from], karena
-  /// modal satu aset terbawa ke semua bulan setelahnya.
-  Future<void> _refreshPortfolioCosts({required DateTime from}) async {
-    final rows = await _database
+  Future<Holding?> _holdingOrNull(String assetId) async {
+    final row = await _database
         .customSelect(
           '''
-      SELECT id, recorded_at
-      FROM asset_snapshots
-      WHERE asset_id = ? AND recorded_at >= ?
+      SELECT current_value, total_cost, quantity, avg_buy_price,
+        price_currency, last_updated_at
+      FROM holdings
+      WHERE asset_id = ?
+      LIMIT 1
       ''',
-          variables: [
-            Variable.withString(_portfolioAssetId),
-            Variable.withInt(_dateToSql(from)),
-          ],
+          variables: [Variable.withString(assetId)],
         )
-        .get();
+        .getSingleOrNull();
 
-    for (final row in rows) {
-      final total = await _historicalPortfolioTotal(
-        row.read<DateTime>('recorded_at'),
-      );
-      await _database.customStatement(
-        'UPDATE asset_snapshots SET total_cost = ? WHERE id = ?',
-        [total.cost, row.read<String>('id')],
-      );
-    }
+    return row == null ? null : _mapHolding(row, assetId: assetId);
+  }
+
+  Future<void> _savePortfolioSnapshot(
+    DateTime recordedAt, {
+    String? note,
+  }) async {
+    final portfolioTotal = await _historicalPortfolioTotal(recordedAt);
+
+    await _database.customStatement(
+      '''
+      INSERT OR REPLACE INTO portfolio_snapshots (
+        id, total_value, total_cost, recorded_at, note
+      ) VALUES (?, ?, ?, ?, ?)
+      ''',
+      [
+        _buildSnapshotId(_portfolioSnapshotPrefix, recordedAt),
+        portfolioTotal.value,
+        portfolioTotal.cost,
+        _dateToSql(recordedAt),
+        note,
+      ],
+    );
   }
 
   /// Modal [assetId] dari snapshot terakhir yang punya modal, per [asOf].
@@ -464,12 +385,6 @@ class DriftPortfolioRepository implements PortfolioRepository {
     return row?.read<double>('total_cost');
   }
 
-  /// The most recent snapshot for [assetId] by recorded_at. Assumes at
-  /// least one snapshot exists (callers only use this right after saving one).
-  Future<AssetSnapshot> _latestSnapshot(String assetId) async {
-    return (await _latestSnapshotOrNull(assetId))!;
-  }
-
   Future<AssetSnapshot?> _latestSnapshotOrNull(String assetId) async {
     final row = await _database
         .customSelect(
@@ -487,7 +402,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
     return row == null ? null : _mapSnapshot(row);
   }
 
-  /// Sums each asset's most recent recorded value at or before [asOf].
+  /// Sums each held asset's most recent recorded value at or before [asOf].
   /// An asset with no snapshot that far back wasn't tracked yet at that
   /// point in time, so it contributes 0 rather than its current value --
   /// otherwise backfilling one asset's past value would drag in every
@@ -499,12 +414,15 @@ class DriftPortfolioRepository implements PortfolioRepository {
   Future<({double value, double? cost})> _historicalPortfolioTotal(
     DateTime asOf,
   ) async {
-    final assets = await getAssets();
+    final holdingRows = await _database
+        .customSelect('SELECT asset_id FROM holdings')
+        .get();
     var total = 0.0;
     var cost = 0.0;
     var hasCost = false;
 
-    for (final asset in assets) {
+    for (final holdingRow in holdingRows) {
+      final assetId = holdingRow.read<String>('asset_id');
       final row = await _database
           .customSelect(
             '''
@@ -515,7 +433,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
         LIMIT 1
         ''',
             variables: [
-              Variable.withString(asset.id),
+              Variable.withString(assetId),
               Variable.withInt(_dateToSql(asOf)),
             ],
           )
@@ -524,7 +442,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
       final value = row?.read<double>('total_value') ?? 0;
       final assetCost = row == null
           ? null
-          : await _historicalAssetCost(asset.id, asOf);
+          : await _historicalAssetCost(assetId, asOf);
       total += value;
       cost += assetCost ?? value;
       hasCost = hasCost || assetCost != null;
@@ -533,7 +451,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
     return (value: total, cost: hasCost ? cost : null);
   }
 
-  double _calculateMonthlyChange(List<AssetSnapshot> history) {
+  double _calculateMonthlyChange(List<PortfolioSnapshot> history) {
     if (history.length < 2) {
       return 0;
     }
@@ -548,19 +466,19 @@ class DriftPortfolioRepository implements PortfolioRepository {
   }
 
   double _calculateTargetProgress(
-    List<Asset> assets,
+    List<PortfolioPosition> positions,
     List<AllocationTarget> targets,
   ) {
-    if (assets.isEmpty || targets.isEmpty) {
+    if (positions.isEmpty || targets.isEmpty) {
       return 0;
     }
 
     final actualByCategory = <AssetCategory, double>{};
-    for (final asset in assets) {
+    for (final position in positions) {
       actualByCategory.update(
-        asset.category,
-        (value) => value + asset.allocationPercentage,
-        ifAbsent: () => asset.allocationPercentage,
+        position.category,
+        (value) => value + position.allocationPercentage,
+        ifAbsent: () => position.allocationPercentage,
       );
     }
 
@@ -574,17 +492,12 @@ class DriftPortfolioRepository implements PortfolioRepository {
     return (100 - (totalDifference / 2)).clamp(0, 100).toDouble();
   }
 
-  Asset _mapAsset(QueryRow row) {
-    return Asset(
-      id: row.read<String>('id'),
-      name: row.read<String>('name'),
-      code: row.read<String>('code'),
-      category: AssetCategory.values.byName(row.read<String>('category')),
+  Holding _mapHolding(QueryRow row, {String? assetId}) {
+    return Holding(
+      assetId: assetId ?? row.read<String>('id'),
       currentValue: row.read<double>('current_value'),
-      allocationPercentage: row.read<double>('allocation_percentage'),
       lastUpdatedAt: row.read<DateTime>('last_updated_at'),
       totalCost: row.readNullable<double>('total_cost'),
-      marketSymbol: row.readNullable<String>('market_symbol'),
       quantity: row.readNullable<double>('quantity'),
       avgBuyPrice: row.readNullable<double>('avg_buy_price'),
       priceCurrency: row.readNullable<String>('price_currency'),
@@ -610,27 +523,19 @@ class DriftPortfolioRepository implements PortfolioRepository {
     double? totalCost,
   }) async {
     // The snapshot id already encodes assetId + local year/month, so
-    // deleting by id is both the dedup key and timezone-safe. (A prior
+    // replacing by id is both the dedup key and timezone-safe. (A prior
     // version deduped via `strftime(..., 'unixepoch')`, which computes the
     // month in UTC -- for timezones ahead of UTC (e.g. WIB/UTC+7), an
     // early-morning date on the 1st of a month can fall on the previous
-    // UTC month, so the DELETE wouldn't match the existing row and the
-    // INSERT would collide with it on a UNIQUE constraint.)
-    final snapshotId = _buildSnapshotId(assetId, recordedAt);
-
-    await _database.customStatement(
-      'DELETE FROM asset_snapshots WHERE id = ?',
-      [snapshotId],
-    );
-
+    // UTC month and miss the existing row.)
     await _database.customStatement(
       '''
-      INSERT INTO asset_snapshots (
+      INSERT OR REPLACE INTO asset_snapshots (
         id, asset_id, total_value, recorded_at, note, total_cost
       ) VALUES (?, ?, ?, ?, ?, ?)
       ''',
       [
-        snapshotId,
+        _buildSnapshotId(assetId, recordedAt),
         assetId,
         totalValue,
         _dateToSql(recordedAt),
@@ -641,21 +546,17 @@ class DriftPortfolioRepository implements PortfolioRepository {
   }
 }
 
-/// Huruf besar, di-trim; string kosong dianggap tidak ada simbol.
-String? _normalizeMarketSymbol(String? symbol) {
-  final trimmed = symbol?.trim().toUpperCase();
-  return trimmed == null || trimmed.isEmpty ? null : trimmed;
-}
-
 String? _normalizePriceCurrency(String? currency) {
   final trimmed = currency?.trim().toUpperCase();
   return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
-String _buildSnapshotId(String assetId, DateTime recordedAt) {
-  return '$assetId-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}';
+String _buildSnapshotId(String prefix, DateTime recordedAt) {
+  return '$prefix-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}';
 }
 
 int _dateToSql(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;
 
-const _portfolioAssetId = 'portfolio';
+/// Prefix id snapshot portofolio; sama dengan id sentinel lama supaya baris
+/// hasil migrasi v8 tetap ter-dedup per bulan.
+const _portfolioSnapshotPrefix = 'portfolio';

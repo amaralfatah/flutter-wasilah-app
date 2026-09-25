@@ -4,8 +4,8 @@ import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/time_weighted_return.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -199,7 +199,9 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
   Future<void> _deleteSnapshot(String snapshotId) async {
     final l10n = context.l10n;
     try {
-      await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
+      await ref
+          .read(portfolioRepositoryProvider)
+          .deletePortfolioSnapshot(snapshotId);
       ref.invalidate(portfolioHistoryProvider);
       ref.invalidate(portfolioSummaryProvider);
       if (!mounted) return;
@@ -215,7 +217,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     }
   }
 
-  Map<String, double> _buildChangeMap(List<AssetSnapshot> history) {
+  Map<String, double> _buildChangeMap(List<ValueSnapshot> history) {
     final map = <String, double>{};
     for (var index = 0; index < history.length; index++) {
       final current = history[index];

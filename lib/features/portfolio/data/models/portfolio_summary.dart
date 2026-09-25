@@ -1,4 +1,4 @@
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'portfolio_summary.freezed.dart';
@@ -9,7 +9,7 @@ abstract class PortfolioSummary with _$PortfolioSummary {
     required double totalValue,
     required double monthlyChangePercentage,
     required double targetProgressPercentage,
-    required List<Asset> assets,
+    required List<PortfolioPosition> positions,
     required DateTime lastUpdatedAt,
   }) = _PortfolioSummary;
   const PortfolioSummary._();
@@ -21,8 +21,10 @@ abstract class PortfolioSummary with _$PortfolioSummary {
           .toDouble(),
       targetProgressPercentage: (json['targetProgressPercentage'] as num)
           .toDouble(),
-      assets: (json['assets'] as List<dynamic>)
-          .map((item) => Asset.fromJson(item as Map<String, dynamic>))
+      positions: (json['positions'] as List<dynamic>)
+          .map(
+            (item) => PortfolioPosition.fromJson(item as Map<String, dynamic>),
+          )
           .toList(growable: false),
       lastUpdatedAt: DateTime.parse(json['lastUpdatedAt'] as String),
     );
@@ -33,7 +35,9 @@ abstract class PortfolioSummary with _$PortfolioSummary {
       'totalValue': totalValue,
       'monthlyChangePercentage': monthlyChangePercentage,
       'targetProgressPercentage': targetProgressPercentage,
-      'assets': assets.map((asset) => asset.toJson()).toList(growable: false),
+      'positions': positions
+          .map((position) => position.toJson())
+          .toList(growable: false),
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
     };
   }

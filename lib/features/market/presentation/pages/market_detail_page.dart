@@ -50,7 +50,7 @@ class _MarketDetailPageState extends ConsumerState<MarketDetailPage> {
             tooltip: l10n.editAssetTooltip,
             onSelected: (value) {
               if (value == 'edit') {
-                context.push('${RouteNames.assets}/${widget.assetId}/edit');
+                context.push('${RouteNames.masterAssets}/${widget.assetId}');
               }
             },
             itemBuilder: (context) => [
@@ -165,7 +165,7 @@ class _MarketDetailBody extends ConsumerWidget {
                 actionLabel: l10n.editAssetButton,
                 onAction: () => GoRouter.of(
                   context,
-                ).push('${RouteNames.assets}/${asset.id}/edit'),
+                ).push('${RouteNames.masterAssets}/${asset.id}'),
               )
             else
               AppErrorView(message: l10n.marketUnavailable),
@@ -294,7 +294,7 @@ class _UpdateValueButton extends StatelessWidget {
     return FilledButton(
       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       onPressed: () =>
-          GoRouter.of(context).push('${RouteNames.assets}/$assetId/update'),
+          GoRouter.of(context).push('${RouteNames.portfolio}/$assetId/update'),
       child: Text(
         context.l10n.updateValueButton,
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),

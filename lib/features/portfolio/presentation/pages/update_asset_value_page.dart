@@ -10,6 +10,7 @@ import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/market/data/models/market_quote.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -37,6 +38,8 @@ class UpdateAssetValuePage extends ConsumerStatefulWidget {
 }
 
 class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
+  static const _priceCurrencies = ['IDR', 'USD'];
+
   final _formKey = GlobalKey<FormState>();
   final _valueController = TextEditingController();
   final _noteController = TextEditingController();
@@ -48,6 +51,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   String? _costPrefilledFor;
   String? _holdingPrefilledFor;
   String? _selectedAssetId;
+  String _priceCurrency = 'IDR';
   AssetValueUpdateType _updateType = AssetValueUpdateType.override;
 
   @override
@@ -70,7 +74,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
 
   @override
   Widget build(BuildContext context) {
-    final assetsValue = ref.watch(assetListProvider);
+    final assetsValue = ref.watch(assetOverviewProvider);
     final submitState = ref.watch(updateAssetValueControllerProvider);
     final l10n = context.l10n;
 
@@ -79,7 +83,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       body: SafeArea(
         child: AsyncValueView(
           value: assetsValue,
-          onRetry: () => ref.invalidate(assetListProvider),
+          onRetry: () => ref.invalidate(assetOverviewProvider),
           data: (assets) {
             final selectedAsset = _findSelectedAsset(assets);
             // Opsi tambah/timpa hanya untuk kas; aset lain selalu timpa.
@@ -213,8 +217,33 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    prefixText:
-                        '${selectedAsset?.effectivePriceCurrency ?? 'IDR'} ',
+                    prefixText: '$_priceCurrency ',
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('currency-$_holdingPrefilledFor'),
+                    initialValue: _priceCurrency,
+                    decoration: InputDecoration(
+                      labelText: l10n.priceCurrencyLabel,
+                    ),
+                    items: _priceCurrencies
+                        .map(
+                          (currency) => DropdownMenuItem(
+                            value: currency,
+                            child: Text(currency),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: submitState.isLoading
+                        ? null
+                        : (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() {
+                              _priceCurrency = value;
+                            });
+                          },
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   FormField<DateTime>(
@@ -353,7 +382,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   ///
   /// Saham IDX (simbol `.JK`) dicatat dalam lot, sedangkan harga Yahoo per
   /// lembar; 1 lot = 100 lembar, jadi jumlah lot dikali 100 dulu.
-  Widget _buildValueSuggestion(Asset? asset) {
+  Widget _buildValueSuggestion(PortfolioPosition? asset) {
     final symbol = asset?.marketSymbol;
     final quantity = asset?.quantity;
     if (asset == null || symbol == null || quantity == null || quantity <= 0) {
@@ -455,7 +484,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   /// Siapkan field nilai sekali per pergantian aset atau mode: mode ubah
   /// diisi nilai saat ini (semua field berisi existing), mode tambah
   /// dikosongkan (nominal yang ditambahkan).
-  void _prefillValue(Asset? asset) {
+  void _prefillValue(PortfolioPosition? asset) {
     if (asset == null || asset.id == _valuePrefilledFor) {
       return;
     }
@@ -468,7 +497,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
 
   /// Siapkan field modal sekali per pergantian aset atau mode: mode ubah
   /// diisi modal saat ini, mode tambah dikosongkan.
-  void _prefillCost(Asset? asset) {
+  void _prefillCost(PortfolioPosition? asset) {
     if (asset == null || asset.id == _costPrefilledFor) {
       return;
     }
@@ -483,7 +512,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
 
   /// Isi field jumlah unit, harga avg, dan mata uang sekali per pergantian
   /// aset, dari nilai tersimpan aset itu.
-  void _prefillHolding(Asset? asset) {
+  void _prefillHolding(PortfolioPosition? asset) {
     if (asset == null || asset.id == _holdingPrefilledFor) {
       return;
     }
@@ -496,6 +525,9 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _avgBuyPriceController.text = avgBuyPrice == null
         ? ''
         : _formatDecimalInput(avgBuyPrice);
+    _priceCurrency = _priceCurrencies.contains(asset.effectivePriceCurrency)
+        ? asset.effectivePriceCurrency
+        : 'IDR';
   }
 
   /// Parse input desimal bebas (unit / harga per unit); `null` bila kosong.
@@ -516,7 +548,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
 
   /// Modal baru yang dikirim ke repository; `null` berarti modal tidak
   /// berubah (repository membawa modal terakhir).
-  double? _resolveTotalCost(Asset? asset) {
+  double? _resolveTotalCost(PortfolioPosition? asset) {
     final inputCost = parseCurrencyInput(_costController.text);
     if (_resolveUpdateType(asset) == AssetValueUpdateType.override) {
       return inputCost;
@@ -530,14 +562,15 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   }
 
   /// Hanya kas yang boleh mode tambah; aset lain selalu timpa.
-  bool _allowsIncrement(Asset? asset) => asset?.category == AssetCategory.cash;
+  bool _allowsIncrement(PortfolioPosition? asset) =>
+      asset?.category == AssetCategory.cash;
 
   /// Mode efektif: pilihan pengguna dihormati hanya untuk kas, selain itu
   /// dipaksa timpa (override).
-  AssetValueUpdateType _resolveUpdateType(Asset? asset) =>
+  AssetValueUpdateType _resolveUpdateType(PortfolioPosition? asset) =>
       _allowsIncrement(asset) ? _updateType : AssetValueUpdateType.override;
 
-  Asset? _findSelectedAsset(List<Asset> assets) {
+  PortfolioPosition? _findSelectedAsset(List<PortfolioPosition> assets) {
     for (final asset in assets) {
       if (asset.id == _selectedAssetId) {
         return asset;
@@ -547,7 +580,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     return null;
   }
 
-  Future<void> _submit(Asset? selectedAsset) async {
+  Future<void> _submit(PortfolioPosition? selectedAsset) async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -579,6 +612,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             totalCost: totalCost,
             quantity: _parseDecimalInput(_quantityController.text),
             avgBuyPrice: _parseDecimalInput(_avgBuyPriceController.text),
+            priceCurrency: _priceCurrency,
           );
 
       if (!mounted) {

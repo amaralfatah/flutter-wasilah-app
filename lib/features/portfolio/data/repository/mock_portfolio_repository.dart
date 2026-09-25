@@ -1,12 +1,19 @@
 import 'dart:async';
 
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/holding.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/asset_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 
-class MockPortfolioRepository implements PortfolioRepository {
+/// Implementasi in-memory untuk master aset sekaligus porto, dengan state
+/// bersama supaya satu instance bisa dipasang ke kedua provider repository.
+class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
   MockPortfolioRepository({
     this.simulatedDelay = const Duration(milliseconds: 250),
   });
@@ -14,52 +21,65 @@ class MockPortfolioRepository implements PortfolioRepository {
   final Duration simulatedDelay;
 
   final List<Asset> _assets = [
-    Asset(
+    const Asset(
       id: 'btc',
       name: 'Bitcoin',
       code: 'BTC',
       category: AssetCategory.crypto,
-      currentValue: 18200000,
-      allocationPercentage: 33.1,
-      lastUpdatedAt: DateTime(2026, 7, 15),
     ),
-    Asset(
+    const Asset(
       id: 'bmri',
       name: 'Bank Mandiri',
       code: 'BMRI',
       category: AssetCategory.stock,
-      currentValue: 10700000,
-      allocationPercentage: 19.5,
-      lastUpdatedAt: DateTime(2026, 7, 15),
     ),
-    Asset(
+    const Asset(
       id: 'bbri',
       name: 'Bank Rakyat Indonesia',
       code: 'BBRI',
       category: AssetCategory.stock,
-      currentValue: 10200000,
-      allocationPercentage: 18.6,
-      lastUpdatedAt: DateTime(2026, 7, 15),
     ),
-    Asset(
+    const Asset(
       id: 'rd',
       name: 'Reksa Dana',
       code: 'RDPT',
       category: AssetCategory.mutualFund,
-      currentValue: 9300000,
-      allocationPercentage: 16.9,
-      lastUpdatedAt: DateTime(2026, 7, 14),
     ),
-    Asset(
+    const Asset(
       id: 'cash',
       name: 'Kas',
       code: 'CASH',
       category: AssetCategory.cash,
-      currentValue: 6600000,
-      allocationPercentage: 12,
-      lastUpdatedAt: DateTime(2026, 7, 12),
     ),
   ];
+
+  final Map<String, Holding> _holdings = {
+    'btc': Holding(
+      assetId: 'btc',
+      currentValue: 18200000,
+      lastUpdatedAt: DateTime(2026, 7, 15),
+    ),
+    'bmri': Holding(
+      assetId: 'bmri',
+      currentValue: 10700000,
+      lastUpdatedAt: DateTime(2026, 7, 15),
+    ),
+    'bbri': Holding(
+      assetId: 'bbri',
+      currentValue: 10200000,
+      lastUpdatedAt: DateTime(2026, 7, 15),
+    ),
+    'rd': Holding(
+      assetId: 'rd',
+      currentValue: 9300000,
+      lastUpdatedAt: DateTime(2026, 7, 14),
+    ),
+    'cash': Holding(
+      assetId: 'cash',
+      currentValue: 6600000,
+      lastUpdatedAt: DateTime(2026, 7, 12),
+    ),
+  };
 
   final Map<String, List<AssetSnapshot>> _assetHistories = {
     'btc': [
@@ -135,28 +155,24 @@ class MockPortfolioRepository implements PortfolioRepository {
     ],
   };
 
-  final List<AssetSnapshot> _portfolioHistory = [
-    AssetSnapshot(
+  final List<PortfolioSnapshot> _portfolioHistory = [
+    PortfolioSnapshot(
       id: 'portfolio-20260715',
-      assetId: 'portfolio',
       totalValue: 55000000,
       recordedAt: DateTime(2026, 7, 15),
     ),
-    AssetSnapshot(
+    PortfolioSnapshot(
       id: 'portfolio-20260615',
-      assetId: 'portfolio',
       totalValue: 53200000,
       recordedAt: DateTime(2026, 6, 15),
     ),
-    AssetSnapshot(
+    PortfolioSnapshot(
       id: 'portfolio-20260515',
-      assetId: 'portfolio',
       totalValue: 51500000,
       recordedAt: DateTime(2026, 5, 15),
     ),
-    AssetSnapshot(
+    PortfolioSnapshot(
       id: 'portfolio-20260415',
-      assetId: 'portfolio',
       totalValue: 49800000,
       recordedAt: DateTime(2026, 4, 15),
     ),
@@ -188,10 +204,12 @@ class MockPortfolioRepository implements PortfolioRepository {
   double _monthlyChangePercentage = 3.4;
   double _targetProgressPercentage = 88.3;
 
+  // ---------------------------------------------------------------- master
+
   @override
-  Future<List<AllocationTarget>> getAllocationTargets() async {
+  Future<List<Asset>> getAssets() async {
     await _wait();
-    return _targets.toList(growable: false);
+    return _assets.toList(growable: false);
   }
 
   @override
@@ -201,36 +219,13 @@ class MockPortfolioRepository implements PortfolioRepository {
   }
 
   @override
-  Future<List<Asset>> getAssets() async {
-    await _wait();
-    return _assets.toList(growable: false);
-  }
-
-  @override
   Future<void> createAsset(Asset asset) async {
     await _wait();
 
     if (_assets.any((item) => item.id == asset.id)) {
       throw StateError('Asset sudah ada.');
     }
-
     _assets.add(asset);
-    final history = _assetHistories.putIfAbsent(
-      asset.id,
-      () => <AssetSnapshot>[],
-    );
-    _replaceSnapshot(
-      history,
-      AssetSnapshot(
-        id: '${asset.id}-${asset.lastUpdatedAt.year}-${asset.lastUpdatedAt.month.toString().padLeft(2, '0')}',
-        assetId: asset.id,
-        totalValue: asset.currentValue,
-        recordedAt: asset.lastUpdatedAt,
-        totalCost: asset.totalCost,
-      ),
-    );
-    _recalculateAllocations();
-    _replacePortfolioSnapshot(asset.lastUpdatedAt);
   }
 
   @override
@@ -241,35 +236,32 @@ class MockPortfolioRepository implements PortfolioRepository {
     if (assetIndex == -1) {
       throw StateError('Asset tidak ditemukan.');
     }
-
-    final existing = _assets[assetIndex];
-    _assets[assetIndex] = existing.copyWith(
-      name: asset.name,
-      code: asset.code,
-      category: asset.category,
-      totalCost: asset.totalCost,
-      marketSymbol: asset.marketSymbol,
-      quantity: asset.quantity,
-      avgBuyPrice: asset.avgBuyPrice,
-      priceCurrency: asset.priceCurrency,
-    );
+    _assets[assetIndex] = asset;
   }
 
   @override
   Future<void> deleteAsset(String assetId) async {
     await _wait();
 
-    _assets.removeWhere((asset) => asset.id == assetId);
-    _assetHistories.remove(assetId);
-    _recalculateAllocations();
-
-    if (_assets.isNotEmpty) {
-      final lastUpdatedAt = _assets
-          .map((asset) => asset.lastUpdatedAt)
-          .reduce((latest, next) => latest.isAfter(next) ? latest : next);
-      _replacePortfolioSnapshot(lastUpdatedAt);
-      _monthlyChangePercentage = _calculateMonthlyChange(_portfolioHistory);
+    if (_holdings.containsKey(assetId) ||
+        (_assetHistories[assetId]?.isNotEmpty ?? false)) {
+      throw const AssetHasHoldingException();
     }
+    _assets.removeWhere((asset) => asset.id == assetId);
+  }
+
+  // ----------------------------------------------------------------- porto
+
+  @override
+  Future<List<PortfolioPosition>> getPositions() async {
+    await _wait();
+    return _positions();
+  }
+
+  @override
+  Future<PortfolioPosition?> getPositionByAssetId(String assetId) async {
+    await _wait();
+    return _positions().where((position) => position.id == assetId).firstOrNull;
   }
 
   @override
@@ -281,31 +273,46 @@ class MockPortfolioRepository implements PortfolioRepository {
   }
 
   @override
-  Future<List<AssetSnapshot>> getPortfolioHistory() async {
+  Future<List<PortfolioSnapshot>> getPortfolioHistory() async {
     await _wait();
     return _portfolioHistory.toList(growable: false);
   }
 
   @override
-  Future<void> deleteSnapshot(String snapshotId) async {
+  Future<void> deleteAssetSnapshot(String snapshotId) async {
     await _wait();
-    _portfolioHistory.removeWhere((snapshot) => snapshot.id == snapshotId);
     for (final history in _assetHistories.values) {
       history.removeWhere((snapshot) => snapshot.id == snapshotId);
     }
   }
 
   @override
+  Future<void> deletePortfolioSnapshot(String snapshotId) async {
+    await _wait();
+    _portfolioHistory.removeWhere((snapshot) => snapshot.id == snapshotId);
+  }
+
+  @override
+  Future<void> removeFromPortfolio(String assetId) async {
+    await _wait();
+    _holdings.remove(assetId);
+    _assetHistories.remove(assetId);
+  }
+
+  @override
   Future<PortfolioSummary> getPortfolioSummary() async {
     await _wait();
+    final positions = _positions();
     return PortfolioSummary(
       totalValue: _currentTotalValue,
       monthlyChangePercentage: _monthlyChangePercentage,
       targetProgressPercentage: _targetProgressPercentage,
-      assets: _assets.toList(growable: false),
-      lastUpdatedAt: _assets
-          .map((asset) => asset.lastUpdatedAt)
-          .reduce((latest, next) => latest.isAfter(next) ? latest : next),
+      positions: positions,
+      lastUpdatedAt: positions.isEmpty
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : positions
+                .map((position) => position.lastUpdatedAt)
+                .reduce((latest, next) => latest.isAfter(next) ? latest : next),
     );
   }
 
@@ -322,57 +329,74 @@ class MockPortfolioRepository implements PortfolioRepository {
   }) async {
     await _wait();
 
-    final assetIndex = _assets.indexWhere((asset) => asset.id == assetId);
-    if (assetIndex == -1) {
+    if (!_assets.any((asset) => asset.id == assetId)) {
       throw StateError('Asset tidak ditemukan.');
     }
 
-    final existing = _assets[assetIndex];
-    final cost = totalCost ?? existing.totalCost;
-    _assets[assetIndex] = existing.copyWith(
+    final existing = _holdings[assetId];
+    final cost = totalCost ?? existing?.totalCost;
+    _holdings[assetId] = Holding(
+      assetId: assetId,
       currentValue: totalValue,
       lastUpdatedAt: recordedAt,
       totalCost: cost,
-      quantity: quantity ?? existing.quantity,
-      avgBuyPrice: avgBuyPrice ?? existing.avgBuyPrice,
-      priceCurrency: priceCurrency ?? existing.priceCurrency,
+      quantity: quantity ?? existing?.quantity,
+      avgBuyPrice: avgBuyPrice ?? existing?.avgBuyPrice,
+      priceCurrency: priceCurrency ?? existing?.priceCurrency,
     );
 
     final history = _assetHistories.putIfAbsent(
       assetId,
       () => <AssetSnapshot>[],
     );
-    _replaceSnapshot(
-      history,
-      AssetSnapshot(
-        id: '$assetId-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}',
-        assetId: assetId,
-        totalValue: totalValue,
-        recordedAt: recordedAt,
-        note: note,
-        totalCost: cost,
-      ),
-    );
+    history
+      ..removeWhere((item) => _sameMonth(item.recordedAt, recordedAt))
+      ..add(
+        AssetSnapshot(
+          id: '$assetId-${_monthKey(recordedAt)}',
+          assetId: assetId,
+          totalValue: totalValue,
+          recordedAt: recordedAt,
+          note: note,
+          totalCost: cost,
+        ),
+      )
+      ..sort((left, right) => right.recordedAt.compareTo(left.recordedAt));
 
-    _recalculateAllocations();
+    _portfolioHistory
+      ..removeWhere((item) => _sameMonth(item.recordedAt, recordedAt))
+      ..add(
+        PortfolioSnapshot(
+          id: 'portfolio-${_monthKey(recordedAt)}',
+          totalValue: _historicalPortfolioTotal(recordedAt),
+          recordedAt: recordedAt,
+          note: note,
+        ),
+      )
+      ..sort((left, right) => right.recordedAt.compareTo(left.recordedAt));
 
-    _replacePortfolioSnapshot(recordedAt, note: note);
-
-    _monthlyChangePercentage = _calculateMonthlyChange(_portfolioHistory);
+    _monthlyChangePercentage = _calculateMonthlyChange();
     _targetProgressPercentage = _estimateTargetProgress();
+  }
+
+  @override
+  Future<List<AllocationTarget>> getAllocationTargets() async {
+    await _wait();
+    return _targets.toList(growable: false);
   }
 
   @override
   Future<void> saveAllocationTarget(AllocationTarget target) async {
     await _wait();
 
-    _targets.removeWhere(
-      (item) => item.id == target.id || item.category == target.category,
-    );
-    _targets.add(target);
-    _targets.sort(
-      (left, right) => left.category.index.compareTo(right.category.index),
-    );
+    _targets
+      ..removeWhere(
+        (item) => item.id == target.id || item.category == target.category,
+      )
+      ..add(target)
+      ..sort(
+        (left, right) => left.category.index.compareTo(right.category.index),
+      );
     _targetProgressPercentage = _estimateTargetProgress();
   }
 
@@ -385,78 +409,51 @@ class MockPortfolioRepository implements PortfolioRepository {
   }
 
   double get _currentTotalValue =>
-      _assets.fold(0, (sum, asset) => sum + asset.currentValue);
+      _holdings.values.fold(0, (sum, holding) => sum + holding.currentValue);
+
+  List<PortfolioPosition> _positions() {
+    final total = _currentTotalValue;
+    return [
+      for (final asset in _assets)
+        if (_holdings[asset.id] case final holding?)
+          PortfolioPosition(
+            asset: asset,
+            holding: holding,
+            allocationPercentage: total == 0
+                ? 0
+                : holding.currentValue / total * 100,
+          ),
+    ]..sort((left, right) => right.currentValue.compareTo(left.currentValue));
+  }
 
   double _estimateTargetProgress() {
     final actualByCategory = <AssetCategory, double>{};
-    for (final asset in _assets) {
+    for (final position in _positions()) {
       actualByCategory.update(
-        asset.category,
-        (value) => value + asset.allocationPercentage,
-        ifAbsent: () => asset.allocationPercentage,
+        position.category,
+        (value) => value + position.allocationPercentage,
+        ifAbsent: () => position.allocationPercentage,
       );
     }
 
     var totalDifference = 0.0;
     for (final target in _targets) {
       totalDifference +=
-          (actualByCategory[target.category] ?? 0 - target.targetPercentage)
+          ((actualByCategory[target.category] ?? 0) - target.targetPercentage)
               .abs();
     }
 
     return (100 - (totalDifference / 2)).clamp(0, 100).toDouble();
   }
 
-  void _recalculateAllocations() {
-    final total = _currentTotalValue;
-    if (total == 0) {
-      for (var index = 0; index < _assets.length; index++) {
-        _assets[index] = _assets[index].copyWith(allocationPercentage: 0);
-      }
-      return;
-    }
-
-    for (var index = 0; index < _assets.length; index++) {
-      final asset = _assets[index];
-      _assets[index] = asset.copyWith(
-        allocationPercentage: (asset.currentValue / total) * 100,
-      );
-    }
-  }
-
-  void _replaceSnapshot(List<AssetSnapshot> snapshots, AssetSnapshot snapshot) {
-    snapshots.removeWhere(
-      (item) =>
-          item.assetId == snapshot.assetId &&
-          item.recordedAt.year == snapshot.recordedAt.year &&
-          item.recordedAt.month == snapshot.recordedAt.month,
-    );
-    snapshots.add(snapshot);
-    snapshots.sort(
-      (left, right) => right.recordedAt.compareTo(left.recordedAt),
-    );
-  }
-
-  void _replacePortfolioSnapshot(DateTime recordedAt, {String? note}) {
-    _replaceSnapshot(
-      _portfolioHistory,
-      AssetSnapshot(
-        id: 'portfolio-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}',
-        assetId: 'portfolio',
-        totalValue: _historicalPortfolioTotal(recordedAt),
-        recordedAt: recordedAt,
-        note: note,
-      ),
-    );
-  }
-
-  /// Sums each asset's most recent recorded value at or before [asOf],
+  /// Sums each held asset's most recent recorded value at or before [asOf],
   /// falling back to its current value when no snapshot exists yet.
   double _historicalPortfolioTotal(DateTime asOf) {
     var total = 0.0;
 
-    for (final asset in _assets) {
-      final history = _assetHistories[asset.id] ?? const <AssetSnapshot>[];
+    for (final holding in _holdings.values) {
+      final history =
+          _assetHistories[holding.assetId] ?? const <AssetSnapshot>[];
       final atOrBefore = history.where(
         (snapshot) => !snapshot.recordedAt.isAfter(asOf),
       );
@@ -466,19 +463,19 @@ class MockPortfolioRepository implements PortfolioRepository {
               (a, b) => a.recordedAt.isAfter(b.recordedAt) ? a : b,
             );
 
-      total += latest?.totalValue ?? asset.currentValue;
+      total += latest?.totalValue ?? holding.currentValue;
     }
 
     return total;
   }
 
-  double _calculateMonthlyChange(List<AssetSnapshot> history) {
-    if (history.length < 2) {
+  double _calculateMonthlyChange() {
+    if (_portfolioHistory.length < 2) {
       return 0;
     }
 
-    final latest = history.first.totalValue;
-    final previous = history[1].totalValue;
+    final latest = _portfolioHistory.first.totalValue;
+    final previous = _portfolioHistory[1].totalValue;
     if (previous == 0) {
       return 0;
     }
@@ -488,3 +485,9 @@ class MockPortfolioRepository implements PortfolioRepository {
 
   Future<void> _wait() => Future<void>.delayed(simulatedDelay);
 }
+
+bool _sameMonth(DateTime left, DateTime right) =>
+    left.year == right.year && left.month == right.month;
+
+String _monthKey(DateTime value) =>
+    '${value.year}-${value.month.toString().padLeft(2, '0')}';

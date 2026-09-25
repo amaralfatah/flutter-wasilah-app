@@ -35,11 +35,11 @@ Future<void> _pumpShell(WidgetTester tester, {required double width}) async {
   tester.view.physicalSize = Size(width, 900) * tester.view.devicePixelRatio;
   addTearDown(tester.view.resetPhysicalSize);
 
+  final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
   final container = ProviderContainer(
     overrides: [
-      portfolioRepositoryProvider.overrideWithValue(
-        MockPortfolioRepository(simulatedDelay: Duration.zero),
-      ),
+      portfolioRepositoryProvider.overrideWithValue(repository),
+      assetRepositoryProvider.overrideWithValue(repository),
     ],
   );
   addTearDown(container.dispose);

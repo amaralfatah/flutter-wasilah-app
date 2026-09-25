@@ -740,12 +740,6 @@ abstract class AppLocalizations {
   /// **'Kode aset wajib diisi.'**
   String get assetCodeRequired;
 
-  /// Label field nilai awal aset
-  ///
-  /// In id, this message translates to:
-  /// **'Nilai awal'**
-  String get initialValueLabel;
-
   /// Helper text total modal opsional
   ///
   /// In id, this message translates to:
@@ -767,7 +761,7 @@ abstract class AppLocalizations {
   /// Pesan dialog konfirmasi hapus aset
   ///
   /// In id, this message translates to:
-  /// **'Aset {assetName} dan histori nilainya akan dihapus.'**
+  /// **'Master aset {assetName} akan dihapus.'**
   String deleteAssetMessage(String assetName);
 
   /// Snackbar gagal simpan aset
@@ -842,23 +836,11 @@ abstract class AppLocalizations {
   /// **'Mengikuti aturan 5/25: penyesuaian baru diperlukan saat alokasi melewati 5 poin persen atau 25% dari target, mana yang lebih kecil.'**
   String get toleranceRuleExplanation;
 
-  /// Judul halaman daftar aset
-  ///
-  /// In id, this message translates to:
-  /// **'Aset'**
-  String get assetsTitle;
-
   /// Tooltip FAB tambah aset
   ///
   /// In id, this message translates to:
   /// **'Tambah aset'**
   String get addAssetTooltip;
-
-  /// Pesan state kosong daftar aset
-  ///
-  /// In id, this message translates to:
-  /// **'Tambahkan aset pertama untuk mulai mencatat nilai.'**
-  String get emptyAssetsListMessage;
 
   /// Label seksi aset nonaktif/arsip
   ///
@@ -1523,6 +1505,90 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Kurs: 1 {currency} = {rate}'**
   String valueSuggestionFxDetail(String currency, String rate);
+
+  /// Pemisahan master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Aset masih ada di portofolio. Keluarkan dari portofolio dulu sebelum menghapus.'**
+  String get assetHasHoldingMessage;
+
+  /// Pemisahan master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Keluarkan dari portofolio'**
+  String get removeFromPortfolioButton;
+
+  /// Pemisahan master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Keluarkan dari portofolio?'**
+  String get removeFromPortfolioTitle;
+
+  /// No description provided for @removeFromPortfolioMessage.
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai dan histori {assetName} akan dihapus dari portofolio. Master aset tetap ada.'**
+  String removeFromPortfolioMessage(String assetName);
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Portofolio'**
+  String get portfolioTitle;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Master aset'**
+  String get masterAssetsTitle;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Data'**
+  String get settingsDataSection;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Nama, kode, kategori, dan simbol pasar'**
+  String get masterAssetsSettingsSubtitle;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Tambahkan aset (mis. saham, kripto, kas) sebelum mencatat nilainya di portofolio.'**
+  String get emptyMasterAssetsMessage;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Portofolio masih kosong'**
+  String get emptyPortfolioTitle;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih aset dari master lalu catat nilainya.'**
+  String get emptyPortfolioMessage;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Buat master aset dulu di Pengaturan, lalu catat nilainya di sini.'**
+  String get emptyPortfolioNoMasterMessage;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Kelola master aset'**
+  String get openMasterAssetsLabel;
+
+  /// Pemisahan halaman master aset & portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Catat nilai aset'**
+  String get addToPortfolioLabel;
 }
 
 class _AppLocalizationsDelegate

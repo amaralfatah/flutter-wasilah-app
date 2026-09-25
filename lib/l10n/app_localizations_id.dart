@@ -351,9 +351,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get assetCodeRequired => 'Kode aset wajib diisi.';
 
   @override
-  String get initialValueLabel => 'Nilai awal';
-
-  @override
   String get totalCostOptionalHelper =>
       'Total dana yang disetor, untuk menghitung untung/rugi.';
 
@@ -365,7 +362,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String deleteAssetMessage(String assetName) {
-    return 'Aset $assetName dan histori nilainya akan dihapus.';
+    return 'Master aset $assetName akan dihapus.';
   }
 
   @override
@@ -413,14 +410,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Mengikuti aturan 5/25: penyesuaian baru diperlukan saat alokasi melewati 5 poin persen atau 25% dari target, mana yang lebih kecil.';
 
   @override
-  String get assetsTitle => 'Aset';
-
-  @override
   String get addAssetTooltip => 'Tambah aset';
-
-  @override
-  String get emptyAssetsListMessage =>
-      'Tambahkan aset pertama untuk mulai mencatat nilai.';
 
   @override
   String get inactiveAssetsLabel => 'Aset nonaktif';
@@ -816,4 +806,53 @@ class AppLocalizationsId extends AppLocalizations {
   String valueSuggestionFxDetail(String currency, String rate) {
     return 'Kurs: 1 $currency = $rate';
   }
+
+  @override
+  String get assetHasHoldingMessage =>
+      'Aset masih ada di portofolio. Keluarkan dari portofolio dulu sebelum menghapus.';
+
+  @override
+  String get removeFromPortfolioButton => 'Keluarkan dari portofolio';
+
+  @override
+  String get removeFromPortfolioTitle => 'Keluarkan dari portofolio?';
+
+  @override
+  String removeFromPortfolioMessage(String assetName) {
+    return 'Nilai dan histori $assetName akan dihapus dari portofolio. Master aset tetap ada.';
+  }
+
+  @override
+  String get portfolioTitle => 'Portofolio';
+
+  @override
+  String get masterAssetsTitle => 'Master aset';
+
+  @override
+  String get settingsDataSection => 'Data';
+
+  @override
+  String get masterAssetsSettingsSubtitle =>
+      'Nama, kode, kategori, dan simbol pasar';
+
+  @override
+  String get emptyMasterAssetsMessage =>
+      'Tambahkan aset (mis. saham, kripto, kas) sebelum mencatat nilainya di portofolio.';
+
+  @override
+  String get emptyPortfolioTitle => 'Portofolio masih kosong';
+
+  @override
+  String get emptyPortfolioMessage =>
+      'Pilih aset dari master lalu catat nilainya.';
+
+  @override
+  String get emptyPortfolioNoMasterMessage =>
+      'Buat master aset dulu di Pengaturan, lalu catat nilainya di sini.';
+
+  @override
+  String get openMasterAssetsLabel => 'Kelola master aset';
+
+  @override
+  String get addToPortfolioLabel => 'Catat nilai aset';
 }

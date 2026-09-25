@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/backup/presentation/widgets/backup_section.dart';
 import 'package:flutter_wasilah_app/features/settings/presentation/widgets/settings_tile.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_wasilah_app/features/settings/providers/locale_provider.
 import 'package:flutter_wasilah_app/features/settings/providers/theme_mode_provider.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
+import 'package:go_router/go_router.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -41,6 +43,13 @@ class SettingsPage extends ConsumerWidget {
             title: l10n.settingsLanguageLabel,
             value: _localeLabel(l10n, locale),
             onTap: () => unawaited(_showLanguagePicker(context, ref, locale)),
+          ),
+          SettingsSectionHeader(l10n.settingsDataSection),
+          SettingsTile(
+            icon: Icons.inventory_2_outlined,
+            title: l10n.masterAssetsTitle,
+            subtitle: l10n.masterAssetsSettingsSubtitle,
+            onTap: () => unawaited(context.push(RouteNames.masterAssets)),
           ),
           SettingsSectionHeader(l10n.settingsBackupSection),
           const BackupSection(),

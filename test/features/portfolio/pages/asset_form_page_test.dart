@@ -7,14 +7,15 @@ import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_provi
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 
 void main() {
-  testWidgets('asset form formats initial value as rupiah input', (
-    tester,
-  ) async {
+  testWidgets('asset form only asks for master data', (tester) async {
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+        ],
         child: const MaterialApp(
           locale: Locale('id'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -26,12 +27,11 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Nilai awal'),
-      '1000000',
-    );
-    await tester.pump();
-
-    expect(find.text('1.000.000'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Nama aset'), findsOneWidget);
+    // Nilai, tanggal, dan mata uang harga beli milik portofolio, bukan
+    // master aset: diisi lewat update nilai.
+    expect(find.text('Tanggal pencatatan'), findsNothing);
+    expect(find.text('Mata uang harga beli'), findsNothing);
+    expect(find.byType(TextFormField), findsNWidgets(3));
   });
 }

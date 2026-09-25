@@ -30,21 +30,21 @@ class DashboardPage extends ConsumerWidget {
         value: summaryValue,
         onRetry: () => ref.invalidate(portfolioSummaryProvider),
         data: (summary) {
-          if (summary.assets.isEmpty) {
+          if (summary.positions.isEmpty) {
             return RefreshablePageBody(
               onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
               child: AppEmptyState(
                 title: l10n.commonEmptyAssetsTitle,
                 message: l10n.emptyAssetsDashboardMessage,
                 actionLabel: l10n.commonAddAssetLabel,
-                onAction: () => context.push(RouteNames.assetCreate),
+                onAction: () => context.go(RouteNames.portfolio),
               ),
             );
           }
 
-          // Aset bernilai 0 sudah nonaktif/diarsipkan (lihat tab Aset);
+          // Aset bernilai 0 sudah nonaktif/diarsipkan (lihat tab Portofolio);
           // beranda hanya menonjolkan kepemilikan yang masih aktif.
-          final activeAssets = summary.assets
+          final activeAssets = summary.positions
               .where((asset) => asset.currentValue != 0)
               .toList(growable: false);
 
@@ -113,7 +113,7 @@ class DashboardPage extends ConsumerWidget {
                   AppSectionBand(
                     label: l10n.mainAssetsTitle,
                     actionLabel: l10n.viewAllLabel,
-                    onAction: () => context.go(RouteNames.assets),
+                    onAction: () => context.go(RouteNames.portfolio),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppListCard(
@@ -125,7 +125,7 @@ class DashboardPage extends ConsumerWidget {
                             (asset) => AssetListItem(
                               asset: asset,
                               onTap: () => context.push(
-                                '${RouteNames.assets}/${asset.id}',
+                                '${RouteNames.portfolio}/${asset.id}',
                               ),
                             ),
                           ),

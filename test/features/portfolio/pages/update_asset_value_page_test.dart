@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -26,7 +27,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+        ],
         child: const MaterialApp(
           locale: Locale('id'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -59,7 +63,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+        ],
         child: const MaterialApp(
           locale: Locale('id'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -90,6 +97,7 @@ void main() {
         ProviderScope(
           overrides: [
             portfolioRepositoryProvider.overrideWithValue(repository),
+            assetRepositoryProvider.overrideWithValue(repository),
           ],
           child: const MaterialApp(
             locale: Locale('id'),
@@ -128,7 +136,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [portfolioRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+        ],
         child: const MaterialApp(
           locale: Locale('id'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -161,7 +172,51 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify asset value updated: 18,200,000 + 1,000,000 = 19,200,000
-    final btcAsset = await repository.getAssetById('btc');
-    expect(btcAsset?.currentValue, 19200000.0);
+    final btcPosition = await repository.getPositionByAssetId('btc');
+    expect(btcPosition?.currentValue, 19200000.0);
+  });
+
+  testWidgets('first update of an asset outside the portfolio adds it', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    // Mock memakai Future.delayed; di zona FakeAsync harus lewat runAsync.
+    await tester.runAsync(
+      () => repository.createAsset(
+        const Asset(
+          id: 'gold',
+          name: 'Emas',
+          code: 'XAU',
+          category: AssetCategory.preciousMetal,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          locale: Locale('id'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: UpdateAssetValuePage(assetId: 'gold'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).first, '5.000.000');
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('gold'),
+    );
+    expect(position?.currentValue, 5000000);
+    expect(position?.priceCurrency, 'IDR');
   });
 }

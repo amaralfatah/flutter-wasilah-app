@@ -9,10 +9,12 @@ import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
@@ -25,31 +27,33 @@ import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart'
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
 
-class AssetDetailPage extends ConsumerStatefulWidget {
-  const AssetDetailPage({required this.assetId, super.key});
+/// Detail satu holding portofolio: nilai, modal, PnL, dan histori. Identitas
+/// aset (nama, kategori, simbol) hanya ditampilkan; diubah di master aset.
+class HoldingDetailPage extends ConsumerStatefulWidget {
+  const HoldingDetailPage({required this.assetId, super.key});
 
   final String assetId;
 
   @override
-  ConsumerState<AssetDetailPage> createState() => _AssetDetailPageState();
+  ConsumerState<HoldingDetailPage> createState() => _HoldingDetailPageState();
 }
 
-class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
+class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
   final Set<String> _removedIds = {};
 
   String get assetId => widget.assetId;
 
   @override
   Widget build(BuildContext context) {
-    final assetValue = ref.watch(assetDetailProvider(assetId));
+    final positionValue = ref.watch(positionDetailProvider(assetId));
     final historyValue = ref.watch(assetHistoryProvider(assetId));
     final l10n = context.l10n;
 
-    return assetValue.when(
-      data: (asset) {
-        if (asset == null) {
+    return positionValue.when(
+      data: (position) {
+        if (position == null) {
           return Scaffold(
-            appBar: const _AssetDetailAppBar(),
+            appBar: const _HoldingDetailAppBar(),
             body: AppEmptyState(
               title: l10n.assetNotFoundTitle,
               message: l10n.assetNotFoundMessage,
@@ -57,13 +61,18 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
           );
         }
 
+        final asset = position.asset;
+
         return Scaffold(
-          appBar: _AssetDetailAppBar(asset: asset),
+          appBar: _HoldingDetailAppBar(
+            asset: asset,
+            onRemoveFromPortfolio: () => _removeFromPortfolio(asset),
+          ),
           bottomNavigationBar: SafeArea(
             minimum: const EdgeInsets.all(AppSpacing.lg),
             child: FilledButton(
               onPressed: () =>
-                  context.push('${RouteNames.assets}/${asset.id}/update'),
+                  context.push('${RouteNames.portfolio}/${asset.id}/update'),
               child: Text(l10n.updateValueButton),
             ),
           ),
@@ -73,7 +82,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
               if (asset.marketSymbol case final marketSymbol?) {
                 ref.invalidate(marketQuoteProvider(marketSymbol));
               }
-              return ref.refresh(assetDetailProvider(assetId).future);
+              return ref.refresh(positionDetailProvider(assetId).future);
             },
             // Horizontal 0: AppListCard (metrik & riwayat) full-bleed sampai
             // tepi layar. Konten lain mengatur padding horizontalnya sendiri.
@@ -90,8 +99,8 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     onTap: asset.marketSymbol == null
                         ? null
                         : () => context.push(
-                            '${RouteNames.assets}/${asset.id}/'
-                            '${RouteNames.assetMarketSegment}',
+                            '${RouteNames.portfolio}/${asset.id}/'
+                            '${RouteNames.portfolioMarketSegment}',
                           ),
                     child: _AssetHeader(asset: asset),
                   ),
@@ -102,24 +111,24 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                   children: [
                     _MetricTile(
                       label: l10n.commonCurrentValueLabel,
-                      value: formatCurrency(asset.currentValue),
+                      value: formatCurrency(position.currentValue),
                     ),
-                    if (asset.totalCost case final totalCost?) ...[
+                    if (position.totalCost case final totalCost?) ...[
                       _MetricTile(
                         label: l10n.totalCostLabel,
                         value: formatCurrency(totalCost),
                       ),
-                      _ProfitLossTile(asset: asset),
+                      _ProfitLossTile(position: position),
                     ],
-                    if (asset.avgBuyPrice case final avgBuyPrice?)
+                    if (position.avgBuyPrice case final avgBuyPrice?)
                       _MetricTile(
                         label: l10n.avgBuyPriceLabel,
                         value: formatAvgPrice(
                           avgBuyPrice,
-                          asset.effectivePriceCurrency,
+                          position.effectivePriceCurrency,
                         ),
                       ),
-                    if (asset.quantity case final quantity?)
+                    if (position.quantity case final quantity?)
                       _MetricTile(
                         label: l10n.quantityLabel,
                         value: formatQuantity(quantity),
@@ -127,7 +136,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     _MetricTile(
                       label: l10n.lastUpdatedLabel,
                       value: formatFullDate(
-                        asset.lastUpdatedAt,
+                        position.lastUpdatedAt,
                         Localizations.localeOf(context),
                       ),
                     ),
@@ -147,7 +156,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     ),
                     child: _AllocationRow(
                       label: l10n.allocationLabel,
-                      percentage: asset.allocationPercentage,
+                      percentage: position.allocationPercentage,
                     ),
                   ),
                 ),
@@ -217,24 +226,55 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
         );
       },
       loading: () =>
-          const Scaffold(appBar: _AssetDetailAppBar(), body: AppLoading()),
+          const Scaffold(appBar: _HoldingDetailAppBar(), body: AppLoading()),
       error: (error, stackTrace) => Scaffold(
-        appBar: const _AssetDetailAppBar(),
+        appBar: const _HoldingDetailAppBar(),
         body: AppErrorView(
-          onRetry: () => ref.invalidate(assetDetailProvider(assetId)),
+          onRetry: () => ref.invalidate(positionDetailProvider(assetId)),
         ),
       ),
     );
   }
 
+  Future<void> _removeFromPortfolio(Asset asset) async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.removeFromPortfolioTitle,
+      message: l10n.removeFromPortfolioMessage(asset.name),
+      confirmLabel: l10n.removeFromPortfolioButton,
+      isDestructive: true,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await ref
+          .read(updateAssetValueControllerProvider.notifier)
+          .removeFromPortfolio(asset.id);
+      if (!mounted) return;
+      context.pop();
+    } on Exception catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.updateAssetValueFailedMessage)),
+      );
+    }
+  }
+
   Future<void> _deleteSnapshot(String assetId, String snapshotId) async {
     final l10n = context.l10n;
     try {
-      await ref.read(portfolioRepositoryProvider).deleteSnapshot(snapshotId);
-      ref.invalidate(assetHistoryProvider(assetId));
-      ref.invalidate(assetDetailProvider(assetId));
-      ref.invalidate(portfolioSummaryProvider);
-      ref.invalidate(portfolioHistoryProvider);
+      await ref
+          .read(portfolioRepositoryProvider)
+          .deleteAssetSnapshot(snapshotId);
+      ref
+        ..invalidate(assetHistoryProvider(assetId))
+        ..invalidate(positionDetailProvider(assetId))
+        ..invalidate(positionListProvider)
+        ..invalidate(portfolioSummaryProvider)
+        ..invalidate(portfolioHistoryProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.commonHistoryDeletedMessage)),
@@ -260,11 +300,12 @@ Future<bool> _confirmDeleteSnapshot(BuildContext context) {
   );
 }
 
-class _AssetDetailAppBar extends StatelessWidget
+class _HoldingDetailAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const _AssetDetailAppBar({this.asset});
+  const _HoldingDetailAppBar({this.asset, this.onRemoveFromPortfolio});
 
   final Asset? asset;
+  final VoidCallback? onRemoveFromPortfolio;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -282,18 +323,13 @@ class _AssetDetailAppBar extends StatelessWidget
         overflow: TextOverflow.ellipsis,
       ),
       actions: [
-        if (asset != null)
+        if (onRemoveFromPortfolio case final onRemove?)
           PopupMenuButton<String>(
-            tooltip: l10n.editAssetTooltip,
-            onSelected: (value) {
-              if (value == 'edit') {
-                context.push('${RouteNames.assets}/${asset.id}/edit');
-              }
-            },
+            onSelected: (_) => onRemove(),
             itemBuilder: (context) => [
               PopupMenuItem(
-                value: 'edit',
-                child: Text(l10n.editAssetTooltip),
+                value: 'remove',
+                child: Text(l10n.removeFromPortfolioButton),
               ),
             ],
           ),
@@ -451,13 +487,13 @@ class _MetricTile extends StatelessWidget {
 }
 
 class _ProfitLossTile extends StatelessWidget {
-  const _ProfitLossTile({required this.asset});
+  const _ProfitLossTile({required this.position});
 
-  final Asset asset;
+  final PortfolioPosition position;
 
   @override
   Widget build(BuildContext context) {
-    final profitLoss = asset.profitLoss ?? 0;
+    final profitLoss = position.profitLoss ?? 0;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
@@ -466,7 +502,7 @@ class _ProfitLossTile extends StatelessWidget {
       ),
       title: Text(profitLossLabel(context, profitLoss)),
       trailing: Text(
-        formatProfitLoss(profitLoss, cost: asset.totalCost ?? 0),
+        formatProfitLoss(profitLoss, cost: position.totalCost ?? 0),
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
           color: profitLossColorOf(context, profitLoss),
         ),

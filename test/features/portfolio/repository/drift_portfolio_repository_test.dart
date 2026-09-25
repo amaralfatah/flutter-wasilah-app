@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_asset_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_portfolio_repository.dart';
 
 void main() {
@@ -21,53 +22,67 @@ void main() {
       await tempDirectory.delete(recursive: true);
     });
 
+    AppDatabase openDatabase() =>
+        AppDatabase.forTesting(NativeDatabase.createInBackground(databaseFile));
+
     test('starts with an empty portfolio on first launch', () async {
-      final database = AppDatabase.forTesting(
-        NativeDatabase.createInBackground(databaseFile),
-      );
+      final database = openDatabase();
       addTearDown(database.close);
       final repository = DriftPortfolioRepository(database);
 
-      final assets = await repository.getAssets();
+      final positions = await repository.getPositions();
       final targets = await repository.getAllocationTargets();
       final summary = await repository.getPortfolioSummary();
 
-      expect(assets, isEmpty);
+      expect(positions, isEmpty);
       expect(targets, isEmpty);
       expect(summary.totalValue, 0);
       expect(summary.monthlyChangePercentage, 0);
       expect(summary.targetProgressPercentage, 0);
-      expect(summary.assets, isEmpty);
+      expect(summary.positions, isEmpty);
     });
 
-    test('persists updated asset value after reopening the database', () async {
-      final firstDatabase = AppDatabase.forTesting(
-        NativeDatabase.createInBackground(databaseFile),
-      );
-      await _insertAsset(firstDatabase);
-      final firstRepository = DriftPortfolioRepository(firstDatabase);
+    test('a master asset without value is not part of the portfolio', () async {
+      final database = openDatabase();
+      addTearDown(database.close);
+      await DriftAssetRepository(database).createAsset(_btc);
+      final repository = DriftPortfolioRepository(database);
 
-      await firstRepository.updateAssetValue(
+      expect(await repository.getPositions(), isEmpty);
+      expect(await repository.getPositionByAssetId('btc'), isNull);
+      expect((await repository.getPortfolioSummary()).totalValue, 0);
+    });
+
+    test('first value update creates the holding and persists it', () async {
+      final firstDatabase = openDatabase();
+      await DriftAssetRepository(firstDatabase).createAsset(_btc);
+      await DriftPortfolioRepository(firstDatabase).updateAssetValue(
         assetId: 'btc',
         totalValue: 50000000,
         recordedAt: DateTime(2026, 7, 15),
         note: 'Update Juli',
+        quantity: 0.05,
+        avgBuyPrice: 60000,
+        priceCurrency: 'usd',
       );
       await firstDatabase.close();
 
-      final reopenedDatabase = AppDatabase.forTesting(
-        NativeDatabase.createInBackground(databaseFile),
-      );
+      final reopenedDatabase = openDatabase();
       addTearDown(reopenedDatabase.close);
-      final reopenedRepository = DriftPortfolioRepository(reopenedDatabase);
+      final repository = DriftPortfolioRepository(reopenedDatabase);
 
-      final asset = await reopenedRepository.getAssetById('btc');
-      final history = await reopenedRepository.getAssetHistory('btc');
-      final summary = await reopenedRepository.getPortfolioSummary();
+      final position = await repository.getPositionByAssetId('btc');
+      final history = await repository.getAssetHistory('btc');
+      final summary = await repository.getPortfolioSummary();
 
-      expect(asset, isNotNull);
-      expect(asset!.currentValue, 50000000);
-      expect(asset.lastUpdatedAt, DateTime(2026, 7, 15));
+      expect(position, isNotNull);
+      expect(position!.name, 'Bitcoin');
+      expect(position.currentValue, 50000000);
+      expect(position.lastUpdatedAt, DateTime(2026, 7, 15));
+      expect(position.allocationPercentage, 100);
+      expect(position.quantity, 0.05);
+      expect(position.avgBuyPrice, 60000);
+      expect(position.priceCurrency, 'USD');
       expect(history, hasLength(1));
       expect(history.first.note, 'Update Juli');
       expect(history.first.totalValue, 50000000);
@@ -77,11 +92,9 @@ void main() {
     test(
       'replaces same-day asset history when updated twice on one date',
       () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
+        final database = openDatabase();
         addTearDown(database.close);
-        await _insertAsset(database);
+        await DriftAssetRepository(database).createAsset(_btc);
         final repository = DriftPortfolioRepository(database);
         final recordedAt = DateTime(2026, 7, 16);
 
@@ -91,7 +104,6 @@ void main() {
           recordedAt: recordedAt,
           note: 'Update pagi',
         );
-
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 21000000,
@@ -99,12 +111,11 @@ void main() {
           note: 'Update sore',
         );
 
-        final asset = await repository.getAssetById('btc');
+        final position = await repository.getPositionByAssetId('btc');
         final history = await repository.getAssetHistory('btc');
 
-        expect(asset, isNotNull);
-        expect(asset!.currentValue, 21000000);
-        expect(asset.lastUpdatedAt, recordedAt);
+        expect(position!.currentValue, 21000000);
+        expect(position.lastUpdatedAt, recordedAt);
         expect(history, hasLength(1));
         expect(history.first.recordedAt, recordedAt);
         expect(history.first.totalValue, 21000000);
@@ -113,36 +124,47 @@ void main() {
     );
 
     test(
+      'keeps quantity, price and cost when an update leaves them empty',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        await DriftAssetRepository(database).createAsset(_btc);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 10000000,
+          recordedAt: DateTime(2026, 6),
+          quantity: 0.1,
+          avgBuyPrice: 50000,
+          priceCurrency: 'USD',
+          totalCost: 8000000,
+        );
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 12000000,
+          recordedAt: DateTime(2026, 7),
+        );
+
+        final position = await repository.getPositionByAssetId('btc');
+        expect(position!.quantity, 0.1);
+        expect(position.avgBuyPrice, 50000);
+        expect(position.priceCurrency, 'USD');
+        expect(position.totalCost, 8000000);
+        expect(position.profitLoss, 4000000);
+        expect(position.profitLossPercentage, 50);
+      },
+    );
+
+    test(
       'backdated updates use each asset historical value, not its current value',
       () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
+        final database = openDatabase();
         addTearDown(database.close);
         final repository = DriftPortfolioRepository(database);
 
-        await repository.createAsset(
-          Asset(
-            id: 'btc',
-            name: 'Bitcoin',
-            code: 'BTC',
-            category: AssetCategory.crypto,
-            currentValue: 10000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 5),
-          ),
-        );
-        await repository.createAsset(
-          Asset(
-            id: 'cash',
-            name: 'Kas',
-            code: 'CASH',
-            category: AssetCategory.cash,
-            currentValue: 5000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 5),
-          ),
-        );
+        await _track(database, _btc, 10000000, DateTime(2026, 5));
+        await _track(database, _cash, 5000000, DateTime(2026, 5));
 
         // Bring btc up to date across two more months.
         await repository.updateAssetValue(
@@ -157,44 +179,25 @@ void main() {
         );
 
         final history = await repository.getPortfolioHistory();
-        final mayEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 5),
-        );
-        final juneEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 6),
-        );
-        final julyEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7),
-        );
+        double totalAt(DateTime date) =>
+            history.firstWhere((item) => item.recordedAt == date).totalValue;
 
         // Cash never changes, so each month's total should reflect btc's
         // value at that point in time, not its final (July) value.
-        expect(mayEntry.totalValue, 15000000);
-        expect(juneEntry.totalValue, 17000000);
-        expect(julyEntry.totalValue, 20000000);
+        expect(totalAt(DateTime(2026, 5)), 15000000);
+        expect(totalAt(DateTime(2026, 6)), 17000000);
+        expect(totalAt(DateTime(2026, 7)), 20000000);
       },
     );
 
     test(
       'a backdated update does not overwrite the asset current value',
       () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
+        final database = openDatabase();
         addTearDown(database.close);
         final repository = DriftPortfolioRepository(database);
 
-        await repository.createAsset(
-          Asset(
-            id: 'btc',
-            name: 'Bitcoin',
-            code: 'BTC',
-            category: AssetCategory.crypto,
-            currentValue: 10000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7),
-          ),
-        );
+        await _track(database, _btc, 10000000, DateTime(2026, 7));
 
         // The latest known value is set in July...
         await repository.updateAssetValue(
@@ -210,115 +213,14 @@ void main() {
           recordedAt: DateTime(2026, 5),
         );
 
-        final asset = await repository.getAssetById('btc');
+        final position = await repository.getPositionByAssetId('btc');
         final summary = await repository.getPortfolioSummary();
 
         // current_value must stay pinned to the latest chronological entry
         // (July), not the value that happened to be entered last (May).
-        expect(asset, isNotNull);
-        expect(asset!.currentValue, 20000000);
-        expect(asset.lastUpdatedAt, DateTime(2026, 7, 15));
+        expect(position!.currentValue, 20000000);
+        expect(position.lastUpdatedAt, DateTime(2026, 7, 15));
         expect(summary.totalValue, 20000000);
-      },
-    );
-
-    test('creates, edits, and deletes assets', () async {
-      final database = AppDatabase.forTesting(
-        NativeDatabase.createInBackground(databaseFile),
-      );
-      addTearDown(database.close);
-      final repository = DriftPortfolioRepository(database);
-      final recordedAt = DateTime(2026, 7, 16);
-
-      await repository.createAsset(
-        Asset(
-          id: 'gold',
-          name: 'Emas',
-          code: 'XAU',
-          category: AssetCategory.preciousMetal,
-          currentValue: 12000000,
-          allocationPercentage: 0,
-          lastUpdatedAt: recordedAt,
-          totalCost: 10000000,
-        ),
-      );
-
-      var asset = await repository.getAssetById('gold');
-      expect(asset?.totalCost, 10000000);
-      expect(asset?.profitLoss, 2000000);
-      expect(asset?.profitLossPercentage, 20);
-      final history = await repository.getAssetHistory('gold');
-
-      expect(asset, isNotNull);
-      expect(asset!.name, 'Emas');
-      expect(asset.allocationPercentage, 100);
-      expect(history, hasLength(1));
-      expect(history.first.totalValue, 12000000);
-
-      await repository.updateAsset(
-        asset.copyWith(
-          name: 'Logam Mulia',
-          code: 'LM',
-          category: AssetCategory.preciousMetal,
-          totalCost: 15000000,
-        ),
-      );
-
-      asset = await repository.getAssetById('gold');
-      expect(asset?.totalCost, 15000000);
-      expect(asset?.profitLoss, -3000000);
-
-      expect(asset, isNotNull);
-      expect(asset!.name, 'Logam Mulia');
-      expect(asset.code, 'LM');
-      expect(asset.category, AssetCategory.preciousMetal);
-      expect(asset.currentValue, 12000000);
-
-      await repository.deleteAsset('gold');
-
-      expect(await repository.getAssetById('gold'), isNull);
-      expect(await repository.getAssetHistory('gold'), isEmpty);
-      expect(await repository.getAssets(), isEmpty);
-    });
-
-    test(
-      'normalizes and persists marketSymbol, and clears it back to null',
-      () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
-        addTearDown(database.close);
-        final repository = DriftPortfolioRepository(database);
-
-        await repository.createAsset(
-          Asset(
-            id: 'bmri',
-            name: 'Bank Mandiri',
-            code: 'BMRI',
-            category: AssetCategory.stock,
-            currentValue: 10000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7, 16),
-            // Lowercase and padded with whitespace on purpose: the
-            // repository must normalize it to trimmed, uppercase.
-            marketSymbol: '  bmri.jk  ',
-          ),
-        );
-
-        var asset = await repository.getAssetById('bmri');
-        expect(asset?.marketSymbol, 'BMRI.JK');
-        expect(await repository.getAssets(), [
-          isA<Asset>().having(
-            (item) => item.marketSymbol,
-            'marketSymbol',
-            'BMRI.JK',
-          ),
-        ]);
-
-        await repository.updateAsset(asset!.copyWith(marketSymbol: ''));
-
-        asset = await repository.getAssetById('bmri');
-        expect(asset?.marketSymbol, isNull);
       },
     );
 
@@ -326,39 +228,17 @@ void main() {
       'backfilling one asset for a past month excludes assets not yet '
       'tracked back then, instead of using their current value',
       () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
+        final database = openDatabase();
         addTearDown(database.close);
         final repository = DriftPortfolioRepository(database);
 
-        // btc is created this month (July) with no prior history.
-        await repository.createAsset(
-          Asset(
-            id: 'btc',
-            name: 'Bitcoin',
-            code: 'BTC',
-            category: AssetCategory.crypto,
-            currentValue: 20000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7),
-          ),
-        );
+        // btc is tracked from this month (July) with no prior history.
+        await _track(database, _btc, 20000000, DateTime(2026, 7));
 
-        // gold is a second asset the user just started tracking, and
-        // they backfill its value for last month (June), which btc has
-        // no record of.
-        await repository.createAsset(
-          Asset(
-            id: 'gold',
-            name: 'Emas',
-            code: 'XAU',
-            category: AssetCategory.preciousMetal,
-            currentValue: 5000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7),
-          ),
-        );
+        // gold is a second asset the user just started tracking, and they
+        // backfill its value for last month (June), which btc has no
+        // record of.
+        await _track(database, _gold, 5000000, DateTime(2026, 7));
         await repository.updateAssetValue(
           assetId: 'gold',
           totalValue: 3000000,
@@ -370,9 +250,9 @@ void main() {
           (item) => item.recordedAt == DateTime(2026, 6),
         );
 
-        // June's total should be just gold's backfilled value (3M) --
-        // btc didn't exist back then and must not be padded in at its
-        // current (July) value of 20M.
+        // June's total should be just gold's backfilled value (3M) -- btc
+        // didn't exist back then and must not be padded in at its current
+        // (July) value of 20M.
         expect(juneEntry.totalValue, 3000000);
       },
     );
@@ -380,24 +260,11 @@ void main() {
     test(
       'deleting last month value updates the monthly portfolio history',
       () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
+        final database = openDatabase();
         addTearDown(database.close);
         final repository = DriftPortfolioRepository(database);
 
-        await repository.createAsset(
-          Asset(
-            id: 'btc',
-            name: 'Bitcoin',
-            code: 'BTC',
-            category: AssetCategory.crypto,
-            currentValue: 10000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 6),
-          ),
-        );
-
+        await _track(database, _btc, 10000000, DateTime(2026, 6));
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 15000000,
@@ -405,18 +272,20 @@ void main() {
         );
 
         var history = await repository.getPortfolioHistory();
-        final julyEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7),
+        expect(
+          history
+              .firstWhere((item) => item.recordedAt == DateTime(2026, 7))
+              .totalValue,
+          15000000,
         );
-        expect(julyEntry.totalValue, 15000000);
 
         final assetHistory = await repository.getAssetHistory('btc');
         final julySnapshot = assetHistory.firstWhere(
           (item) => item.recordedAt == DateTime(2026, 7),
         );
-        await repository.deleteSnapshot(julySnapshot.id);
+        await repository.deleteAssetSnapshot(julySnapshot.id);
 
-        final asset = await repository.getAssetById('btc');
+        final position = await repository.getPositionByAssetId('btc');
         final summary = await repository.getPortfolioSummary();
         history = await repository.getPortfolioHistory();
         final updatedJulyEntry = history.firstWhere(
@@ -425,16 +294,89 @@ void main() {
 
         // With July's value deleted, btc (and thus the portfolio) should
         // fall back to June's value everywhere, not stay stuck at 15M.
-        expect(asset!.currentValue, 10000000);
+        expect(position!.currentValue, 10000000);
         expect(summary.totalValue, 10000000);
         expect(updatedJulyEntry.totalValue, 10000000);
       },
     );
 
-    test('saves and deletes allocation targets', () async {
-      final database = AppDatabase.forTesting(
-        NativeDatabase.createInBackground(databaseFile),
+    test(
+      'deleting the only snapshot removes the holding but keeps the master',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+        await _track(database, _btc, 10000000, DateTime(2026, 7));
+
+        final snapshot = (await repository.getAssetHistory('btc')).single;
+        await repository.deleteAssetSnapshot(snapshot.id);
+
+        expect(await repository.getPositionByAssetId('btc'), isNull);
+        expect(
+          await DriftAssetRepository(database).getAssetById('btc'),
+          isNotNull,
+        );
+      },
+    );
+
+    test('deletes a portfolio snapshot independently', () async {
+      final database = openDatabase();
+      addTearDown(database.close);
+      final repository = DriftPortfolioRepository(database);
+      await _track(database, _btc, 10000000, DateTime(2026, 7));
+
+      final snapshot = (await repository.getPortfolioHistory()).single;
+      await repository.deletePortfolioSnapshot(snapshot.id);
+
+      expect(await repository.getPortfolioHistory(), isEmpty);
+      expect(await repository.getAssetHistory('btc'), hasLength(1));
+      expect(
+        (await repository.getPositionByAssetId('btc'))!.currentValue,
+        10000000,
       );
+    });
+
+    test(
+      'removeFromPortfolio drops holding and history, then recomputes totals',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+        await _track(database, _btc, 10000000, DateTime(2026, 7));
+        await _track(database, _cash, 5000000, DateTime(2026, 7));
+
+        await repository.removeFromPortfolio('btc');
+
+        final positions = await repository.getPositions();
+        final history = await repository.getPortfolioHistory();
+        expect(positions.map((position) => position.id), ['cash']);
+        expect(positions.single.allocationPercentage, 100);
+        expect(await repository.getAssetHistory('btc'), isEmpty);
+        expect(history.single.totalValue, 5000000);
+        expect(
+          await DriftAssetRepository(database).getAssetById('btc'),
+          isNotNull,
+        );
+      },
+    );
+
+    test('throws when updating the value of an unknown asset', () async {
+      final database = openDatabase();
+      addTearDown(database.close);
+      final repository = DriftPortfolioRepository(database);
+
+      await expectLater(
+        repository.updateAssetValue(
+          assetId: 'ghost',
+          totalValue: 1,
+          recordedAt: DateTime(2026, 7),
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('saves and deletes allocation targets', () async {
+      final database = openDatabase();
       addTearDown(database.close);
       final repository = DriftPortfolioRepository(database);
 
@@ -474,22 +416,20 @@ void main() {
     test(
       'target progress stays above zero when targets exist but allocation is still imbalanced',
       () async {
-        final database = AppDatabase.forTesting(
-          NativeDatabase.createInBackground(databaseFile),
-        );
+        final database = openDatabase();
         addTearDown(database.close);
         final repository = DriftPortfolioRepository(database);
 
-        await repository.createAsset(
-          Asset(
+        await _track(
+          database,
+          const Asset(
             id: 'bbri',
             name: 'Bank Rakyat Indonesia',
             code: 'BBRI',
             category: AssetCategory.stock,
-            currentValue: 12000000,
-            allocationPercentage: 0,
-            lastUpdatedAt: DateTime(2026, 7, 16),
           ),
+          12000000,
+          DateTime(2026, 7, 16),
         );
 
         await repository.saveAllocationTarget(
@@ -515,21 +455,38 @@ void main() {
   });
 }
 
-Future<void> _insertAsset(AppDatabase database) async {
-  await database.customStatement(
-    '''
-    INSERT INTO assets (
-      id, name, code, category, current_value, allocation_percentage, last_updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''',
-    [
-      'btc',
-      'Bitcoin',
-      'BTC',
-      'crypto',
-      18200000,
-      100,
-      DateTime(2026, 7, 15).millisecondsSinceEpoch ~/ 1000,
-    ],
+const _btc = Asset(
+  id: 'btc',
+  name: 'Bitcoin',
+  code: 'BTC',
+  category: AssetCategory.crypto,
+);
+
+const _cash = Asset(
+  id: 'cash',
+  name: 'Kas',
+  code: 'CASH',
+  category: AssetCategory.cash,
+);
+
+const _gold = Asset(
+  id: 'gold',
+  name: 'Emas',
+  code: 'XAU',
+  category: AssetCategory.preciousMetal,
+);
+
+/// Buat master aset lalu isi nilai pertamanya (alur tambah aset dua langkah).
+Future<void> _track(
+  AppDatabase database,
+  Asset asset,
+  double value,
+  DateTime recordedAt,
+) async {
+  await DriftAssetRepository(database).createAsset(asset);
+  await DriftPortfolioRepository(database).updateAssetValue(
+    assetId: asset.id,
+    totalValue: value,
+    recordedAt: recordedAt,
   );
 }

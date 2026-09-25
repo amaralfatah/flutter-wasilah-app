@@ -4,6 +4,7 @@ import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -29,7 +30,7 @@ class PortfolioSummaryCard extends StatelessWidget {
     final l10n = context.l10n;
     // Aset bernilai 0 sudah nonaktif/diarsipkan; historinya tetap tersimpan
     // tapi tidak lagi ikut dihitung sebagai kepemilikan aktif.
-    final activeAssets = summary.assets
+    final activeAssets = summary.positions
         .where((asset) => asset.currentValue != 0)
         .toList(growable: false);
     final cash = activeAssets
@@ -186,7 +187,7 @@ class PortfolioSummaryCard extends StatelessWidget {
   /// (modal = nilai) supaya tidak terbaca sebagai untung — sama dengan
   /// perhitungan histori portofolio.
   ({double amount, double cost, double? percentage})? _totalProfitLoss(
-    List<Asset> activeAssets,
+    List<PortfolioPosition> activeAssets,
   ) {
     if (activeAssets.every((asset) => asset.totalCost == null)) {
       return null;

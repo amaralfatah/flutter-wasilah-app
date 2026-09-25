@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -16,47 +15,33 @@ class AssetManagementController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  Future<void> createAsset({
+  /// Membuat master aset baru dan mengembalikan id-nya. Nilai porto diisi
+  /// terpisah lewat update nilai.
+  Future<String> createAsset({
     required String name,
     required String code,
     required AssetCategory category,
-    required double currentValue,
-    required DateTime recordedAt,
-    double? totalCost,
     String? marketSymbol,
-    double? quantity,
-    double? avgBuyPrice,
-    String? priceCurrency,
   }) async {
-    _validateAssetFields(
-      name: name,
-      code: code,
-      currentValue: currentValue,
-      totalCost: totalCost,
-    );
+    _validateAssetFields(name: name, code: code);
     state = const AsyncLoading();
 
     try {
+      final assetId = _buildAssetId(code.isEmpty ? name : code);
       await ref
-          .read(portfolioRepositoryProvider)
+          .read(assetRepositoryProvider)
           .createAsset(
             Asset(
-              id: _buildAssetId(code.isEmpty ? name : code),
+              id: assetId,
               name: name.trim(),
               code: code.trim().toUpperCase(),
               category: category,
-              currentValue: currentValue,
-              allocationPercentage: 0,
-              lastUpdatedAt: recordedAt,
-              totalCost: totalCost,
               marketSymbol: marketSymbol,
-              quantity: quantity,
-              avgBuyPrice: avgBuyPrice,
-              priceCurrency: priceCurrency,
             ),
           );
       _invalidateAssetReads();
       state = const AsyncData(null);
+      return assetId;
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       rethrow;
@@ -64,17 +49,12 @@ class AssetManagementController extends AsyncNotifier<void> {
   }
 
   Future<void> updateAsset(Asset asset) async {
-    _validateAssetFields(
-      name: asset.name,
-      code: asset.code,
-      currentValue: asset.currentValue,
-      totalCost: asset.totalCost,
-    );
+    _validateAssetFields(name: asset.name, code: asset.code);
     state = const AsyncLoading();
 
     try {
       await ref
-          .read(portfolioRepositoryProvider)
+          .read(assetRepositoryProvider)
           .updateAsset(
             asset.copyWith(
               name: asset.name.trim(),
@@ -93,7 +73,7 @@ class AssetManagementController extends AsyncNotifier<void> {
     state = const AsyncLoading();
 
     try {
-      await ref.read(portfolioRepositoryProvider).deleteAsset(assetId);
+      await ref.read(assetRepositoryProvider).deleteAsset(assetId);
       _invalidateAssetReads(assetId);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
@@ -102,12 +82,7 @@ class AssetManagementController extends AsyncNotifier<void> {
     }
   }
 
-  void _validateAssetFields({
-    required String name,
-    required String code,
-    required double currentValue,
-    double? totalCost,
-  }) {
+  void _validateAssetFields({required String name, required String code}) {
     final nameError = validateRequiredText(
       name,
       message: 'Nama aset wajib diisi.',
@@ -123,24 +98,15 @@ class AssetManagementController extends AsyncNotifier<void> {
     if (codeError != null) {
       throw ArgumentError(codeError);
     }
-
-    if (currentValue < 0) {
-      throw const InvalidCurrentValueException();
-    }
-
-    if (totalCost != null && totalCost < 0) {
-      throw const InvalidTotalCostException();
-    }
   }
 
   void _invalidateAssetReads([String? assetId]) {
     ref.invalidate(assetListProvider);
-    ref.invalidate(portfolioSummaryProvider);
-    ref.invalidate(portfolioHistoryProvider);
     if (assetId != null) {
       ref.invalidate(assetDetailProvider(assetId));
-      ref.invalidate(assetHistoryProvider(assetId));
     }
+    // Nama/kategori ikut tampil di layar porto.
+    invalidatePortfolioReads(ref, assetId);
   }
 }
 

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 
 /// Time-weighted return dari histori snapshot portofolio bulanan, dalam
 /// persen. Mengukur hasil investasi tanpa terpengaruh besar/kecil atau
@@ -16,7 +16,7 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapsho
 /// tahun sebelumnya sebagai nilai awal. Mengembalikan `null` bila belum ada
 /// satu bulan pun yang bisa dihitung (butuh dua snapshot bermodal).
 ({double cumulative, double? annualized})? timeWeightedReturn(
-  List<AssetSnapshot> history, {
+  List<ValueSnapshot> history, {
   int? year,
 }) {
   final sorted = [...history]
