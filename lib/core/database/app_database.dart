@@ -13,7 +13,7 @@ class AppDatabase extends GeneratedDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
@@ -24,14 +24,19 @@ class AppDatabase extends GeneratedDatabase {
       await customStatement('''
         CREATE TABLE assets (
           id TEXT PRIMARY KEY NOT NULL,
+          -- Master aset: identitas & atribut yang diubah lewat form edit aset.
           name TEXT NOT NULL,
           code TEXT NOT NULL,
           category TEXT NOT NULL,
+          market_symbol TEXT,
+          quantity REAL,
+          avg_buy_price REAL,
+          price_currency TEXT,
+          -- Porto: nilai yang diubah lewat update nilai portofolio.
           current_value REAL NOT NULL,
           allocation_percentage REAL NOT NULL,
-          last_updated_at INTEGER NOT NULL,
           total_cost REAL,
-          market_symbol TEXT
+          last_updated_at INTEGER NOT NULL
         );
       ''');
 
@@ -107,6 +112,11 @@ class AppDatabase extends GeneratedDatabase {
             fetched_at INTEGER NOT NULL
           );
         ''');
+      }
+      if (from < 7) {
+        await _addColumnIfMissing('assets', 'quantity', 'REAL');
+        await _addColumnIfMissing('assets', 'avg_buy_price', 'REAL');
+        await _addColumnIfMissing('assets', 'price_currency', 'TEXT');
       }
     },
   );

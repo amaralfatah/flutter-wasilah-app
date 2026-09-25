@@ -67,10 +67,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(
-        path: RouteNames.assetUpdate,
-        builder: (context, state) => const UpdateAssetValuePage(),
-      ),
+      // ======================= MASTER ASET =======================
+      // Data master aset: tambah, detail, edit (nama, kategori, simbol pasar).
       GoRoute(
         path: RouteNames.assetCreate,
         builder: (context, state) => const AssetFormPage(),
@@ -82,13 +80,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return AssetDetailPage(assetId: assetId);
         },
         routes: [
-          GoRoute(
-            path: 'update',
-            builder: (context, state) {
-              final assetId = state.pathParameters['id']!;
-              return UpdateAssetValuePage(assetId: assetId);
-            },
-          ),
           GoRoute(
             path: 'edit',
             builder: (context, state) {
@@ -103,7 +94,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return MarketDetailPage(assetId: assetId);
             },
           ),
+          // Update nilai portofolio aset ini (lihat grup PORTOFOLIO).
+          GoRoute(
+            path: 'update',
+            builder: (context, state) {
+              final assetId = state.pathParameters['id']!;
+              return UpdateAssetValuePage(assetId: assetId);
+            },
+          ),
         ],
+      ),
+
+      // ======================= PORTOFOLIO ========================
+      // Update nilai aset saja (currentValue/totalCost), tanpa ubah master.
+      GoRoute(
+        path: RouteNames.assetUpdate,
+        builder: (context, state) => const UpdateAssetValuePage(),
       ),
       GoRoute(
         path: RouteNames.targetCreate,
