@@ -14,6 +14,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/histor
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_value_bar.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -69,14 +70,7 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
             asset: asset,
             onRemoveFromPortfolio: () => _removeFromPortfolio(asset),
           ),
-          bottomNavigationBar: SafeArea(
-            minimum: const EdgeInsets.all(AppSpacing.lg),
-            child: FilledButton(
-              onPressed: () =>
-                  context.push('${RouteNames.portfolio}/${asset.id}/update'),
-              child: Text(l10n.updateValueButton),
-            ),
-          ),
+          bottomNavigationBar: UpdateValueBar(assetId: asset.id),
           body: RefreshablePageBody(
             onRefresh: () {
               ref.invalidate(assetHistoryProvider(assetId));

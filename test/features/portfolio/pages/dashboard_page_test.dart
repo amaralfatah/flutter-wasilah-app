@@ -35,7 +35,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Total Nilai'), findsOneWidget);
+    expect(find.text('Total Ekuitas'), findsOneWidget);
     expect(find.text('55.000.000'), findsOneWidget);
     expect(find.text('Kas'), findsOneWidget);
     expect(find.text('6.600.000'), findsOneWidget);

@@ -14,6 +14,7 @@ import 'package:flutter_wasilah_app/features/market/presentation/widgets/market_
 import 'package:flutter_wasilah_app/features/market/presentation/widgets/price_line_chart.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_value_bar.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
@@ -62,6 +63,9 @@ class _MarketDetailPageState extends ConsumerState<MarketDetailPage> {
           ),
         ],
       ),
+      bottomNavigationBar: assetValue.valueOrNull?.marketSymbol == null
+          ? null
+          : UpdateValueBar(assetId: widget.assetId),
       body: SafeArea(
         child: assetValue.when(
           data: (asset) {
@@ -115,8 +119,6 @@ class _MarketDetailBody extends ConsumerWidget {
     final l10n = context.l10n;
     final quoteAsync = ref.watch(marketQuoteProvider(symbol));
 
-    final updateButton = _UpdateValueButton(assetId: asset.id);
-
     return RefreshablePageBody(
       onRefresh: () async {
         ref
@@ -140,19 +142,15 @@ class _MarketDetailBody extends ConsumerWidget {
               const Divider(height: 1),
               const SizedBox(height: AppSpacing.lg),
               MarketStatsGrid(quote: quoteResult.quote),
-              const SizedBox(height: AppSpacing.lg),
             ],
-            updateButton,
           ],
         ),
         loading: () => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(asset.code, style: Theme.of(context).textTheme.titleLarge),
+            Text(asset.code, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.xl),
             const AppLoading(),
-            const SizedBox(height: AppSpacing.xl),
-            updateButton,
           ],
         ),
         error: (error, stackTrace) => Column(
@@ -169,8 +167,6 @@ class _MarketDetailBody extends ConsumerWidget {
               )
             else
               AppErrorView(message: l10n.marketUnavailable),
-            const SizedBox(height: AppSpacing.xl),
-            updateButton,
           ],
         ),
       ),
@@ -279,26 +275,6 @@ class _MarketDetailContent extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         ChartRangeTabs(selected: range, onSelected: onRangeChanged),
       ],
-    );
-  }
-}
-
-/// Satu-satunya tombol aksi (pengganti Jual/Beli Stockbit), setinggi 48dp.
-class _UpdateValueButton extends StatelessWidget {
-  const _UpdateValueButton({required this.assetId});
-
-  final String assetId;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton(
-      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-      onPressed: () =>
-          GoRouter.of(context).push('${RouteNames.portfolio}/$assetId/update'),
-      child: Text(
-        context.l10n.updateValueButton,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-      ),
     );
   }
 }

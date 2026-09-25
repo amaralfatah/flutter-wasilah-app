@@ -215,7 +215,6 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
       );
     }
   }
-
 }
 
 /// Kemampuan investasi dalam satu angka: time-weighted return, supaya

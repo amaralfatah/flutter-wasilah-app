@@ -45,7 +45,7 @@ class MarketStatsGrid extends StatelessWidget {
       children: [
         Text(
           l10n.marketStatsTitle,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: textTheme.titleSmall,
         ),
         const SizedBox(height: AppSpacing.md),
         // Dua kolom rata; tiap sel: label kecil di atas, nilai tebal di bawah.
@@ -75,7 +75,7 @@ class MarketStatsGrid extends StatelessWidget {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodyLarge?.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -70,7 +70,7 @@ class MarketQuoteHeader extends StatelessWidget {
         : isPositive
         ? AppColors.positiveOf(context)
         : AppColors.negativeOf(context);
-    final changeStyle = textTheme.bodyLarge?.copyWith(color: changeColor);
+    final changeStyle = textTheme.bodyMedium?.copyWith(color: changeColor);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,12 +81,7 @@ class MarketQuoteHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    asset.code,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  Text(asset.code, style: textTheme.titleMedium),
                   Text(
                     asset.name,
                     maxLines: 1,
@@ -98,15 +93,12 @@ class MarketQuoteHeader extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     formatPrice(displayPrice, quote.currency),
-                    style: textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      height: 1.1,
-                    ),
+                    style: textTheme.headlineSmall,
                   ),
                   // Tinggi baris dijaga tetap walau perubahan belum ada,
                   // supaya chart di bawahnya tidak melompat saat data masuk.
                   SizedBox(
-                    height: 24,
+                    height: 20,
                     child: change == null || changePercent == null
                         ? null
                         : Row(
@@ -115,7 +107,7 @@ class MarketQuoteHeader extends StatelessWidget {
                                 isPositive
                                     ? Icons.north_east
                                     : Icons.south_east,
-                                size: 16,
+                                size: 14,
                                 color: changeColor,
                               ),
                               const SizedBox(width: AppSpacing.xs),
@@ -135,7 +127,7 @@ class MarketQuoteHeader extends StatelessWidget {
                                       : periodLabelFor(context, range),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: textTheme.bodyLarge?.copyWith(
+                                  style: textTheme.bodyMedium?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
@@ -150,7 +142,7 @@ class MarketQuoteHeader extends StatelessWidget {
             AssetCategoryIcon(
               category: asset.category,
               marketSymbol: asset.marketSymbol,
-              radius: 28,
+              radius: 22,
             ),
           ],
         ),
@@ -208,11 +200,11 @@ class _Tag extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
       ),
     );
   }

@@ -45,7 +45,7 @@ class ChartRangeTabs extends StatelessWidget {
                     Text(
                       labelFor(range),
                       textAlign: TextAlign.center,
-                      style: textTheme.bodyLarge?.copyWith(
+                      style: textTheme.bodyMedium?.copyWith(
                         color: range == selected
                             ? colorScheme.primary
                             : colorScheme.onSurfaceVariant,
