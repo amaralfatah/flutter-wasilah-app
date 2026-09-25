@@ -40,97 +40,100 @@ class TargetDetailPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: AsyncValueView(
-        value: targetItemsValue,
-        onRetry: () => ref.invalidate(targetAllocationItemsProvider),
-        data: (items) {
-          final item = items.where((item) => item.id == targetId).firstOrNull;
-          if (item == null) {
-            return AppEmptyState(
-              title: l10n.targetNotFoundTitle,
-              message: l10n.targetNotFoundDetailMessage,
-            );
-          }
+      body: SafeArea(
+        child: AsyncValueView(
+          value: targetItemsValue,
+          onRetry: () => ref.invalidate(targetAllocationItemsProvider),
+          data: (items) {
+            final item = items.where((item) => item.id == targetId).firstOrNull;
+            if (item == null) {
+              return AppEmptyState(
+                title: l10n.targetNotFoundTitle,
+                message: l10n.targetNotFoundDetailMessage,
+              );
+            }
 
-          final assets = assetsValue.asData?.value ?? const <Asset>[];
-          // Aset bernilai 0 sudah nonaktif/diarsipkan, sama seperti
-          // perlakuan di Dashboard: tidak ikut dihitung sebagai kepemilikan
-          // aktif dalam kategori ini.
-          final categoryAssets = assets
-              .where(
-                (asset) =>
-                    asset.category == item.category &&
-                    asset.currentValue != 0,
-              )
-              .toList(growable: false);
-          return RefreshablePageBody(
-            onRefresh: () {
-              ref.invalidate(assetListProvider);
-              return ref.refresh(targetAllocationItemsProvider.future);
-            },
-            // Horizontal 0: AppListCard full-bleed sampai tepi layar. Konten
-            // lain mengatur padding horizontalnya sendiri.
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                  ),
-                  child: AppCard(child: TargetAllocationItem(item: item)),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppListCard(
-                  children: [
-                    _TargetValueTile(
-                      label: l10n.actualValueLabel,
-                      value: formatCurrency(item.actualValue),
-                    ),
-                    _TargetValueTile(
-                      label: l10n.targetValueLabel,
-                      value: formatCurrency(item.targetValue),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                  ),
-                  child: SectionHeader(
-                    title: l10n.assetsInCategoryTitle(item.category.label),
-                    onInfoTap: () => _showToleranceInfo(context, item),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                if (categoryAssets.isEmpty)
+            final assets = assetsValue.asData?.value ?? const <Asset>[];
+            // Aset bernilai 0 sudah nonaktif/diarsipkan, sama seperti
+            // perlakuan di Dashboard: tidak ikut dihitung sebagai kepemilikan
+            // aktif dalam kategori ini.
+            final categoryAssets = assets
+                .where(
+                  (asset) =>
+                      asset.category == item.category &&
+                      asset.currentValue != 0,
+                )
+                .toList(growable: false);
+            return RefreshablePageBody(
+              onRefresh: () {
+                ref.invalidate(assetListProvider);
+                return ref.refresh(targetAllocationItemsProvider.future);
+              },
+              // Horizontal 0: AppListCard full-bleed sampai tepi layar. Konten
+              // lain mengatur padding horizontalnya sendiri.
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.xl,
                     ),
-                    child: AppEmptyState(
-                      title: l10n.commonEmptyAssetsTitle,
-                      message: l10n.emptyAssetsInCategoryMessage,
-                    ),
-                  )
-                else
+                    child: AppCard(child: TargetAllocationItem(item: item)),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   AppListCard(
                     children: [
-                      const AssetTableHeader(),
-                      ...categoryAssets.map(
-                        (asset) => AssetListItem(
-                          asset: asset,
-                          onTap: () =>
-                              context.push('${RouteNames.assets}/${asset.id}'),
-                        ),
+                      _TargetValueTile(
+                        label: l10n.actualValueLabel,
+                        value: formatCurrency(item.actualValue),
+                      ),
+                      _TargetValueTile(
+                        label: l10n.targetValueLabel,
+                        value: formatCurrency(item.targetValue),
                       ),
                     ],
                   ),
-              ],
-            ),
-          );
-        },
+                  const SizedBox(height: AppSpacing.xl),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                    child: SectionHeader(
+                      title: l10n.assetsInCategoryTitle(item.category.label),
+                      onInfoTap: () => _showToleranceInfo(context, item),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  if (categoryAssets.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
+                      child: AppEmptyState(
+                        title: l10n.commonEmptyAssetsTitle,
+                        message: l10n.emptyAssetsInCategoryMessage,
+                      ),
+                    )
+                  else
+                    AppListCard(
+                      children: [
+                        const AssetTableHeader(),
+                        ...categoryAssets.map(
+                          (asset) => AssetListItem(
+                            asset: asset,
+                            onTap: () => context.push(
+                              '${RouteNames.assets}/${asset.id}',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

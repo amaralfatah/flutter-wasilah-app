@@ -257,7 +257,7 @@ class _TargetFormScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: child,
+      body: SafeArea(child: child),
     );
   }
 }

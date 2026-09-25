@@ -7,6 +7,8 @@ import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
+import 'package:flutter_wasilah_app/features/market/data/models/market_quote.dart';
+import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
@@ -39,8 +41,11 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   final _valueController = TextEditingController();
   final _noteController = TextEditingController();
   final _costController = TextEditingController();
+  final _quantityController = TextEditingController();
+  final _avgBuyPriceController = TextEditingController();
   DateTime? _selectedDate;
   String? _costPrefilledFor;
+  String? _holdingPrefilledFor;
   String? _selectedAssetId;
   AssetValueUpdateType _updateType = AssetValueUpdateType.override;
 
@@ -57,6 +62,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _valueController.dispose();
     _noteController.dispose();
     _costController.dispose();
+    _quantityController.dispose();
+    _avgBuyPriceController.dispose();
     super.dispose();
   }
 
@@ -68,238 +75,360 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.updateAssetValueTitle)),
-      body: AsyncValueView(
-        value: assetsValue,
-        onRetry: () => ref.invalidate(assetListProvider),
-        data: (assets) {
-          final selectedAsset = _findSelectedAsset(assets);
-          final previousValue = selectedAsset?.currentValue ?? 0;
-          final inputValue = parseCurrencyInput(_valueController.text) ?? 0;
-          final latestValue = _updateType == AssetValueUpdateType.override
-              ? (parseCurrencyInput(_valueController.text) ?? previousValue)
-              : previousValue + inputValue;
-          _prefillCost(selectedAsset);
-          final previousCost = selectedAsset?.totalCost;
-          final inputCost = parseCurrencyInput(_costController.text) ?? 0;
-          final latestCost = _resolveTotalCost(selectedAsset) ?? previousCost;
-          final isOverride = _updateType == AssetValueUpdateType.override;
+      body: SafeArea(
+        child: AsyncValueView(
+          value: assetsValue,
+          onRetry: () => ref.invalidate(assetListProvider),
+          data: (assets) {
+            final selectedAsset = _findSelectedAsset(assets);
+            final previousValue = selectedAsset?.currentValue ?? 0;
+            final inputValue = parseCurrencyInput(_valueController.text) ?? 0;
+            final latestValue = _updateType == AssetValueUpdateType.override
+                ? (parseCurrencyInput(_valueController.text) ?? previousValue)
+                : previousValue + inputValue;
+            _prefillCost(selectedAsset);
+            _prefillHolding(selectedAsset);
+            final previousCost = selectedAsset?.totalCost;
+            final inputCost = parseCurrencyInput(_costController.text) ?? 0;
+            final latestCost = _resolveTotalCost(selectedAsset) ?? previousCost;
+            final isOverride = _updateType == AssetValueUpdateType.override;
 
-          return Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              children: [
-                DropdownButtonFormField<String>(
-                  key: ValueKey(_selectedAssetId),
-                  initialValue: _selectedAssetId,
-                  decoration: InputDecoration(
-                    labelText: l10n.assetDropdownLabel,
-                  ),
-                  items: assets
-                      .map(
-                        (asset) => DropdownMenuItem<String>(
-                          value: asset.id,
-                          child: Text(asset.name),
-                        ),
-                      )
-                      .toList(),
-                  validator: validateSelectedAsset,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedAssetId = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  l10n.updateTypeLabel,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<AssetValueUpdateType>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment<AssetValueUpdateType>(
-                        value: AssetValueUpdateType.override,
-                        label: Text(l10n.updateTypeOverride),
-                        icon: const Icon(Icons.edit_outlined),
-                      ),
-                      ButtonSegment<AssetValueUpdateType>(
-                        value: AssetValueUpdateType.increment,
-                        label: Text(l10n.updateTypeIncrement),
-                        icon: const Icon(Icons.add_circle_outline),
-                      ),
-                    ],
-                    selected: {_updateType},
-                    onSelectionChanged: (newSelection) {
+            return Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                children: [
+                  DropdownButtonFormField<String>(
+                    key: ValueKey(_selectedAssetId),
+                    initialValue: _selectedAssetId,
+                    decoration: InputDecoration(
+                      labelText: l10n.assetDropdownLabel,
+                    ),
+                    items: assets
+                        .map(
+                          (asset) => DropdownMenuItem<String>(
+                            value: asset.id,
+                            child: Text(asset.name),
+                          ),
+                        )
+                        .toList(),
+                    validator: validateSelectedAsset,
+                    onChanged: (value) {
                       setState(() {
-                        _updateType = newSelection.first;
-                        // Arti field modal ikut berganti (total vs.
-                        // penambahan), jadi isinya disiapkan ulang.
-                        _costPrefilledFor = null;
+                        _selectedAssetId = value;
                       });
                     },
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppTextField(
-                  label: isOverride
-                      ? l10n.totalValueFieldLabel
-                      : l10n.incrementValueFieldLabel,
-                  helperText: isOverride
-                      ? l10n.totalValueFieldHelper
-                      : l10n.incrementValueFieldHelper,
-                  controller: _valueController,
-                  keyboardType: TextInputType.number,
-                  prefixText: 'Rp',
-                  validator: validateCurrencyValue,
-                  inputFormatters: const [RupiahInputFormatter()],
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppTextField(
-                  label: isOverride
-                      ? l10n.commonTotalCostOptionalLabel
-                      : l10n.incrementCostFieldLabel,
-                  helperText: isOverride
-                      ? l10n.totalCostFieldHelper
-                      : l10n.incrementCostFieldHelper,
-                  controller: _costController,
-                  keyboardType: TextInputType.number,
-                  prefixText: 'Rp',
-                  validator: validateOptionalCurrencyValue,
-                  inputFormatters: const [RupiahInputFormatter()],
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                FormField<DateTime>(
-                  initialValue: _selectedDate,
-                  validator: validateSelectedDate,
-                  builder: (field) {
-                    final selectedDate = field.value;
-                    final hasValue = selectedDate != null;
-
-                    return InkWell(
-                      onTap: submitState.isLoading
-                          ? null
-                          : () => _selectDate(context, field),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: l10n.commonRecordedAtLabel,
-                          errorText: field.errorText,
-                          suffixIcon: const Icon(Icons.calendar_today_outlined),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    l10n.updateTypeLabel,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<AssetValueUpdateType>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment<AssetValueUpdateType>(
+                          value: AssetValueUpdateType.override,
+                          label: Text(l10n.updateTypeOverride),
+                          icon: const Icon(Icons.edit_outlined),
                         ),
-                        child: Text(
-                          hasValue
-                              ? formatFullDate(
-                                  selectedDate,
-                                  Localizations.localeOf(context),
-                                )
-                              : l10n.commonSelectDatePlaceholder,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: hasValue
-                                    ? null
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppTextField(
-                  label: l10n.noteFieldLabel,
-                  controller: _noteController,
-                  maxLines: 2,
-                  maxLength: 200,
-                  validator: validateNote,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.previewLabel,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _PreviewRow(
-                        label: l10n.commonCurrentValueLabel,
-                        value: formatCurrency(previousValue),
-                      ),
-                      if (!isOverride) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        _PreviewRow(
-                          label: l10n.addedValueLabel,
-                          value: '+ ${formatCurrency(inputValue)}',
+                        ButtonSegment<AssetValueUpdateType>(
+                          value: AssetValueUpdateType.increment,
+                          label: Text(l10n.updateTypeIncrement),
+                          icon: const Icon(Icons.add_circle_outline),
                         ),
                       ],
-                      const SizedBox(height: AppSpacing.sm),
-                      _PreviewRow(
-                        label: l10n.latestValueLabel,
-                        value: formatCurrency(latestValue),
-                      ),
-                      if (latestCost != null) ...[
-                        const Divider(height: AppSpacing.xl),
+                      selected: {_updateType},
+                      onSelectionChanged: (newSelection) {
+                        setState(() {
+                          _updateType = newSelection.first;
+                          // Arti field modal ikut berganti (total vs.
+                          // penambahan), jadi isinya disiapkan ulang.
+                          _costPrefilledFor = null;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    label: isOverride
+                        ? l10n.totalValueFieldLabel
+                        : l10n.incrementValueFieldLabel,
+                    helperText: isOverride
+                        ? l10n.totalValueFieldHelper
+                        : l10n.incrementValueFieldHelper,
+                    controller: _valueController,
+                    keyboardType: TextInputType.number,
+                    prefixText: 'Rp',
+                    validator: validateCurrencyValue,
+                    inputFormatters: const [RupiahInputFormatter()],
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  _buildValueSuggestion(selectedAsset),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    label: isOverride
+                        ? l10n.commonTotalCostOptionalLabel
+                        : l10n.incrementCostFieldLabel,
+                    helperText: isOverride
+                        ? l10n.totalCostFieldHelper
+                        : l10n.incrementCostFieldHelper,
+                    controller: _costController,
+                    keyboardType: TextInputType.number,
+                    prefixText: 'Rp',
+                    validator: validateOptionalCurrencyValue,
+                    inputFormatters: const [RupiahInputFormatter()],
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    label: l10n.quantityOptionalLabel,
+                    helperText: l10n.quantityHelper,
+                    controller: _quantityController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    label: l10n.avgBuyPriceOptionalLabel,
+                    helperText: l10n.avgBuyPriceHelper,
+                    controller: _avgBuyPriceController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    prefixText:
+                        '${selectedAsset?.effectivePriceCurrency ?? 'IDR'} ',
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  FormField<DateTime>(
+                    initialValue: _selectedDate,
+                    validator: validateSelectedDate,
+                    builder: (field) {
+                      final selectedDate = field.value;
+                      final hasValue = selectedDate != null;
+
+                      return InkWell(
+                        onTap: submitState.isLoading
+                            ? null
+                            : () => _selectDate(context, field),
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: l10n.commonRecordedAtLabel,
+                            errorText: field.errorText,
+                            suffixIcon: const Icon(
+                              Icons.calendar_today_outlined,
+                            ),
+                          ),
+                          child: Text(
+                            hasValue
+                                ? formatFullDate(
+                                    selectedDate,
+                                    Localizations.localeOf(context),
+                                  )
+                                : l10n.commonSelectDatePlaceholder,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: hasValue
+                                      ? null
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    label: l10n.noteFieldLabel,
+                    controller: _noteController,
+                    maxLines: 2,
+                    maxLength: 200,
+                    validator: validateNote,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.previewLabel,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
                         _PreviewRow(
-                          label: l10n.currentCostLabel,
-                          value: previousCost == null
-                              ? '-'
-                              : formatCurrency(previousCost),
+                          label: l10n.commonCurrentValueLabel,
+                          value: formatCurrency(previousValue),
                         ),
                         if (!isOverride) ...[
                           const SizedBox(height: AppSpacing.sm),
                           _PreviewRow(
-                            label: l10n.addedCostLabel,
-                            value: '+ ${formatCurrency(inputCost)}',
+                            label: l10n.addedValueLabel,
+                            value: '+ ${formatCurrency(inputValue)}',
                           ),
                         ],
                         const SizedBox(height: AppSpacing.sm),
                         _PreviewRow(
-                          label: l10n.latestCostLabel,
-                          value: formatCurrency(latestCost),
+                          label: l10n.latestValueLabel,
+                          value: formatCurrency(latestValue),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        _PreviewRow(
-                          label: profitLossLabel(
-                            context,
-                            latestValue - latestCost,
+                        if (latestCost != null) ...[
+                          const Divider(height: AppSpacing.xl),
+                          _PreviewRow(
+                            label: l10n.currentCostLabel,
+                            value: previousCost == null
+                                ? '-'
+                                : formatCurrency(previousCost),
                           ),
-                          value: formatProfitLoss(
-                            latestValue - latestCost,
-                            cost: latestCost,
+                          if (!isOverride) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            _PreviewRow(
+                              label: l10n.addedCostLabel,
+                              value: '+ ${formatCurrency(inputCost)}',
+                            ),
+                          ],
+                          const SizedBox(height: AppSpacing.sm),
+                          _PreviewRow(
+                            label: l10n.latestCostLabel,
+                            value: formatCurrency(latestCost),
                           ),
-                          valueColor: profitLossColorOf(
-                            context,
-                            latestValue - latestCost,
+                          const SizedBox(height: AppSpacing.sm),
+                          _PreviewRow(
+                            label: profitLossLabel(
+                              context,
+                              latestValue - latestCost,
+                            ),
+                            value: formatProfitLoss(
+                              latestValue - latestCost,
+                              cost: latestCost,
+                            ),
+                            valueColor: profitLossColorOf(
+                              context,
+                              latestValue - latestCost,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppPrimaryButton(
-                  label: l10n.commonSave,
-                  onPressed: submitState.isLoading
-                      ? null
-                      : () => _submit(selectedAsset),
-                  isLoading: submitState.isLoading,
-                ),
-              ],
-            ),
-          );
-        },
+                  const SizedBox(height: AppSpacing.xl),
+                  AppPrimaryButton(
+                    label: l10n.commonSave,
+                    onPressed: submitState.isLoading
+                        ? null
+                        : () => _submit(selectedAsset),
+                    isLoading: submitState.isLoading,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
+  }
+
+  /// Saran nilai total = jumlah unit × harga terkini, dikonversi ke IDR.
+  /// Muncul bila aset punya jumlah unit dan simbol pasar. Harga non-IDR
+  /// (mis. SPY/BTC dalam USD) dikonversi via kurs Yahoo `{cur}IDR=X`; nilai
+  /// portofolio selalu disimpan IDR.
+  Widget _buildValueSuggestion(Asset? asset) {
+    final symbol = asset?.marketSymbol;
+    final quantity = asset?.quantity;
+    if (asset == null || symbol == null || quantity == null || quantity <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    return ref
+        .watch(marketQuoteProvider(symbol))
+        .maybeWhen(
+          data: (result) {
+            final quote = result.quote;
+            final nativeTotal = quantity * quote.price;
+            if (quote.currency == 'IDR') {
+              return _valueSuggestionCard(
+                asset: asset,
+                quote: quote,
+                suggestedIdr: nativeTotal,
+                rate: null,
+              );
+            }
+            return ref
+                .watch(fxRateToIdrProvider(quote.currency))
+                .maybeWhen(
+                  data: (rate) => _valueSuggestionCard(
+                    asset: asset,
+                    quote: quote,
+                    suggestedIdr: nativeTotal * rate,
+                    rate: rate,
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                );
+          },
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+
+  Widget _valueSuggestionCard({
+    required Asset asset,
+    required MarketQuote quote,
+    required double suggestedIdr,
+    required double? rate,
+  }) {
+    final l10n = context.l10n;
+    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ActionChip(
+              avatar: const Icon(Icons.auto_awesome_outlined, size: 18),
+              label: Text(
+                l10n.valueSuggestionChip(formatCurrency(suggestedIdr)),
+              ),
+              onPressed: () => _applyValueSuggestion(suggestedIdr),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            l10n.valueSuggestionDetail(
+              formatQuantity(asset.quantity!),
+              formatPrice(quote.price, quote.currency),
+            ),
+            style: captionStyle,
+          ),
+          if (rate != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              l10n.valueSuggestionFxDetail(
+                quote.currency,
+                formatCurrency(rate),
+              ),
+              style: captionStyle,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _applyValueSuggestion(double value) {
+    setState(() {
+      _updateType = AssetValueUpdateType.override;
+      _valueController.text = formatNumber(value);
+    });
   }
 
   /// Siapkan field modal sekali per pergantian aset atau mode: mode ubah
@@ -314,6 +443,39 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         cost == null || _updateType == AssetValueUpdateType.increment
         ? ''
         : formatCurrency(cost).replaceFirst('Rp', '');
+  }
+
+  /// Isi field jumlah unit, harga avg, dan mata uang sekali per pergantian
+  /// aset, dari nilai tersimpan aset itu.
+  void _prefillHolding(Asset? asset) {
+    if (asset == null || asset.id == _holdingPrefilledFor) {
+      return;
+    }
+    _holdingPrefilledFor = asset.id;
+    final quantity = asset.quantity;
+    _quantityController.text = quantity == null
+        ? ''
+        : _formatDecimalInput(quantity);
+    final avgBuyPrice = asset.avgBuyPrice;
+    _avgBuyPriceController.text = avgBuyPrice == null
+        ? ''
+        : _formatDecimalInput(avgBuyPrice);
+  }
+
+  /// Parse input desimal bebas (unit / harga per unit); `null` bila kosong.
+  double? _parseDecimalInput(String text) {
+    final cleaned = text.trim().replaceAll(' ', '').replaceAll(',', '.');
+    if (cleaned.isEmpty) {
+      return null;
+    }
+    return double.tryParse(cleaned);
+  }
+
+  String _formatDecimalInput(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toString();
   }
 
   /// Modal baru yang dikirim ke repository; `null` berarti modal tidak
@@ -370,6 +532,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             recordedAt: selectedDate,
             note: _noteController.text,
             totalCost: totalCost,
+            quantity: _parseDecimalInput(_quantityController.text),
+            avgBuyPrice: _parseDecimalInput(_avgBuyPriceController.text),
           );
 
       if (!mounted) {

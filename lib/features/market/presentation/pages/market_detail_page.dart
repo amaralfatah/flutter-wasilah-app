@@ -62,30 +62,32 @@ class _MarketDetailPageState extends ConsumerState<MarketDetailPage> {
           ),
         ],
       ),
-      body: assetValue.when(
-        data: (asset) {
-          final symbol = asset?.marketSymbol;
-          if (asset == null || symbol == null) {
-            return AppEmptyState(
-              title: l10n.assetNotFoundTitle,
-              message: l10n.assetNotFoundMessage,
+      body: SafeArea(
+        child: assetValue.when(
+          data: (asset) {
+            final symbol = asset?.marketSymbol;
+            if (asset == null || symbol == null) {
+              return AppEmptyState(
+                title: l10n.assetNotFoundTitle,
+                message: l10n.assetNotFoundMessage,
+              );
+            }
+            return _MarketDetailBody(
+              asset: asset,
+              symbol: symbol,
+              range: _range,
+              scrubPoint: _scrubPoint,
+              onRangeChanged: (range) => setState(() {
+                _range = range;
+                _scrubPoint = null;
+              }),
+              onScrub: (point) => setState(() => _scrubPoint = point),
             );
-          }
-          return _MarketDetailBody(
-            asset: asset,
-            symbol: symbol,
-            range: _range,
-            scrubPoint: _scrubPoint,
-            onRangeChanged: (range) => setState(() {
-              _range = range;
-              _scrubPoint = null;
-            }),
-            onScrub: (point) => setState(() => _scrubPoint = point),
-          );
-        },
-        loading: () => const AppLoading(),
-        error: (error, stackTrace) =>
-            AppErrorView(message: l10n.marketUnavailable),
+          },
+          loading: () => const AppLoading(),
+          error: (error, stackTrace) =>
+              AppErrorView(message: l10n.marketUnavailable),
+        ),
       ),
     );
   }

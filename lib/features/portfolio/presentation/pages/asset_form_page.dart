@@ -37,7 +37,10 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   final _marketSymbolController = TextEditingController();
   late DateTime _recordedAt;
   AssetCategory _category = AssetCategory.other;
+  String _priceCurrency = 'IDR';
   bool _didPopulate = false;
+
+  static const _priceCurrencies = ['IDR', 'USD'];
 
   // Prefill simbol Yahoo berhenti begitu user pernah mengetik di field itu
   // sendiri (termasuk mengosongkannya), supaya tidak menimpa pilihan user.
@@ -185,6 +188,29 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
             inputFormatters: const [RupiahInputFormatter()],
             validator: validateOptionalCurrencyValue,
           ),
+          const SizedBox(height: AppSpacing.lg),
+          DropdownButtonFormField<String>(
+            initialValue: _priceCurrency,
+            decoration: InputDecoration(labelText: l10n.priceCurrencyLabel),
+            items: _priceCurrencies
+                .map(
+                  (currency) => DropdownMenuItem(
+                    value: currency,
+                    child: Text(currency),
+                  ),
+                )
+                .toList(),
+            onChanged: submitState.isLoading
+                ? null
+                : (value) {
+                    if (value == null) {
+                      return;
+                    }
+                    setState(() {
+                      _priceCurrency = value;
+                    });
+                  },
+          ),
           const SizedBox(height: AppSpacing.xl),
           AppPrimaryButton(
             label: _isEditing ? l10n.commonSaveChanges : l10n.addAssetTitle,
@@ -221,6 +247,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
       _costController.text = formatCurrency(totalCost).replaceFirst('Rp', '');
     }
     _marketSymbolController.text = asset.marketSymbol ?? '';
+    _priceCurrency = asset.effectivePriceCurrency;
     // Mode edit menampilkan nilai tersimpan apa adanya, tanpa prefill
     // otomatis menimpanya saat kategori/kode di form ini diubah.
     _marketSymbolEditedByUser = true;
@@ -278,6 +305,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               recordedAt: _recordedAt,
               totalCost: totalCost,
               marketSymbol: _marketSymbolController.text,
+              priceCurrency: _priceCurrency,
             );
       } else {
         await ref
@@ -289,6 +317,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                 category: _category,
                 totalCost: totalCost,
                 marketSymbol: _marketSymbolController.text,
+                priceCurrency: _priceCurrency,
               ),
             );
       }
@@ -359,7 +388,7 @@ class _AssetFormScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: child,
+      body: SafeArea(child: child),
     );
   }
 }

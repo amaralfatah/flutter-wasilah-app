@@ -27,40 +27,42 @@ class RestorePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.restoreTitle)),
-      body: backupsAsync.when(
-        loading: () => const AppLoading(),
-        error: (error, stackTrace) => AppErrorView(
-          title: l10n.backupListLoadFailedTitle,
-          onRetry: () => ref.invalidate(_backupListProvider),
-        ),
-        data: (backups) {
-          if (backups.isEmpty) {
-            return AppEmptyState(
-              title: l10n.emptyBackupTitle,
-              message: l10n.emptyBackupMessage,
-              icon: Icons.cloud_off_outlined,
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            itemCount: backups.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-            itemBuilder: (context, index) {
-              final backup = backups[index];
-              return ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(
-                  formatFullDateTime(
-                    backup.createdAt,
-                    Localizations.localeOf(context),
-                  ),
-                ),
-                subtitle: Text(_formatFileSize(backup.sizeBytes)),
-                onTap: () => _confirmRestore(context, ref, backup),
+      body: SafeArea(
+        child: backupsAsync.when(
+          loading: () => const AppLoading(),
+          error: (error, stackTrace) => AppErrorView(
+            title: l10n.backupListLoadFailedTitle,
+            onRetry: () => ref.invalidate(_backupListProvider),
+          ),
+          data: (backups) {
+            if (backups.isEmpty) {
+              return AppEmptyState(
+                title: l10n.emptyBackupTitle,
+                message: l10n.emptyBackupMessage,
+                icon: Icons.cloud_off_outlined,
               );
-            },
-          );
-        },
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              itemCount: backups.length,
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (context, index) {
+                final backup = backups[index];
+                return ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(
+                    formatFullDateTime(
+                      backup.createdAt,
+                      Localizations.localeOf(context),
+                    ),
+                  ),
+                  subtitle: Text(_formatFileSize(backup.sizeBytes)),
+                  onTap: () => _confirmRestore(context, ref, backup),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
