@@ -553,6 +553,9 @@ class DriftPortfolioRepository implements PortfolioRepository {
     String? note,
     double? totalCost,
   }) async {
+    // Nominal rupiah disimpan bulat: hasil konversi kurs menghasilkan pecahan,
+    // sedangkan bilangan bulat dalam double selalu eksak saat dijumlahkan.
+    //
     // The snapshot id already encodes assetId + local year/month, so
     // replacing by id is both the dedup key and timezone-safe. (A prior
     // version deduped via `strftime(..., 'unixepoch')`, which computes the
@@ -568,10 +571,10 @@ class DriftPortfolioRepository implements PortfolioRepository {
       [
         _buildSnapshotId(assetId, recordedAt),
         assetId,
-        totalValue,
+        totalValue.roundToDouble(),
         _dateToSql(recordedAt),
         note,
-        totalCost,
+        totalCost?.roundToDouble(),
       ],
     );
   }

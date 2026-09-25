@@ -133,6 +133,40 @@ void main() {
       },
     );
 
+    test('rounds stored rupiah amounts on upgrade from version 8', () async {
+      final fresh = AppDatabase.forTesting(
+        NativeDatabase.createInBackground(databaseFile),
+      );
+      await fresh.customSelect('SELECT 1').get();
+      await fresh.close();
+      _seedFractionalVersionEight(databaseFile);
+
+      final database = AppDatabase.forTesting(
+        NativeDatabase.createInBackground(databaseFile),
+      );
+      addTearDown(database.close);
+
+      final holding = await database
+          .customSelect("SELECT * FROM holdings WHERE asset_id = 'btc'")
+          .getSingle();
+      expect(holding.read<double>('current_value'), 18200001);
+      expect(holding.read<double>('total_cost'), 15000000);
+      expect(holding.read<double>('quantity'), 0.0234);
+      expect(holding.read<double>('avg_buy_price'), 60000.55);
+
+      final snapshot = await database
+          .customSelect('SELECT * FROM asset_snapshots')
+          .getSingle();
+      expect(snapshot.read<double>('total_value'), 18200001);
+      expect(snapshot.readNullable<double>('total_cost'), isNull);
+
+      final portfolio = await database
+          .customSelect('SELECT * FROM portfolio_snapshots')
+          .getSingle();
+      expect(portfolio.read<double>('total_value'), 18200001);
+      expect(portfolio.read<double>('total_cost'), 15000000);
+    });
+
     test('enforces foreign keys between holdings and assets', () async {
       final database = AppDatabase.forTesting(
         NativeDatabase.createInBackground(databaseFile),
@@ -240,6 +274,37 @@ void _seedVersionSevenColumns(File file) {
       ) VALUES (
         'portfolio-2026-07', 'portfolio', 18200000, 1784055600, NULL, 15000000
       );
+    ''');
+  } finally {
+    database.dispose();
+  }
+}
+
+/// Isi database skema terkini dengan nominal rupiah pecahan (hasil konversi
+/// kurs sebelum pembulatan), lalu turunkan versinya ke 8.
+void _seedFractionalVersionEight(File file) {
+  final database = sqlite3.sqlite3.open(file.path);
+  try {
+    database.execute('''
+      INSERT INTO assets (id, name, code, category)
+      VALUES ('btc', 'Bitcoin', 'BTC', 'crypto');
+
+      INSERT INTO holdings (
+        asset_id, current_value, total_cost, quantity, avg_buy_price,
+        price_currency, last_updated_at
+      ) VALUES ('btc', 18200000.73, 14999999.6, 0.0234, 60000.55, 'USD',
+        1784055600);
+
+      INSERT INTO asset_snapshots (
+        id, asset_id, total_value, recorded_at, note, total_cost
+      ) VALUES ('btc-2026-07', 'btc', 18200000.73, 1784055600, NULL, NULL);
+
+      INSERT INTO portfolio_snapshots (
+        id, total_value, total_cost, recorded_at, note
+      ) VALUES ('portfolio-2026-07', 18200000.73, 14999999.6, 1784055600,
+        NULL);
+
+      PRAGMA user_version = 8;
     ''');
   } finally {
     database.dispose();

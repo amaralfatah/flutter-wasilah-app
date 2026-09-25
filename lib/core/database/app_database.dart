@@ -9,7 +9,7 @@ import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 /// Versi skema saat ini. Dipisah dari [AppDatabase.schemaVersion] supaya bisa
 /// dibaca (mis. untuk validasi file backup) tanpa membuka koneksi database.
-const int appDatabaseSchemaVersion = 8;
+const int appDatabaseSchemaVersion = 9;
 
 class AppDatabase extends GeneratedDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openConnection());
@@ -226,6 +226,22 @@ class AppDatabase extends GeneratedDatabase {
         await customStatement('''
           CREATE INDEX IF NOT EXISTS asset_snapshots_asset_recorded_idx
           ON asset_snapshots (asset_id, recorded_at DESC);
+        ''');
+      }
+      if (from < 9) {
+        // Nominal rupiah kini disimpan bulat; quantity & avg_buy_price
+        // (harga per unit, bisa dalam USD) sengaja tidak dibulatkan.
+        await customStatement('''
+          UPDATE holdings
+          SET current_value = ROUND(current_value), total_cost = ROUND(total_cost);
+        ''');
+        await customStatement('''
+          UPDATE asset_snapshots
+          SET total_value = ROUND(total_value), total_cost = ROUND(total_cost);
+        ''');
+        await customStatement('''
+          UPDATE portfolio_snapshots
+          SET total_value = ROUND(total_value), total_cost = ROUND(total_cost);
         ''');
       }
     },

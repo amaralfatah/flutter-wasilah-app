@@ -90,6 +90,45 @@ void main() {
     });
 
     test(
+      'rounds rupiah amounts to whole rupiah but keeps unit price and '
+      'quantity precise',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        await DriftAssetRepository(database).createAsset(_btc);
+        await DriftAssetRepository(database).createAsset(_cash);
+        final repository = DriftPortfolioRepository(database);
+
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 16345678.9,
+          totalCost: 15000000.4,
+          quantity: 0.0123,
+          avgBuyPrice: 60000.55,
+          priceCurrency: 'USD',
+          recordedAt: DateTime(2026, 7),
+        );
+        await repository.updateAssetValue(
+          assetId: 'cash',
+          totalValue: 0.1 + 0.2,
+          recordedAt: DateTime(2026, 7),
+        );
+
+        final position = await repository.getPositionByAssetId('btc');
+        final history = await repository.getAssetHistory('btc');
+        final portfolio = await repository.getPortfolioHistory();
+
+        expect(position!.currentValue, 16345679);
+        expect(position.totalCost, 15000000);
+        expect(position.quantity, 0.0123);
+        expect(position.avgBuyPrice, 60000.55);
+        expect(history.single.totalValue, 16345679);
+        expect(history.single.totalCost, 15000000);
+        expect(portfolio.single.totalValue, 16345679);
+      },
+    );
+
+    test(
       'replaces same-day asset history when updated twice on one date',
       () async {
         final database = openDatabase();
