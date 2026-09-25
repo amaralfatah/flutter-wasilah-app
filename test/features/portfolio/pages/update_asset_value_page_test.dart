@@ -32,9 +32,8 @@ Future<void> _pumpPage(
         portfolioRepositoryProvider.overrideWithValue(repository),
         assetRepositoryProvider.overrideWithValue(repository),
         fxRateToIdrProvider.overrideWith(
-          (ref, currency) => marketRateAvailable
-              ? 16000
-              : throw Exception('offline'),
+          (ref, currency) =>
+              marketRateAvailable ? 16000 : throw Exception('offline'),
         ),
       ],
       child: MaterialApp(
