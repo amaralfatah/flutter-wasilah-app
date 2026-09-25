@@ -201,8 +201,9 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
       await ref
           .read(portfolioRepositoryProvider)
           .deletePortfolioSnapshot(snapshotId);
-      ref.invalidate(portfolioHistoryProvider);
-      ref.invalidate(portfolioSummaryProvider);
+      ref
+        ..invalidate(portfolioHistoryProvider)
+        ..invalidate(portfolioSummaryProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.commonHistoryDeletedMessage)),

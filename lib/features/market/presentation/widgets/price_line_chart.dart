@@ -252,28 +252,28 @@ class _ChartPainter extends CustomPainter {
       ..lineTo(offsets.first.dx, size.height)
       ..close();
 
-    canvas.drawPath(
-      fillPath,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            lineColor.withValues(alpha: 0.25),
-            lineColor.withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
-    );
-
-    canvas.drawPath(
-      linePath,
-      Paint()
-        ..color = lineColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    canvas
+      ..drawPath(
+        fillPath,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              lineColor.withValues(alpha: 0.25),
+              lineColor.withValues(alpha: 0),
+            ],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+      )
+      ..drawPath(
+        linePath,
+        Paint()
+          ..color = lineColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
 
     _drawExtremeLabel(
       canvas,
@@ -292,22 +292,23 @@ class _ChartPainter extends CustomPainter {
 
     if (scrubIndex case final index?) {
       final offset = offsets[index];
-      canvas.drawLine(
-        Offset(offset.dx, 0),
-        Offset(offset.dx, size.height),
-        Paint()
-          ..color = onSurfaceColor.withValues(alpha: 0.4)
-          ..strokeWidth = 1,
-      );
-      canvas.drawCircle(offset, 4, Paint()..color = lineColor);
-      canvas.drawCircle(
-        offset,
-        4,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
-      );
+      canvas
+        ..drawLine(
+          Offset(offset.dx, 0),
+          Offset(offset.dx, size.height),
+          Paint()
+            ..color = onSurfaceColor.withValues(alpha: 0.4)
+            ..strokeWidth = 1,
+        )
+        ..drawCircle(offset, 4, Paint()..color = lineColor)
+        ..drawCircle(
+          offset,
+          4,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5,
+        );
     }
   }
 

@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/router/app_router.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
+
+import '../../helpers/mock_portfolio_repository.dart';
 
 void main() {
   testWidgets('navigating to asset detail does not throw hero tag conflicts', (

@@ -236,16 +236,17 @@ class _LineChartPainter extends CustomPainter {
       ..lineTo(points.first.dx, size.height)
       ..close();
 
-    canvas.drawPath(fillPath, Paint()..color = fillColor);
-    canvas.drawPath(
-      linePath,
-      Paint()
-        ..color = lineColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    canvas
+      ..drawPath(fillPath, Paint()..color = fillColor)
+      ..drawPath(
+        linePath,
+        Paint()
+          ..color = lineColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
 
     final dotPaint = Paint()..color = lineColor;
     for (final point in points) {

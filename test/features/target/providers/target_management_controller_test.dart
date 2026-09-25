@@ -2,10 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_management_controller.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
+
+import '../../../helpers/mock_portfolio_repository.dart';
 
 void main() {
   test('saveTarget updates a valid target allocation', () async {

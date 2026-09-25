@@ -157,7 +157,8 @@ void main() {
     );
 
     test(
-      'backdated updates use each asset historical value, not its current value',
+      'backdated updates use each asset historical value, not its current '
+      'value',
       () async {
         final database = openDatabase();
         addTearDown(database.close);
@@ -414,7 +415,8 @@ void main() {
     });
 
     test(
-      'target progress stays above zero when targets exist but allocation is still imbalanced',
+      'target progress stays above zero when targets exist but allocation '
+      'is still imbalanced',
       () async {
         final database = openDatabase();
         addTearDown(database.close);

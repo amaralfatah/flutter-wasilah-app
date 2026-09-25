@@ -552,7 +552,8 @@ String? _normalizePriceCurrency(String? currency) {
 }
 
 String _buildSnapshotId(String prefix, DateTime recordedAt) {
-  return '$prefix-${recordedAt.year}-${recordedAt.month.toString().padLeft(2, '0')}';
+  final month = recordedAt.month.toString().padLeft(2, '0');
+  return '$prefix-${recordedAt.year}-$month';
 }
 
 int _dateToSql(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;

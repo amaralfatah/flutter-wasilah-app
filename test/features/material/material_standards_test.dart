@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_history_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_page.dart';
@@ -15,6 +14,8 @@ import 'package:flutter_wasilah_app/features/target/presentation/pages/target_fo
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+
+import '../../helpers/mock_portfolio_repository.dart';
 
 void main() {
   testWidgets('dashboard uses pull-to-refresh for top-level content', (

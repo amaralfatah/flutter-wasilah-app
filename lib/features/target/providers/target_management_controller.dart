@@ -69,8 +69,9 @@ class TargetManagementController extends AsyncNotifier<void> {
   }
 
   void _invalidateTargetReads() {
-    ref.invalidate(allocationTargetProvider);
-    ref.invalidate(portfolioSummaryProvider);
-    ref.invalidate(targetAllocationItemsProvider);
+    ref
+      ..invalidate(allocationTargetProvider)
+      ..invalidate(portfolioSummaryProvider)
+      ..invalidate(targetAllocationItemsProvider);
   }
 }
