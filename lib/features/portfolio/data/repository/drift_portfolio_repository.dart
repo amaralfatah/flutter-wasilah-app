@@ -123,7 +123,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   @override
   Future<void> deleteAssetSnapshot(String snapshotId) async {
-    await _database.transaction(() async {
+    await _database.writePortfolio(() async {
       final row = await _database
           .customSelect(
             '''
@@ -180,15 +180,17 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   @override
   Future<void> deletePortfolioSnapshot(String snapshotId) async {
-    await _database.customStatement(
-      'DELETE FROM portfolio_snapshots WHERE id = ?',
-      [snapshotId],
+    await _database.writePortfolio(
+      () => _database.customStatement(
+        'DELETE FROM portfolio_snapshots WHERE id = ?',
+        [snapshotId],
+      ),
     );
   }
 
   @override
   Future<void> removeFromPortfolio(String assetId) async {
-    await _database.transaction(() async {
+    await _database.writePortfolio(() async {
       final months = await _database
           .customSelect(
             'SELECT recorded_at FROM asset_snapshots WHERE asset_id = ? '
@@ -255,7 +257,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
     String? fxCurrency,
     double? fxRate,
   }) async {
-    await _database.transaction(() async {
+    await _database.writePortfolio(() async {
       final assetRow = await _database
           .customSelect(
             'SELECT id FROM assets WHERE id = ? LIMIT 1',
@@ -319,7 +321,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   @override
   Future<void> saveAllocationTarget(AllocationTarget target) async {
-    await _database.transaction(() async {
+    await _database.writePortfolio(() async {
       await _database.customStatement(
         'DELETE FROM allocation_targets WHERE id = ? OR category = ?',
         [target.id, target.category.name],
@@ -336,11 +338,16 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   @override
   Future<void> deleteAllocationTarget(String targetId) async {
-    await _database.customStatement(
-      'DELETE FROM allocation_targets WHERE id = ?',
-      [targetId],
+    await _database.writePortfolio(
+      () => _database.customStatement(
+        'DELETE FROM allocation_targets WHERE id = ?',
+        [targetId],
+      ),
     );
   }
+
+  @override
+  Stream<void> get changes => _database.portfolioChanges;
 
   Future<Holding?> _holdingOrNull(String assetId) async {
     final row = await _database

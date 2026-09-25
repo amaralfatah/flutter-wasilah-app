@@ -133,6 +133,9 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
   final PortfolioSummary summary;
 
   @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
   Future<List<AllocationTarget>> getAllocationTargets() async => const [];
 
   @override

@@ -11,6 +11,9 @@ import 'package:sqlite3/sqlite3.dart' as sqlite3;
 /// dibaca (mis. untuk validasi file backup) tanpa membuka koneksi database.
 const int appDatabaseSchemaVersion = 10;
 
+/// Nama tabel semu untuk notifikasi perubahan data aset/portofolio.
+const _portfolioDataTable = 'portfolio_data';
+
 class AppDatabase extends GeneratedDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openConnection());
 
@@ -255,6 +258,20 @@ class AppDatabase extends GeneratedDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Tulis data aset/portofolio dalam satu transaksi lalu kabari
+  /// [portfolioChanges]. SQL mentah (`customStatement`) tidak memicu
+  /// notifikasi stream drift, jadi semua tulis wajib lewat sini.
+  Future<T> writePortfolio<T>(Future<T> Function() action) async {
+    final result = await transaction(action);
+    notifyUpdates({const TableUpdate(_portfolioDataTable)});
+    return result;
+  }
+
+  /// Berbunyi setiap kali [writePortfolio] selesai.
+  Stream<void> get portfolioChanges => tableUpdates(
+    const TableUpdateQuery.onTableName(_portfolioDataTable),
+  ).map((_) {});
 
   Future<void> _addColumnIfMissing(
     String table,

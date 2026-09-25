@@ -5,7 +5,6 @@ import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
-import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 
 final targetManagementControllerProvider =
     AsyncNotifierProvider<TargetManagementController, void>(
@@ -45,7 +44,6 @@ class TargetManagementController extends AsyncNotifier<void> {
               targetPercentage: targetPercentage,
             ),
           );
-      _invalidateTargetReads();
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -60,18 +58,10 @@ class TargetManagementController extends AsyncNotifier<void> {
       await ref
           .read(portfolioRepositoryProvider)
           .deleteAllocationTarget(targetId);
-      _invalidateTargetReads();
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       rethrow;
     }
-  }
-
-  void _invalidateTargetReads() {
-    ref
-      ..invalidate(allocationTargetProvider)
-      ..invalidate(portfolioSummaryProvider)
-      ..invalidate(targetAllocationItemsProvider);
   }
 }

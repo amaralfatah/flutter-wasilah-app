@@ -525,6 +525,26 @@ void main() {
       );
     });
 
+    test('announces every write on the changes stream', () async {
+      final database = openDatabase();
+      addTearDown(database.close);
+      final repository = DriftPortfolioRepository(database);
+      var count = 0;
+      final subscription = repository.changes.listen((_) => count++);
+      addTearDown(subscription.cancel);
+
+      await DriftAssetRepository(database).createAsset(_btc);
+      await repository.updateAssetValue(
+        assetId: 'btc',
+        totalValue: 1000,
+        recordedAt: DateTime(2026, 7),
+      );
+      await repository.getPositions();
+      await pumpEventQueue();
+
+      expect(count, 2);
+    });
+
     test('skips allocation targets with an unknown category', () async {
       final database = openDatabase();
       addTearDown(database.close);

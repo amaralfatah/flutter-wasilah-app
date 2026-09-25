@@ -61,9 +61,6 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             fxCurrency: fxCurrency,
             fxRate: fxRate,
           );
-
-      invalidatePortfolioReads(ref, assetId);
-
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -77,7 +74,6 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
 
     try {
       await ref.read(portfolioRepositoryProvider).removeFromPortfolio(assetId);
-      invalidatePortfolioReads(ref, assetId);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

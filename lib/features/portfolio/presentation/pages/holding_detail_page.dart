@@ -297,12 +297,6 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
       await ref
           .read(portfolioRepositoryProvider)
           .deleteAssetSnapshot(snapshotId);
-      ref
-        ..invalidate(assetHistoryProvider(assetId))
-        ..invalidate(positionDetailProvider(assetId))
-        ..invalidate(positionListProvider)
-        ..invalidate(portfolioSummaryProvider)
-        ..invalidate(portfolioHistoryProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.commonHistoryDeletedMessage)),

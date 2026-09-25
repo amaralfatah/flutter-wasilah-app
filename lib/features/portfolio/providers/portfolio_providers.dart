@@ -11,6 +11,18 @@ import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_ass
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 
+/// Naik setiap kali data aset/portofolio ditulis. Semua provider baca
+/// menonton ini, jadi layar ikut segar tanpa `invalidate` manual. Nilainya
+/// angka yang terus naik karena `AsyncData(null)` berulang dianggap sama dan
+/// tidak memicu rebuild.
+final portfolioChangesProvider = StreamProvider<int>((ref) {
+  var revision = 0;
+  return ref
+      .watch(portfolioRepositoryProvider)
+      .changes
+      .map((_) => ++revision);
+});
+
 // ======================= MASTER ASET =======================
 
 final assetRepositoryProvider = Provider<AssetRepository>((ref) {
@@ -18,6 +30,7 @@ final assetRepositoryProvider = Provider<AssetRepository>((ref) {
 });
 
 final assetListProvider = FutureProvider<List<Asset>>((ref) async {
+  ref.watch(portfolioChangesProvider);
   final repository = ref.watch(assetRepositoryProvider);
   return repository.getAssets();
 });
@@ -27,6 +40,7 @@ final FutureProviderFamily<Asset?, String> assetDetailProvider =
       ref,
       assetId,
     ) async {
+      ref.watch(portfolioChangesProvider);
       final repository = ref.watch(assetRepositoryProvider);
       return repository.getAssetById(assetId);
     });
@@ -38,6 +52,7 @@ final portfolioRepositoryProvider = Provider<PortfolioRepository>((ref) {
 });
 
 final portfolioSummaryProvider = FutureProvider<PortfolioSummary>((ref) async {
+  ref.watch(portfolioChangesProvider);
   final repository = ref.watch(portfolioRepositoryProvider);
   return repository.getPortfolioSummary();
 });
@@ -45,6 +60,7 @@ final portfolioSummaryProvider = FutureProvider<PortfolioSummary>((ref) async {
 final positionListProvider = FutureProvider<List<PortfolioPosition>>((
   ref,
 ) async {
+  ref.watch(portfolioChangesProvider);
   final repository = ref.watch(portfolioRepositoryProvider);
   return repository.getPositions();
 });
@@ -54,7 +70,8 @@ final FutureProviderFamily<PortfolioPosition?, String> positionDetailProvider =
       ref,
       assetId,
     ) async {
-      final repository = ref.watch(portfolioRepositoryProvider);
+      ref.watch(portfolioChangesProvider);
+  final repository = ref.watch(portfolioRepositoryProvider);
       return repository.getPositionByAssetId(assetId);
     });
 
@@ -77,6 +94,7 @@ final assetOverviewProvider = FutureProvider<List<PortfolioPosition>>((
 final portfolioHistoryProvider = FutureProvider<List<PortfolioSnapshot>>((
   ref,
 ) async {
+  ref.watch(portfolioChangesProvider);
   final repository = ref.watch(portfolioRepositoryProvider);
   return repository.getPortfolioHistory();
 });
@@ -84,7 +102,8 @@ final portfolioHistoryProvider = FutureProvider<List<PortfolioSnapshot>>((
 final FutureProviderFamily<List<AssetSnapshot>, String> assetHistoryProvider =
     FutureProvider.family<List<AssetSnapshot>, String>(
       (ref, assetId) async {
-        final repository = ref.watch(portfolioRepositoryProvider);
+        ref.watch(portfolioChangesProvider);
+  final repository = ref.watch(portfolioRepositoryProvider);
         return repository.getAssetHistory(assetId);
       },
     );
@@ -92,19 +111,7 @@ final FutureProviderFamily<List<AssetSnapshot>, String> assetHistoryProvider =
 final allocationTargetProvider = FutureProvider<List<AllocationTarget>>((
   ref,
 ) async {
+  ref.watch(portfolioChangesProvider);
   final repository = ref.watch(portfolioRepositoryProvider);
   return repository.getAllocationTargets();
 });
-
-/// Invalidate semua bacaan porto (dan master bila perlu) setelah tulis.
-void invalidatePortfolioReads(Ref ref, [String? assetId]) {
-  ref
-    ..invalidate(portfolioSummaryProvider)
-    ..invalidate(positionListProvider)
-    ..invalidate(portfolioHistoryProvider);
-  if (assetId != null) {
-    ref
-      ..invalidate(positionDetailProvider(assetId))
-      ..invalidate(assetHistoryProvider(assetId));
-  }
-}

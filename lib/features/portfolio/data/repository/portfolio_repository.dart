@@ -53,4 +53,8 @@ abstract interface class PortfolioRepository {
   Future<void> saveAllocationTarget(AllocationTarget target);
 
   Future<void> deleteAllocationTarget(String targetId);
+
+  /// Berbunyi setiap kali data aset/portofolio berubah (termasuk master aset,
+  /// karena berbagi database yang sama).
+  Stream<void> get changes;
 }

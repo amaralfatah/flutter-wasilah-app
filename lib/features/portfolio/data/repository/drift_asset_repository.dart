@@ -39,42 +39,46 @@ class DriftAssetRepository implements AssetRepository {
 
   @override
   Future<void> createAsset(Asset asset) async {
-    await _database.customStatement(
-      '''
-      INSERT INTO assets (id, name, code, category, market_symbol)
-      VALUES (?, ?, ?, ?, ?)
-      ''',
-      [
-        asset.id,
-        asset.name,
-        asset.code,
-        asset.category.name,
-        normalizeMarketSymbol(asset.marketSymbol),
-      ],
+    await _database.writePortfolio(
+      () => _database.customStatement(
+        '''
+        INSERT INTO assets (id, name, code, category, market_symbol)
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        [
+          asset.id,
+          asset.name,
+          asset.code,
+          asset.category.name,
+          normalizeMarketSymbol(asset.marketSymbol),
+        ],
+      ),
     );
   }
 
   @override
   Future<void> updateAsset(Asset asset) async {
-    await _database.customUpdate(
-      '''
-      UPDATE assets
-      SET name = ?, code = ?, category = ?, market_symbol = ?
-      WHERE id = ?
-      ''',
-      variables: [
-        Variable.withString(asset.name),
-        Variable.withString(asset.code),
-        Variable.withString(asset.category.name),
-        Variable<String>(normalizeMarketSymbol(asset.marketSymbol)),
-        Variable.withString(asset.id),
-      ],
+    await _database.writePortfolio(
+      () => _database.customUpdate(
+        '''
+        UPDATE assets
+        SET name = ?, code = ?, category = ?, market_symbol = ?
+        WHERE id = ?
+        ''',
+        variables: [
+          Variable.withString(asset.name),
+          Variable.withString(asset.code),
+          Variable.withString(asset.category.name),
+          Variable<String>(normalizeMarketSymbol(asset.marketSymbol)),
+          Variable.withString(asset.id),
+        ],
+      ),
     );
   }
 
   @override
   Future<void> deleteAsset(String assetId) async {
-    await _database.transaction(() async {
+    await _database.writePortfolio(() async {
       final row = await _database
           .customSelect(
             '''

@@ -39,7 +39,6 @@ class AssetManagementController extends AsyncNotifier<void> {
               marketSymbol: marketSymbol,
             ),
           );
-      _invalidateAssetReads();
       state = const AsyncData(null);
       return assetId;
     } catch (error, stackTrace) {
@@ -61,7 +60,6 @@ class AssetManagementController extends AsyncNotifier<void> {
               code: asset.code.trim().toUpperCase(),
             ),
           );
-      _invalidateAssetReads(asset.id);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -74,7 +72,6 @@ class AssetManagementController extends AsyncNotifier<void> {
 
     try {
       await ref.read(assetRepositoryProvider).deleteAsset(assetId);
-      _invalidateAssetReads(assetId);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -98,15 +95,6 @@ class AssetManagementController extends AsyncNotifier<void> {
     if (codeError != null) {
       throw ArgumentError(codeError);
     }
-  }
-
-  void _invalidateAssetReads([String? assetId]) {
-    ref.invalidate(assetListProvider);
-    if (assetId != null) {
-      ref.invalidate(assetDetailProvider(assetId));
-    }
-    // Nama/kategori ikut tampil di layar porto.
-    invalidatePortfolioReads(ref, assetId);
   }
 }
 

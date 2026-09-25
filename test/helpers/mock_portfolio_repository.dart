@@ -220,7 +220,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> createAsset(Asset asset) async {
-    await _wait();
+    await _beginWrite();
 
     if (_assets.any((item) => item.id == asset.id)) {
       throw StateError('Asset sudah ada.');
@@ -230,7 +230,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> updateAsset(Asset asset) async {
-    await _wait();
+    await _beginWrite();
 
     final assetIndex = _assets.indexWhere((item) => item.id == asset.id);
     if (assetIndex == -1) {
@@ -241,7 +241,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> deleteAsset(String assetId) async {
-    await _wait();
+    await _beginWrite();
 
     if (_holdings.containsKey(assetId) ||
         (_assetHistories[assetId]?.isNotEmpty ?? false)) {
@@ -280,7 +280,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> deleteAssetSnapshot(String snapshotId) async {
-    await _wait();
+    await _beginWrite();
     for (final history in _assetHistories.values) {
       history.removeWhere((snapshot) => snapshot.id == snapshotId);
     }
@@ -288,13 +288,13 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> deletePortfolioSnapshot(String snapshotId) async {
-    await _wait();
+    await _beginWrite();
     _portfolioHistory.removeWhere((snapshot) => snapshot.id == snapshotId);
   }
 
   @override
   Future<void> removeFromPortfolio(String assetId) async {
-    await _wait();
+    await _beginWrite();
     _holdings.remove(assetId);
     _assetHistories.remove(assetId);
   }
@@ -329,7 +329,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
     String? fxCurrency,
     double? fxRate,
   }) async {
-    await _wait();
+    await _beginWrite();
 
     if (!_assets.any((asset) => asset.id == assetId)) {
       throw StateError('Asset tidak ditemukan.');
@@ -391,7 +391,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> saveAllocationTarget(AllocationTarget target) async {
-    await _wait();
+    await _beginWrite();
 
     _targets
       ..removeWhere(
@@ -406,7 +406,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
 
   @override
   Future<void> deleteAllocationTarget(String targetId) async {
-    await _wait();
+    await _beginWrite();
 
     _targets.removeWhere((target) => target.id == targetId);
     _targetProgressPercentage = _estimateTargetProgress();
@@ -488,6 +488,17 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
   }
 
   Future<void> _wait() => Future<void>.delayed(simulatedDelay);
+
+  final _changes = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get changes => _changes.stream;
+
+  /// Kabari pembaca setelah mutasi sinkron di method tulis selesai.
+  Future<void> _beginWrite() async {
+    await _wait();
+    scheduleMicrotask(() => _changes.add(null));
+  }
 }
 
 bool _sameMonth(DateTime left, DateTime right) =>
