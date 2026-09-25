@@ -6,11 +6,22 @@ import 'package:flutter_wasilah_app/features/portfolio/data/repository/mock_port
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+
+/// Perbesar viewport supaya seluruh form (kini punya field jumlah unit &
+/// harga avg) muat tanpa scroll -- ListView-nya lazy, jadi widget di luar
+/// viewport tidak dibangun dan tak bisa di-tap.
+void _useTallView(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1400, 4000);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+}
 
 void main() {
   testWidgets('update asset value form validates required fields', (
     tester,
   ) async {
+    _useTallView(tester);
     final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
 
     await tester.pumpWidget(
@@ -26,10 +37,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
-    await tester.pumpAndSettle();
-    final saveLabel = find.text('Simpan', skipOffstage: false).last;
-    await tester.tap(saveLabel);
+    await tester.tap(find.byType(AppPrimaryButton));
     await tester.pumpAndSettle();
 
     expect(
@@ -64,10 +72,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text(formatFullDate(DateTime.now(), const Locale('id'))),
+      find.text(
+        formatFullDate(DateTime.now(), const Locale('id')),
+        skipOffstage: false,
+      ),
       findsOneWidget,
     );
-    expect(find.text('Pilih tanggal'), findsNothing);
+    expect(find.text('Pilih tanggal', skipOffstage: false), findsNothing);
   });
 
   testWidgets(

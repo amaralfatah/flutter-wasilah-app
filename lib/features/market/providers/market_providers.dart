@@ -35,6 +35,22 @@ marketQuoteProvider = FutureProvider.autoDispose.family<QuoteResult, String>((
   return repository.getQuote(symbol);
 });
 
+/// Kurs 1 unit `currency` dalam IDR, lewat simbol forex Yahoo
+/// (`USDIDR=X`, `EURIDR=X`, dst). `IDR` mengembalikan 1 tanpa fetch.
+/// Memakai [marketQuoteProvider] sehingga kurs ikut ter-cache & tahan
+/// offline seperti quote lain.
+final AutoDisposeFutureProviderFamily<double, String> fxRateToIdrProvider =
+    FutureProvider.autoDispose.family<double, String>((ref, currency) async {
+      final normalized = currency.trim().toUpperCase();
+      if (normalized.isEmpty || normalized == 'IDR') {
+        return 1;
+      }
+      final result = await ref.watch(
+        marketQuoteProvider('${normalized}IDR=X').future,
+      );
+      return result.quote.price;
+    });
+
 typedef ChartArgs = ({String symbol, ChartRange range});
 
 /// Chart untuk range apa pun. Untuk [ChartRange.oneDay], seri diambil dari

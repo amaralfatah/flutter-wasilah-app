@@ -357,5 +357,17 @@
   "chartPeriodYearToDate": "Year to Date",
   "chartPeriodPastYear": "Past Year",
   "chartPeriodPastThreeYears": "Past 3 Years",
-  "chartPeriodPastFiveYears": "Past 5 Years"
+  "chartPeriodPastFiveYears": "Past 5 Years",
+
+  "avgBuyPriceLabel": "Average buy price",
+  "avgBuyPriceOptionalLabel": "Average buy price (optional)",
+  "avgBuyPriceHelper": "Price per unit in its native currency. E.g. BMRI in IDR, SPY in USD.",
+  "quantityOptionalLabel": "Quantity (optional)",
+  "quantityLabel": "Quantity",
+  "quantityHelper": "Number of lots, shares, coins, or grams held.",
+  "priceCurrencyLabel": "Buy price currency",
+
+  "valueSuggestionChip": "Use suggestion: {value}",
+  "valueSuggestionDetail": "{quantity} units × {price} (latest price)",
+  "valueSuggestionFxDetail": "Rate: 1 {currency} = {rate}"
 }

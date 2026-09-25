@@ -1463,6 +1463,66 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'5 Tahun Terakhir'**
   String get chartPeriodPastFiveYears;
+
+  /// Label metrik/field harga rata-rata beli per unit
+  ///
+  /// In id, this message translates to:
+  /// **'Harga rata-rata beli'**
+  String get avgBuyPriceLabel;
+
+  /// Label field harga rata-rata beli per unit di form aset
+  ///
+  /// In id, this message translates to:
+  /// **'Harga rata-rata beli (opsional)'**
+  String get avgBuyPriceOptionalLabel;
+
+  /// Helper text field harga rata-rata beli
+  ///
+  /// In id, this message translates to:
+  /// **'Harga per unit di mata uang aslinya. Contoh: BMRI dalam IDR, SPY dalam USD.'**
+  String get avgBuyPriceHelper;
+
+  /// Label field jumlah unit yang dimiliki di form aset
+  ///
+  /// In id, this message translates to:
+  /// **'Jumlah unit (opsional)'**
+  String get quantityOptionalLabel;
+
+  /// Label metrik jumlah unit
+  ///
+  /// In id, this message translates to:
+  /// **'Jumlah unit'**
+  String get quantityLabel;
+
+  /// Helper text field jumlah unit
+  ///
+  /// In id, this message translates to:
+  /// **'Jumlah lot, lembar, koin, atau gram yang dimiliki.'**
+  String get quantityHelper;
+
+  /// Label dropdown mata uang harga rata-rata beli
+  ///
+  /// In id, this message translates to:
+  /// **'Mata uang harga beli'**
+  String get priceCurrencyLabel;
+
+  /// Label chip saran nilai total aset dari jumlah unit x harga terkini
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai saran: {value}'**
+  String valueSuggestionChip(String value);
+
+  /// Rincian perhitungan saran nilai total aset
+  ///
+  /// In id, this message translates to:
+  /// **'{quantity} unit × {price} (harga terkini)'**
+  String valueSuggestionDetail(String quantity, String price);
+
+  /// Baris kurs konversi ke IDR pada saran nilai total aset
+  ///
+  /// In id, this message translates to:
+  /// **'Kurs: 1 {currency} = {rate}'**
+  String valueSuggestionFxDetail(String currency, String rate);
 }
 
 class _AppLocalizationsDelegate

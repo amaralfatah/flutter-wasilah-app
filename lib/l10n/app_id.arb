@@ -581,5 +581,42 @@
   "chartPeriodPastThreeYears": "3 Tahun Terakhir",
   "@chartPeriodPastThreeYears": {"description": "Label periode perubahan harga rentang 3 tahun"},
   "chartPeriodPastFiveYears": "5 Tahun Terakhir",
-  "@chartPeriodPastFiveYears": {"description": "Label periode perubahan harga rentang 5 tahun"}
+  "@chartPeriodPastFiveYears": {"description": "Label periode perubahan harga rentang 5 tahun"},
+
+  "avgBuyPriceLabel": "Harga rata-rata beli",
+  "@avgBuyPriceLabel": {"description": "Label metrik/field harga rata-rata beli per unit"},
+  "avgBuyPriceOptionalLabel": "Harga rata-rata beli (opsional)",
+  "@avgBuyPriceOptionalLabel": {"description": "Label field harga rata-rata beli per unit di form aset"},
+  "avgBuyPriceHelper": "Harga per unit di mata uang aslinya. Contoh: BMRI dalam IDR, SPY dalam USD.",
+  "@avgBuyPriceHelper": {"description": "Helper text field harga rata-rata beli"},
+  "quantityOptionalLabel": "Jumlah unit (opsional)",
+  "@quantityOptionalLabel": {"description": "Label field jumlah unit yang dimiliki di form aset"},
+  "quantityLabel": "Jumlah unit",
+  "@quantityLabel": {"description": "Label metrik jumlah unit"},
+  "quantityHelper": "Jumlah lot, lembar, koin, atau gram yang dimiliki.",
+  "@quantityHelper": {"description": "Helper text field jumlah unit"},
+  "priceCurrencyLabel": "Mata uang harga beli",
+  "@priceCurrencyLabel": {"description": "Label dropdown mata uang harga rata-rata beli"},
+
+  "valueSuggestionChip": "Pakai saran: {value}",
+  "@valueSuggestionChip": {
+    "description": "Label chip saran nilai total aset dari jumlah unit x harga terkini",
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "valueSuggestionDetail": "{quantity} unit × {price} (harga terkini)",
+  "@valueSuggestionDetail": {
+    "description": "Rincian perhitungan saran nilai total aset",
+    "placeholders": {
+      "quantity": {"type": "String"},
+      "price": {"type": "String"}
+    }
+  },
+  "valueSuggestionFxDetail": "Kurs: 1 {currency} = {rate}",
+  "@valueSuggestionFxDetail": {
+    "description": "Baris kurs konversi ke IDR pada saran nilai total aset",
+    "placeholders": {
+      "currency": {"type": "String"},
+      "rate": {"type": "String"}
+    }
+  }
 }

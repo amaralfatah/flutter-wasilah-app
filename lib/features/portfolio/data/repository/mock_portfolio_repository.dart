@@ -249,6 +249,9 @@ class MockPortfolioRepository implements PortfolioRepository {
       category: asset.category,
       totalCost: asset.totalCost,
       marketSymbol: asset.marketSymbol,
+      quantity: asset.quantity,
+      avgBuyPrice: asset.avgBuyPrice,
+      priceCurrency: asset.priceCurrency,
     );
   }
 
@@ -313,6 +316,9 @@ class MockPortfolioRepository implements PortfolioRepository {
     required DateTime recordedAt,
     String? note,
     double? totalCost,
+    double? quantity,
+    double? avgBuyPrice,
+    String? priceCurrency,
   }) async {
     await _wait();
 
@@ -321,11 +327,15 @@ class MockPortfolioRepository implements PortfolioRepository {
       throw StateError('Asset tidak ditemukan.');
     }
 
-    final cost = totalCost ?? _assets[assetIndex].totalCost;
-    _assets[assetIndex] = _assets[assetIndex].copyWith(
+    final existing = _assets[assetIndex];
+    final cost = totalCost ?? existing.totalCost;
+    _assets[assetIndex] = existing.copyWith(
       currentValue: totalValue,
       lastUpdatedAt: recordedAt,
       totalCost: cost,
+      quantity: quantity ?? existing.quantity,
+      avgBuyPrice: avgBuyPrice ?? existing.avgBuyPrice,
+      priceCurrency: priceCurrency ?? existing.priceCurrency,
     );
 
     final history = _assetHistories.putIfAbsent(

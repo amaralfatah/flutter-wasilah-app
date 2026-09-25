@@ -779,4 +779,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartPeriodPastFiveYears => 'Past 5 Years';
+
+  @override
+  String get avgBuyPriceLabel => 'Average buy price';
+
+  @override
+  String get avgBuyPriceOptionalLabel => 'Average buy price (optional)';
+
+  @override
+  String get avgBuyPriceHelper =>
+      'Price per unit in its native currency. E.g. BMRI in IDR, SPY in USD.';
+
+  @override
+  String get quantityOptionalLabel => 'Quantity (optional)';
+
+  @override
+  String get quantityLabel => 'Quantity';
+
+  @override
+  String get quantityHelper => 'Number of lots, shares, coins, or grams held.';
+
+  @override
+  String get priceCurrencyLabel => 'Buy price currency';
+
+  @override
+  String valueSuggestionChip(String value) {
+    return 'Use suggestion: $value';
+  }
+
+  @override
+  String valueSuggestionDetail(String quantity, String price) {
+    return '$quantity units × $price (latest price)';
+  }
+
+  @override
+  String valueSuggestionFxDetail(String currency, String rate) {
+    return 'Rate: 1 $currency = $rate';
+  }
 }

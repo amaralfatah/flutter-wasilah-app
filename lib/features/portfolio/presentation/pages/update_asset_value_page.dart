@@ -44,6 +44,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   final _quantityController = TextEditingController();
   final _avgBuyPriceController = TextEditingController();
   DateTime? _selectedDate;
+  String? _valuePrefilledFor;
   String? _costPrefilledFor;
   String? _holdingPrefilledFor;
   String? _selectedAssetId;
@@ -81,17 +82,22 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
           onRetry: () => ref.invalidate(assetListProvider),
           data: (assets) {
             final selectedAsset = _findSelectedAsset(assets);
+            // Opsi tambah/timpa hanya untuk kas; aset lain selalu timpa.
+            final allowIncrement = _allowsIncrement(selectedAsset);
+            final isOverride =
+                _resolveUpdateType(selectedAsset) ==
+                AssetValueUpdateType.override;
             final previousValue = selectedAsset?.currentValue ?? 0;
             final inputValue = parseCurrencyInput(_valueController.text) ?? 0;
-            final latestValue = _updateType == AssetValueUpdateType.override
+            final latestValue = isOverride
                 ? (parseCurrencyInput(_valueController.text) ?? previousValue)
                 : previousValue + inputValue;
+            _prefillValue(selectedAsset);
             _prefillCost(selectedAsset);
             _prefillHolding(selectedAsset);
             final previousCost = selectedAsset?.totalCost;
             final inputCost = parseCurrencyInput(_costController.text) ?? 0;
             final latestCost = _resolveTotalCost(selectedAsset) ?? previousCost;
-            final isOverride = _updateType == AssetValueUpdateType.override;
 
             return Form(
               key: _formKey,
@@ -120,41 +126,46 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    l10n.updateTypeLabel,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  if (allowIncrement) ...[
+                    Text(
+                      l10n.updateTypeLabel,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  SizedBox(
-                    width: double.infinity,
-                    child: SegmentedButton<AssetValueUpdateType>(
-                      showSelectedIcon: false,
-                      segments: [
-                        ButtonSegment<AssetValueUpdateType>(
-                          value: AssetValueUpdateType.override,
-                          label: Text(l10n.updateTypeOverride),
-                          icon: const Icon(Icons.edit_outlined),
-                        ),
-                        ButtonSegment<AssetValueUpdateType>(
-                          value: AssetValueUpdateType.increment,
-                          label: Text(l10n.updateTypeIncrement),
-                          icon: const Icon(Icons.add_circle_outline),
-                        ),
-                      ],
-                      selected: {_updateType},
-                      onSelectionChanged: (newSelection) {
-                        setState(() {
-                          _updateType = newSelection.first;
-                          // Arti field modal ikut berganti (total vs.
-                          // penambahan), jadi isinya disiapkan ulang.
-                          _costPrefilledFor = null;
-                        });
-                      },
+                    const SizedBox(height: AppSpacing.xs),
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<AssetValueUpdateType>(
+                        showSelectedIcon: false,
+                        segments: [
+                          ButtonSegment<AssetValueUpdateType>(
+                            value: AssetValueUpdateType.override,
+                            label: Text(l10n.updateTypeOverride),
+                            icon: const Icon(Icons.edit_outlined),
+                          ),
+                          ButtonSegment<AssetValueUpdateType>(
+                            value: AssetValueUpdateType.increment,
+                            label: Text(l10n.updateTypeIncrement),
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                        ],
+                        selected: {_updateType},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            _updateType = newSelection.first;
+                            // Arti field nilai & modal ikut berganti (total
+                            // vs. penambahan), jadi isinya disiapkan ulang:
+                            // mode ubah diisi nilai existing, mode tambah
+                            // dikosongkan.
+                            _valuePrefilledFor = null;
+                            _costPrefilledFor = null;
+                          });
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                   AppTextField(
                     label: isOverride
                         ? l10n.totalValueFieldLabel
@@ -335,10 +346,13 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     );
   }
 
-  /// Saran nilai total = jumlah unit × harga terkini, dikonversi ke IDR.
+  /// Saran nilai total = jumlah lembar × harga terkini, dikonversi ke IDR.
   /// Muncul bila aset punya jumlah unit dan simbol pasar. Harga non-IDR
   /// (mis. SPY/BTC dalam USD) dikonversi via kurs Yahoo `{cur}IDR=X`; nilai
   /// portofolio selalu disimpan IDR.
+  ///
+  /// Saham IDX (simbol `.JK`) dicatat dalam lot, sedangkan harga Yahoo per
+  /// lembar; 1 lot = 100 lembar, jadi jumlah lot dikali 100 dulu.
   Widget _buildValueSuggestion(Asset? asset) {
     final symbol = asset?.marketSymbol;
     final quantity = asset?.quantity;
@@ -346,16 +360,19 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       return const SizedBox.shrink();
     }
 
+    // Jumlah unit efektif dalam satuan harga (lembar untuk saham IDX).
+    final shares = quantity * _lotToShareFactor(symbol);
+
     return ref
         .watch(marketQuoteProvider(symbol))
         .maybeWhen(
           data: (result) {
             final quote = result.quote;
-            final nativeTotal = quantity * quote.price;
+            final nativeTotal = shares * quote.price;
             if (quote.currency == 'IDR') {
               return _valueSuggestionCard(
-                asset: asset,
                 quote: quote,
+                units: shares,
                 suggestedIdr: nativeTotal,
                 rate: null,
               );
@@ -364,8 +381,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                 .watch(fxRateToIdrProvider(quote.currency))
                 .maybeWhen(
                   data: (rate) => _valueSuggestionCard(
-                    asset: asset,
                     quote: quote,
+                    units: shares,
                     suggestedIdr: nativeTotal * rate,
                     rate: rate,
                   ),
@@ -376,9 +393,13 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         );
   }
 
+  /// 1 lot = 100 lembar untuk saham IDX (`.JK`); aset lain 1:1.
+  double _lotToShareFactor(String symbol) =>
+      symbol.toUpperCase().endsWith('.JK') ? 100 : 1;
+
   Widget _valueSuggestionCard({
-    required Asset asset,
     required MarketQuote quote,
+    required double units,
     required double suggestedIdr,
     required double? rate,
   }) {
@@ -404,7 +425,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.valueSuggestionDetail(
-              formatQuantity(asset.quantity!),
+              formatQuantity(units),
               formatPrice(quote.price, quote.currency),
             ),
             style: captionStyle,
@@ -431,6 +452,20 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     });
   }
 
+  /// Siapkan field nilai sekali per pergantian aset atau mode: mode ubah
+  /// diisi nilai saat ini (semua field berisi existing), mode tambah
+  /// dikosongkan (nominal yang ditambahkan).
+  void _prefillValue(Asset? asset) {
+    if (asset == null || asset.id == _valuePrefilledFor) {
+      return;
+    }
+    _valuePrefilledFor = asset.id;
+    _valueController.text =
+        _resolveUpdateType(asset) == AssetValueUpdateType.increment
+        ? ''
+        : formatNumber(asset.currentValue);
+  }
+
   /// Siapkan field modal sekali per pergantian aset atau mode: mode ubah
   /// diisi modal saat ini, mode tambah dikosongkan.
   void _prefillCost(Asset? asset) {
@@ -440,7 +475,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _costPrefilledFor = asset.id;
     final cost = asset.totalCost;
     _costController.text =
-        cost == null || _updateType == AssetValueUpdateType.increment
+        cost == null ||
+            _resolveUpdateType(asset) == AssetValueUpdateType.increment
         ? ''
         : formatCurrency(cost).replaceFirst('Rp', '');
   }
@@ -482,7 +518,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   /// berubah (repository membawa modal terakhir).
   double? _resolveTotalCost(Asset? asset) {
     final inputCost = parseCurrencyInput(_costController.text);
-    if (_updateType == AssetValueUpdateType.override) {
+    if (_resolveUpdateType(asset) == AssetValueUpdateType.override) {
       return inputCost;
     }
     if (asset == null || inputCost == null || inputCost == 0) {
@@ -492,6 +528,14 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     // supaya setoran baru tidak terbaca sebagai seluruh modal.
     return (asset.totalCost ?? asset.currentValue) + inputCost;
   }
+
+  /// Hanya kas yang boleh mode tambah; aset lain selalu timpa.
+  bool _allowsIncrement(Asset? asset) => asset?.category == AssetCategory.cash;
+
+  /// Mode efektif: pilihan pengguna dihormati hanya untuk kas, selain itu
+  /// dipaksa timpa (override).
+  AssetValueUpdateType _resolveUpdateType(Asset? asset) =>
+      _allowsIncrement(asset) ? _updateType : AssetValueUpdateType.override;
 
   Asset? _findSelectedAsset(List<Asset> assets) {
     for (final asset in assets) {
@@ -518,7 +562,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       return;
     }
 
-    final effectiveTotal = _updateType == AssetValueUpdateType.override
+    final effectiveTotal =
+        _resolveUpdateType(selectedAsset) == AssetValueUpdateType.override
         ? parsedValue
         : (selectedAsset?.currentValue ?? 0) + parsedValue;
     final totalCost = _resolveTotalCost(selectedAsset);

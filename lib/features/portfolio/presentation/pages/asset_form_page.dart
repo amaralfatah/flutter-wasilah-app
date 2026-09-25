@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
@@ -33,7 +32,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _valueController = TextEditingController();
-  final _costController = TextEditingController();
   final _marketSymbolController = TextEditingController();
   late DateTime _recordedAt;
   AssetCategory _category = AssetCategory.other;
@@ -60,7 +58,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _nameController.dispose();
     _codeController.dispose();
     _valueController.dispose();
-    _costController.dispose();
     _marketSymbolController.dispose();
     super.dispose();
   }
@@ -179,16 +176,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
-          AppTextField(
-            label: l10n.commonTotalCostOptionalLabel,
-            helperText: l10n.totalCostOptionalHelper,
-            controller: _costController,
-            keyboardType: TextInputType.number,
-            prefixText: 'Rp',
-            inputFormatters: const [RupiahInputFormatter()],
-            validator: validateOptionalCurrencyValue,
-          ),
-          const SizedBox(height: AppSpacing.lg),
           DropdownButtonFormField<String>(
             initialValue: _priceCurrency,
             decoration: InputDecoration(labelText: l10n.priceCurrencyLabel),
@@ -242,10 +229,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     _nameController.text = asset.name;
     _codeController.text = asset.code;
     _category = asset.category;
-    final totalCost = asset.totalCost;
-    if (totalCost != null) {
-      _costController.text = formatCurrency(totalCost).replaceFirst('Rp', '');
-    }
     _marketSymbolController.text = asset.marketSymbol ?? '';
     _priceCurrency = asset.effectivePriceCurrency;
     // Mode edit menampilkan nilai tersimpan apa adanya, tanpa prefill
@@ -286,8 +269,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
       return;
     }
 
-    final totalCost = parseCurrencyInput(_costController.text);
-
     try {
       if (editingAsset == null) {
         final value = parseCurrencyInput(_valueController.text);
@@ -303,7 +284,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
               category: _category,
               currentValue: value,
               recordedAt: _recordedAt,
-              totalCost: totalCost,
               marketSymbol: _marketSymbolController.text,
               priceCurrency: _priceCurrency,
             );
@@ -315,7 +295,6 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                 name: _nameController.text,
                 code: _codeController.text,
                 category: _category,
-                totalCost: totalCost,
                 marketSymbol: _marketSymbolController.text,
                 priceCurrency: _priceCurrency,
               ),

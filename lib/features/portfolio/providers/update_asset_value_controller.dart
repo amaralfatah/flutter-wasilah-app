@@ -20,6 +20,9 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
     required DateTime recordedAt,
     String? note,
     double? totalCost,
+    double? quantity,
+    double? avgBuyPrice,
+    String? priceCurrency,
   }) async {
     final assetError = validateSelectedAsset(assetId);
     if (assetError != null) {
@@ -50,6 +53,9 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             recordedAt: recordedAt,
             note: note?.trim().isEmpty ?? true ? null : note?.trim(),
             totalCost: totalCost,
+            quantity: quantity,
+            avgBuyPrice: avgBuyPrice,
+            priceCurrency: priceCurrency,
           );
 
       ref.invalidate(portfolioSummaryProvider);

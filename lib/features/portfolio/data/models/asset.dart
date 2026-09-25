@@ -50,6 +50,18 @@ abstract class Asset with _$Asset {
     /// Simbol Yahoo Finance (mis. `BMRI.JK`, `BTC-USD`); `null` bila aset
     /// tidak punya harga pasar.
     String? marketSymbol,
+
+    /// Jumlah unit yang dimiliki (lot, lembar, koin, gram); `null` bila belum
+    /// diisi.
+    double? quantity,
+
+    /// Harga rata-rata beli per unit, dalam [priceCurrency]. Nilai display
+    /// murni; tidak dipakai untuk menghitung PnL (PnL selalu IDR).
+    double? avgBuyPrice,
+
+    /// Mata uang [avgBuyPrice] (mis. `IDR`, `USD`). `null` dianggap `IDR`.
+    /// Tidak ditebak dari kategori: BTC bisa dibeli dalam IDR atau USD.
+    String? priceCurrency,
   }) = _Asset;
   const Asset._();
 
@@ -64,6 +76,9 @@ abstract class Asset with _$Asset {
       lastUpdatedAt: DateTime.parse(json['lastUpdatedAt'] as String),
       totalCost: (json['totalCost'] as num?)?.toDouble(),
       marketSymbol: json['marketSymbol'] as String?,
+      quantity: (json['quantity'] as num?)?.toDouble(),
+      avgBuyPrice: (json['avgBuyPrice'] as num?)?.toDouble(),
+      priceCurrency: json['priceCurrency'] as String?,
     );
   }
 
@@ -78,8 +93,14 @@ abstract class Asset with _$Asset {
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
       'totalCost': totalCost,
       'marketSymbol': marketSymbol,
+      'quantity': quantity,
+      'avgBuyPrice': avgBuyPrice,
+      'priceCurrency': priceCurrency,
     };
   }
+
+  /// Mata uang harga beli efektif; `IDR` bila belum diisi.
+  String get effectivePriceCurrency => priceCurrency ?? 'IDR';
 
   /// Untung/rugi terhadap [totalCost]; `null` bila modal belum diisi.
   double? get profitLoss {

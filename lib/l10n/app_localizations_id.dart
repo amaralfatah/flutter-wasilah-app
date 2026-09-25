@@ -778,4 +778,42 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get chartPeriodPastFiveYears => '5 Tahun Terakhir';
+
+  @override
+  String get avgBuyPriceLabel => 'Harga rata-rata beli';
+
+  @override
+  String get avgBuyPriceOptionalLabel => 'Harga rata-rata beli (opsional)';
+
+  @override
+  String get avgBuyPriceHelper =>
+      'Harga per unit di mata uang aslinya. Contoh: BMRI dalam IDR, SPY dalam USD.';
+
+  @override
+  String get quantityOptionalLabel => 'Jumlah unit (opsional)';
+
+  @override
+  String get quantityLabel => 'Jumlah unit';
+
+  @override
+  String get quantityHelper =>
+      'Jumlah lot, lembar, koin, atau gram yang dimiliki.';
+
+  @override
+  String get priceCurrencyLabel => 'Mata uang harga beli';
+
+  @override
+  String valueSuggestionChip(String value) {
+    return 'Pakai saran: $value';
+  }
+
+  @override
+  String valueSuggestionDetail(String quantity, String price) {
+    return '$quantity unit × $price (harga terkini)';
+  }
+
+  @override
+  String valueSuggestionFxDetail(String currency, String rate) {
+    return 'Kurs: 1 $currency = $rate';
+  }
 }

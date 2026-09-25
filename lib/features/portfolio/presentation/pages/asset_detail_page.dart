@@ -111,6 +111,19 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                       ),
                       _ProfitLossTile(asset: asset),
                     ],
+                    if (asset.avgBuyPrice case final avgBuyPrice?)
+                      _MetricTile(
+                        label: l10n.avgBuyPriceLabel,
+                        value: formatPrice(
+                          avgBuyPrice,
+                          asset.effectivePriceCurrency,
+                        ),
+                      ),
+                    if (asset.quantity case final quantity?)
+                      _MetricTile(
+                        label: l10n.quantityLabel,
+                        value: formatQuantity(quantity),
+                      ),
                     _MetricTile(
                       label: l10n.lastUpdatedLabel,
                       value: formatFullDate(

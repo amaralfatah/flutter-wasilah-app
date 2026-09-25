@@ -176,6 +176,9 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
     required DateTime recordedAt,
     String? note,
     double? totalCost,
+    double? quantity,
+    double? avgBuyPrice,
+    String? priceCurrency,
   }) {
     throw UnimplementedError();
   }

@@ -24,6 +24,9 @@ class AssetManagementController extends AsyncNotifier<void> {
     required DateTime recordedAt,
     double? totalCost,
     String? marketSymbol,
+    double? quantity,
+    double? avgBuyPrice,
+    String? priceCurrency,
   }) async {
     _validateAssetFields(
       name: name,
@@ -47,6 +50,9 @@ class AssetManagementController extends AsyncNotifier<void> {
               lastUpdatedAt: recordedAt,
               totalCost: totalCost,
               marketSymbol: marketSymbol,
+              quantity: quantity,
+              avgBuyPrice: avgBuyPrice,
+              priceCurrency: priceCurrency,
             ),
           );
       _invalidateAssetReads();
