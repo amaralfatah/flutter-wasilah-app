@@ -47,8 +47,7 @@ class SettingsPage extends ConsumerWidget {
           SettingsSectionHeader(l10n.settingsDataSection),
           SettingsTile(
             icon: Icons.inventory_2_outlined,
-            title: l10n.masterAssetsTitle,
-            subtitle: l10n.masterAssetsSettingsSubtitle,
+            title: 'Assets',
             onTap: () => unawaited(context.push(RouteNames.masterAssets)),
           ),
           SettingsSectionHeader(l10n.settingsBackupSection),
