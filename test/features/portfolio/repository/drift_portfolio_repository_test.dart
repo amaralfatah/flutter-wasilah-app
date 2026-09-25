@@ -192,6 +192,83 @@ void main() {
     );
 
     test(
+      'a backdated update recalculates later portfolio months that carry it '
+      'forward, keeping their notes',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await _track(database, _btc, 10000000, DateTime(2026, 5));
+        await _track(database, _cash, 5000000, DateTime(2026, 5));
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 12000000,
+          recordedAt: DateTime(2026, 6),
+        );
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 15000000,
+          recordedAt: DateTime(2026, 7),
+          note: 'Update Juli',
+        );
+
+        // Cash for June is corrected afterwards; July has no cash snapshot
+        // of its own, so it carries June's corrected value forward.
+        await repository.updateAssetValue(
+          assetId: 'cash',
+          totalValue: 8000000,
+          recordedAt: DateTime(2026, 6),
+        );
+
+        final history = await repository.getPortfolioHistory();
+        final july = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 7),
+        );
+        final may = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 5),
+        );
+
+        expect(may.totalValue, 15000000);
+        expect(july.totalValue, 23000000);
+        expect(july.note, 'Update Juli');
+      },
+    );
+
+    test(
+      'deleting a past asset snapshot recalculates later portfolio months',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+
+        await _track(database, _btc, 10000000, DateTime(2026, 5));
+        await _track(database, _cash, 5000000, DateTime(2026, 5));
+        await repository.updateAssetValue(
+          assetId: 'cash',
+          totalValue: 8000000,
+          recordedAt: DateTime(2026, 6),
+        );
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 15000000,
+          recordedAt: DateTime(2026, 7),
+        );
+
+        final cashJune = (await repository.getAssetHistory(
+          'cash',
+        )).firstWhere((item) => item.recordedAt == DateTime(2026, 6));
+        await repository.deleteAssetSnapshot(cashJune.id);
+
+        final history = await repository.getPortfolioHistory();
+        final july = history.firstWhere(
+          (item) => item.recordedAt == DateTime(2026, 7),
+        );
+        expect(july.totalValue, 20000000);
+      },
+    );
+
+    test(
       'a backdated update does not overwrite the asset current value',
       () async {
         final database = openDatabase();

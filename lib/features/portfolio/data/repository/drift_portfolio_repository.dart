@@ -169,6 +169,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
       // The portfolio's monthly history snapshot for that month baked in
       // the now-deleted value, so it must be regenerated from what's left.
       await _savePortfolioSnapshot(deleted.recordedAt);
+      await _refreshPortfolioSnapshotsAfter(deleted.recordedAt);
     });
   }
 
@@ -185,7 +186,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     await _database.transaction(() async {
       final months = await _database
           .customSelect(
-            'SELECT recorded_at FROM asset_snapshots WHERE asset_id = ?',
+            'SELECT recorded_at FROM asset_snapshots WHERE asset_id = ? '
+            'ORDER BY recorded_at',
             variables: [Variable.withString(assetId)],
           )
           .get();
@@ -202,6 +204,11 @@ class DriftPortfolioRepository implements PortfolioRepository {
       // Setiap bulan yang dulu memuat nilai aset ini dihitung ulang.
       for (final row in months) {
         await _savePortfolioSnapshot(row.read<DateTime>('recorded_at'));
+      }
+      if (months.isNotEmpty) {
+        await _refreshPortfolioSnapshotsAfter(
+          months.first.read<DateTime>('recorded_at'),
+        );
       }
     });
   }
@@ -297,6 +304,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
       );
 
       await _savePortfolioSnapshot(recordedAt, note: note);
+      await _refreshPortfolioSnapshotsAfter(recordedAt);
     });
   }
 
@@ -362,6 +370,29 @@ class DriftPortfolioRepository implements PortfolioRepository {
         note,
       ],
     );
+  }
+
+  /// Bulan-bulan setelah [after] ikut membawa nilai aset terakhir yang
+  /// tercatat, jadi perubahan histori di [after] harus merambat ke sana.
+  Future<void> _refreshPortfolioSnapshotsAfter(DateTime after) async {
+    final rows = await _database
+        .customSelect(
+          'SELECT id, recorded_at FROM portfolio_snapshots '
+          'WHERE recorded_at > ?',
+          variables: [Variable.withInt(_dateToSql(after))],
+        )
+        .get();
+
+    for (final row in rows) {
+      final total = await _historicalPortfolioTotal(
+        row.read<DateTime>('recorded_at'),
+      );
+      await _database.customStatement(
+        'UPDATE portfolio_snapshots SET total_value = ?, total_cost = ? '
+        'WHERE id = ?',
+        [total.value, total.cost, row.read<String>('id')],
+      );
+    }
   }
 
   /// Modal [assetId] dari snapshot terakhir yang punya modal, per [asOf].
