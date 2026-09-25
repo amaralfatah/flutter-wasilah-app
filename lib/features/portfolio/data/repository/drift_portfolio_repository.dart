@@ -462,41 +462,41 @@ class DriftPortfolioRepository implements PortfolioRepository {
   Future<({double value, double? cost})> _historicalPortfolioTotal(
     DateTime asOf,
   ) async {
-    final holdingRows = await _database
-        .customSelect('SELECT asset_id FROM holdings')
-        .get();
-    var total = 0.0;
-    var cost = 0.0;
-    var hasCost = false;
-
-    for (final holdingRow in holdingRows) {
-      final assetId = holdingRow.read<String>('asset_id');
-      final row = await _database
-          .customSelect(
-            '''
-        SELECT total_value
-        FROM asset_snapshots
-        WHERE asset_id = ? AND recorded_at <= ?
+    // Satu query: tiap holding digabung dengan snapshot nilai terakhirnya
+    // (INNER JOIN: aset tanpa snapshot sampai [asOf] tidak ikut) dan
+    // snapshot terakhir yang punya modal.
+    final row = await _database
+        .customSelect(
+          '''
+      SELECT
+        COALESCE(SUM(v.total_value), 0) AS total_value,
+        COALESCE(SUM(COALESCE(c.total_cost, v.total_value)), 0) AS total_cost,
+        COUNT(c.total_cost) AS cost_count
+      FROM holdings h
+      JOIN asset_snapshots v ON v.id = (
+        SELECT id FROM asset_snapshots
+        WHERE asset_id = h.asset_id AND recorded_at <= ?1
         ORDER BY recorded_at DESC
         LIMIT 1
-        ''',
-            variables: [
-              Variable.withString(assetId),
-              Variable.withInt(_dateToSql(asOf)),
-            ],
-          )
-          .getSingleOrNull();
+      )
+      LEFT JOIN asset_snapshots c ON c.id = (
+        SELECT id FROM asset_snapshots
+        WHERE asset_id = h.asset_id AND recorded_at <= ?1
+          AND total_cost IS NOT NULL
+        ORDER BY recorded_at DESC
+        LIMIT 1
+      )
+      ''',
+          variables: [Variable.withInt(_dateToSql(asOf))],
+        )
+        .getSingle();
 
-      final value = row?.read<double>('total_value') ?? 0;
-      final assetCost = row == null
-          ? null
-          : await _historicalAssetCost(assetId, asOf);
-      total += value;
-      cost += assetCost ?? value;
-      hasCost = hasCost || assetCost != null;
-    }
-
-    return (value: total, cost: hasCost ? cost : null);
+    return (
+      value: row.read<double>('total_value'),
+      cost: row.read<int>('cost_count') > 0
+          ? row.read<double>('total_cost')
+          : null,
+    );
   }
 
   double _calculateMonthlyChange(List<PortfolioSnapshot> history) {

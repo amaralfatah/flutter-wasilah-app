@@ -9,7 +9,7 @@ import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 /// Versi skema saat ini. Dipisah dari [AppDatabase.schemaVersion] supaya bisa
 /// dibaca (mis. untuk validasi file backup) tanpa membuka koneksi database.
-const int appDatabaseSchemaVersion = 10;
+const int appDatabaseSchemaVersion = 11;
 
 /// Nama tabel semu untuk notifikasi perubahan data aset/portofolio.
 const _portfolioDataTable = 'portfolio_data';
@@ -107,8 +107,11 @@ class AppDatabase extends GeneratedDatabase {
         CREATE INDEX asset_snapshots_asset_recorded_idx
         ON asset_snapshots (asset_id, recorded_at DESC);
       ''');
+      await _createIndexesV11();
     },
-    onUpgrade: (migrator, from, to) async {
+    // Satu transaksi: migrasi yang gagal di tengah jalan tidak meninggalkan
+    // skema setengah jadi yang akan dicoba ulang dari awal.
+    onUpgrade: (migrator, from, to) => transaction(() async {
       if (from < 2) {
         await customStatement('DELETE FROM asset_snapshots');
         await customStatement('DELETE FROM assets');
@@ -253,7 +256,18 @@ class AppDatabase extends GeneratedDatabase {
         await _addColumnIfMissing('asset_snapshots', 'fx_currency', 'TEXT');
         await _addColumnIfMissing('asset_snapshots', 'fx_rate', 'REAL');
       }
-    },
+      if (from < 11) {
+        // Satu target per kategori: sisakan baris terbaru sebelum dikunci
+        // indeks UNIQUE.
+        await customStatement('''
+          DELETE FROM allocation_targets
+          WHERE rowid NOT IN (
+            SELECT MAX(rowid) FROM allocation_targets GROUP BY category
+          );
+        ''');
+        await _createIndexesV11();
+      }
+    }),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
@@ -272,6 +286,17 @@ class AppDatabase extends GeneratedDatabase {
   Stream<void> get portfolioChanges => tableUpdates(
     const TableUpdateQuery.onTableName(_portfolioDataTable),
   ).map((_) {});
+
+  Future<void> _createIndexesV11() async {
+    await customStatement('''
+      CREATE INDEX IF NOT EXISTS portfolio_snapshots_recorded_idx
+      ON portfolio_snapshots (recorded_at);
+    ''');
+    await customStatement('''
+      CREATE UNIQUE INDEX IF NOT EXISTS allocation_targets_category_idx
+      ON allocation_targets (category);
+    ''');
+  }
 
   Future<void> _addColumnIfMissing(
     String table,

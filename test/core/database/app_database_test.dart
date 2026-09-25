@@ -192,6 +192,57 @@ void main() {
       },
     );
 
+    test(
+      'dedupes allocation targets per category and adds indexes on upgrade '
+      'from version 10',
+      () async {
+        final fresh = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        await fresh.customSelect('SELECT 1').get();
+        await fresh.close();
+        final raw = sqlite3.sqlite3.open(databaseFile.path);
+        try {
+          raw.execute('''
+            DROP INDEX allocation_targets_category_idx;
+            DROP INDEX portfolio_snapshots_recorded_idx;
+            INSERT INTO allocation_targets (id, category, target_percentage)
+            VALUES ('old', 'crypto', 10), ('new', 'crypto', 25);
+            PRAGMA user_version = 10;
+          ''');
+        } finally {
+          raw.dispose();
+        }
+
+        final database = AppDatabase.forTesting(
+          NativeDatabase.createInBackground(databaseFile),
+        );
+        addTearDown(database.close);
+
+        final targets = await database
+            .customSelect('SELECT id FROM allocation_targets')
+            .get();
+        expect(targets.map((row) => row.read<String>('id')), ['new']);
+
+        final indexes = await database
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type = 'index' "
+              "AND name IN ('allocation_targets_category_idx', "
+              "'portfolio_snapshots_recorded_idx')",
+            )
+            .get();
+        expect(indexes, hasLength(2));
+
+        await expectLater(
+          database.customStatement(
+            'INSERT INTO allocation_targets (id, category, target_percentage) '
+            "VALUES ('dup', 'crypto', 5)",
+          ),
+          throwsA(anything),
+        );
+      },
+    );
+
     test('enforces foreign keys between holdings and assets', () async {
       final database = AppDatabase.forTesting(
         NativeDatabase.createInBackground(databaseFile),
