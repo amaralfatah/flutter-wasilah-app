@@ -29,15 +29,18 @@ class DriftPortfolioRepository implements PortfolioRepository {
       ORDER BY category ASC
       ''').get();
 
-    return rows
-        .map(
-          (row) => AllocationTarget(
+    // Target berkategori tak dikenal dilewati, bukan dijadikan `other`, agar
+    // tidak bertumpuk dengan target `other` yang sudah ada.
+    final categories = AssetCategory.values.asNameMap();
+    return [
+      for (final row in rows)
+        if (categories[row.read<String>('category')] case final category?)
+          AllocationTarget(
             id: row.read<String>('id'),
-            category: AssetCategory.values.byName(row.read<String>('category')),
+            category: category,
             targetPercentage: row.read<double>('target_percentage'),
           ),
-        )
-        .toList(growable: false)
+    ]
       ..sort(
         (left, right) => left.category.index.compareTo(right.category.index),
       );

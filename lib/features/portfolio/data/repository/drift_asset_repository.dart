@@ -104,7 +104,7 @@ Asset mapAssetRow(QueryRow row) {
     id: row.read<String>('id'),
     name: row.read<String>('name'),
     code: row.read<String>('code'),
-    category: AssetCategory.values.byName(row.read<String>('category')),
+    category: AssetCategory.fromName(row.read<String>('category')),
     marketSymbol: row.readNullable<String>('market_symbol'),
   );
 }

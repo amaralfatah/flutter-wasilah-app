@@ -525,6 +525,22 @@ void main() {
       );
     });
 
+    test('skips allocation targets with an unknown category', () async {
+      final database = openDatabase();
+      addTearDown(database.close);
+      final repository = DriftPortfolioRepository(database);
+      await database.customStatement(
+        'INSERT INTO allocation_targets (id, category, target_percentage) '
+        "VALUES ('t-bond', 'bond', 20), ('t-cash', 'cash', 10)",
+      );
+
+      final targets = await repository.getAllocationTargets();
+
+      expect(targets.map((target) => target.category), [AssetCategory.cash]);
+      final summary = await repository.getPortfolioSummary();
+      expect(summary.totalValue, 0);
+    });
+
     test('saves and deletes allocation targets', () async {
       final database = openDatabase();
       addTearDown(database.close);

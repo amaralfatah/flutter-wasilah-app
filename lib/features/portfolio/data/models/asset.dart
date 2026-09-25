@@ -9,7 +9,12 @@ enum AssetCategory {
   indexEtf,
   preciousMetal,
   cash,
-  other,
+  other;
+
+  /// Kategori tak dikenal (mis. dari backup versi app yang lebih baru)
+  /// dibaca sebagai [other] supaya data tetap bisa dibuka.
+  static AssetCategory fromName(String name) =>
+      values.asNameMap()[name] ?? other;
 }
 
 extension AssetCategoryX on AssetCategory {
@@ -55,7 +60,7 @@ abstract class Asset with _$Asset {
       id: json['id'] as String,
       name: json['name'] as String,
       code: json['code'] as String,
-      category: AssetCategory.values.byName(json['category'] as String),
+      category: AssetCategory.fromName(json['category'] as String),
       marketSymbol: json['marketSymbol'] as String?,
     );
   }

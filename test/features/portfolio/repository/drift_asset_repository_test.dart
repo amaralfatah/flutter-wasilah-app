@@ -18,6 +18,20 @@ void main() {
 
     tearDown(() => database.close());
 
+    test(
+      'reads an unknown category (e.g. from a newer app backup) as other',
+      () async {
+        await database.customStatement(
+          'INSERT INTO assets (id, name, code, category) '
+          "VALUES ('sbn', 'SBN', 'ORI', 'bond')",
+        );
+
+        final asset = await repository.getAssetById('sbn');
+        expect(asset!.category, AssetCategory.other);
+        expect(await repository.getAssets(), hasLength(1));
+      },
+    );
+
     test('creates, edits, and deletes a master asset', () async {
       await repository.createAsset(_gold);
 
