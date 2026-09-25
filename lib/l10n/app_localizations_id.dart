@@ -524,13 +524,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Total modal tidak boleh kurang dari nol.';
 
   @override
-  String get dashboardPortfolioValueLabel => 'Total Nilai';
+  String get dashboardPortfolioValueLabel => 'Total Ekuitas';
 
   @override
   String get dashboardCashLabel => 'Kas';
 
   @override
-  String get dashboardCapitalLabel => 'Modal';
+  String get dashboardCapitalLabel => 'Investasi';
 
   @override
   String get dashboardAssetCountLabel => 'Jumlah Aset';

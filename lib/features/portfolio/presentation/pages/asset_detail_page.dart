@@ -114,7 +114,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     if (asset.avgBuyPrice case final avgBuyPrice?)
                       _MetricTile(
                         label: l10n.avgBuyPriceLabel,
-                        value: formatPrice(
+                        value: formatAvgPrice(
                           avgBuyPrice,
                           asset.effectivePriceCurrency,
                         ),

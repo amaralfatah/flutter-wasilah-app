@@ -36,6 +36,18 @@ class PortfolioSummaryCard extends StatelessWidget {
         .where((asset) => asset.category == AssetCategory.cash)
         .fold<double>(0, (sum, asset) => sum + asset.currentValue);
     final profitLoss = _totalProfitLoss(activeAssets);
+    // Modal yang ditampilkan di kartu ringkasan sengaja beda dari modal yang
+    // dipakai hitung return (profitLoss.cost): di sini kas dikeluarkan
+    // supaya angka "Modal" merepresentasikan aset investasi murni.
+    final nonCashAssets = activeAssets
+        .where((asset) => asset.category != AssetCategory.cash)
+        .toList(growable: false);
+    final capital = nonCashAssets.isEmpty
+        ? null
+        : nonCashAssets.fold<double>(
+            0,
+            (sum, asset) => sum + (asset.totalCost ?? asset.currentValue),
+          );
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -66,9 +78,7 @@ class PortfolioSummaryCard extends StatelessWidget {
                         child: _SummaryMetric(
                           label: l10n.dashboardCapitalLabel,
                           alignment: _MetricAlignment.center,
-                          value: profitLoss == null
-                              ? '-'
-                              : formatNumber(profitLoss.cost),
+                          value: capital == null ? '-' : formatNumber(capital),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),

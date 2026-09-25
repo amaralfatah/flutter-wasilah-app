@@ -201,9 +201,9 @@
   "invalidCurrentValueMessage": "Asset value cannot be less than zero.",
   "invalidTotalCostMessage": "Total cost cannot be less than zero.",
 
-  "dashboardPortfolioValueLabel": "Total Value",
+  "dashboardPortfolioValueLabel": "Total Equity",
   "dashboardCashLabel": "Cash",
-  "dashboardCapitalLabel": "Capital",
+  "dashboardCapitalLabel": "Invested",
   "dashboardAssetCountLabel": "Asset Count",
   "dashboardProfitLossLabel": "P&L",
   "dashboardViewHistoryLabel": "View history",

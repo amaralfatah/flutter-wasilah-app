@@ -84,6 +84,20 @@ String formatAxisPrice(double value, String currency) {
   ).format(value);
 }
 
+/// Harga avg beli per unit, IDR selalu dua desimal (mis. `Rp4.070,50`)
+/// karena avg beli sering pecahan, beda dengan [formatPrice] yang
+/// membulatkan IDR ke bilangan bulat.
+String formatAvgPrice(double value, String currency) {
+  if (currency == 'IDR') {
+    return 'Rp${NumberFormat('#,##0.00', 'id_ID').format(value)}';
+  }
+
+  return NumberFormat.simpleCurrency(
+    name: currency,
+    decimalDigits: 2,
+  ).format(value);
+}
+
 /// Seperti [formatPrice], dengan tanda `+` untuk nilai positif.
 String formatSignedPrice(double value, String currency) {
   return value > 0

@@ -1,12 +1,7 @@
-/// Format persentase alokasi.
-///
-/// Nilai di bawah 10% ditampilkan dengan satu desimal supaya aset kecil tidak
-/// terbaca sebagai `0%`; di atas itu desimalnya hanya menambah keramaian.
+/// Format persentase alokasi, selalu dua desimal.
 String formatPercentage(double value) {
-  final text = value.abs() >= 10
-      ? value.toStringAsFixed(0)
-      : value.toStringAsFixed(1);
-  return '${text.replaceAll('.', ',')}%';
+  final text = value.toStringAsFixed(2).replaceAll('.', ',');
+  return '$text%';
 }
 
 /// Sama seperti [formatPercentage], dengan tanda `+`/`-` eksplisit.

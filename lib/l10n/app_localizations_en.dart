@@ -519,13 +519,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidTotalCostMessage => 'Total cost cannot be less than zero.';
 
   @override
-  String get dashboardPortfolioValueLabel => 'Total Value';
+  String get dashboardPortfolioValueLabel => 'Total Equity';
 
   @override
   String get dashboardCashLabel => 'Cash';
 
   @override
-  String get dashboardCapitalLabel => 'Capital';
+  String get dashboardCapitalLabel => 'Invested';
 
   @override
   String get dashboardAssetCountLabel => 'Asset Count';

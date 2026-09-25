@@ -358,11 +358,11 @@
   "invalidTotalCostMessage": "Total modal tidak boleh kurang dari nol.",
   "@invalidTotalCostMessage": {"description": "Validasi total modal tidak boleh negatif"},
 
-  "dashboardPortfolioValueLabel": "Total Nilai",
+  "dashboardPortfolioValueLabel": "Total Ekuitas",
   "@dashboardPortfolioValueLabel": {"description": "Label metrik total nilai portofolio (kas + investasi) di kartu ringkasan dashboard"},
   "dashboardCashLabel": "Kas",
   "@dashboardCashLabel": {"description": "Label metrik total aset kategori kas di kartu ringkasan dashboard"},
-  "dashboardCapitalLabel": "Modal",
+  "dashboardCapitalLabel": "Investasi",
   "@dashboardCapitalLabel": {"description": "Label singkat 'Modal', dipakai di kartu ringkasan dan header tabel aset"},
   "dashboardAssetCountLabel": "Jumlah Aset",
   "@dashboardAssetCountLabel": {"description": "Label metrik jumlah aset di kartu ringkasan dashboard"},

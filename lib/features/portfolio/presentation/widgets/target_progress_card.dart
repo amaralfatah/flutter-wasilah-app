@@ -29,7 +29,7 @@ class TargetProgressCard extends StatelessWidget {
       child: Semantics(
         label: l10n.targetProgressSemanticLabel(
           resolvedLabel,
-          percentage.toStringAsFixed(0),
+          percentage.toStringAsFixed(2),
           resolvedSubtitle,
         ),
         excludeSemantics: true,
@@ -43,7 +43,7 @@ class TargetProgressCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              '${percentage.toStringAsFixed(0)}%',
+              '${percentage.toStringAsFixed(2)}%',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.sm),

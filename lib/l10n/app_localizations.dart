@@ -1043,7 +1043,7 @@ abstract class AppLocalizations {
   /// Label metrik total nilai portofolio (kas + investasi) di kartu ringkasan dashboard
   ///
   /// In id, this message translates to:
-  /// **'Total Nilai'**
+  /// **'Total Ekuitas'**
   String get dashboardPortfolioValueLabel;
 
   /// Label metrik total aset kategori kas di kartu ringkasan dashboard
@@ -1055,7 +1055,7 @@ abstract class AppLocalizations {
   /// Label singkat 'Modal', dipakai di kartu ringkasan dan header tabel aset
   ///
   /// In id, this message translates to:
-  /// **'Modal'**
+  /// **'Investasi'**
   String get dashboardCapitalLabel;
 
   /// Label metrik jumlah aset di kartu ringkasan dashboard
