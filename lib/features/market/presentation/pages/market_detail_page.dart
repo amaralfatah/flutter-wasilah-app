@@ -10,6 +10,7 @@ import 'package:flutter_wasilah_app/features/market/data/models/price_series.dar
 import 'package:flutter_wasilah_app/features/market/presentation/chart_math.dart';
 import 'package:flutter_wasilah_app/features/market/presentation/widgets/chart_range_tabs.dart';
 import 'package:flutter_wasilah_app/features/market/presentation/widgets/market_quote_header.dart';
+import 'package:flutter_wasilah_app/features/market/presentation/widgets/market_stats_grid.dart';
 import 'package:flutter_wasilah_app/features/market/presentation/widgets/price_line_chart.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
@@ -133,6 +134,12 @@ class _MarketDetailBody extends ConsumerWidget {
           children: [
             _buildChartSection(context, ref, quoteResult),
             const SizedBox(height: AppSpacing.lg),
+            if (quoteResult.quote.hasTradingStats) ...[
+              const Divider(height: 1),
+              const SizedBox(height: AppSpacing.lg),
+              MarketStatsGrid(quote: quoteResult.quote),
+              const SizedBox(height: AppSpacing.lg),
+            ],
             updateButton,
           ],
         ),

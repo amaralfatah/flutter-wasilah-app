@@ -708,6 +708,27 @@ class AppLocalizationsId extends AppLocalizations {
   String get marketChartEmpty => 'Data chart belum tersedia.';
 
   @override
+  String get marketStatsTitle => 'Data Perdagangan';
+
+  @override
+  String get statPrevClose => 'Penutupan Sebelumnya';
+
+  @override
+  String get statDayHigh => 'Tertinggi Hari Ini';
+
+  @override
+  String get statDayLow => 'Terendah Hari Ini';
+
+  @override
+  String get statVolume => 'Volume';
+
+  @override
+  String get statFiftyTwoWeekHigh => 'Tertinggi 52 Minggu';
+
+  @override
+  String get statFiftyTwoWeekLow => 'Terendah 52 Minggu';
+
+  @override
   String get editAssetButton => 'Edit Aset';
 
   @override

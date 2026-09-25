@@ -97,6 +97,11 @@ class YahooFinanceClient {
       marketTime: marketTime,
       fetchedAt: _clock(),
       previousClose: previousClose,
+      dayHigh: (meta['regularMarketDayHigh'] as num?)?.toDouble(),
+      dayLow: (meta['regularMarketDayLow'] as num?)?.toDouble(),
+      fiftyTwoWeekHigh: (meta['fiftyTwoWeekHigh'] as num?)?.toDouble(),
+      fiftyTwoWeekLow: (meta['fiftyTwoWeekLow'] as num?)?.toDouble(),
+      volume: (meta['regularMarketVolume'] as num?)?.toDouble(),
     );
 
     final series = PriceSeries(

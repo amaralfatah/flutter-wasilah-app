@@ -709,6 +709,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get marketChartEmpty => 'Chart data isn\'t available yet.';
 
   @override
+  String get marketStatsTitle => 'Trading data';
+
+  @override
+  String get statPrevClose => 'Previous close';
+
+  @override
+  String get statDayHigh => 'Day high';
+
+  @override
+  String get statDayLow => 'Day low';
+
+  @override
+  String get statVolume => 'Volume';
+
+  @override
+  String get statFiftyTwoWeekHigh => '52-week high';
+
+  @override
+  String get statFiftyTwoWeekLow => '52-week low';
+
+  @override
   String get editAssetButton => 'Edit Asset';
 
   @override

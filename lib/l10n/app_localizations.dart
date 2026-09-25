@@ -1320,6 +1320,48 @@ abstract class AppLocalizations {
   /// **'Data chart belum tersedia.'**
   String get marketChartEmpty;
 
+  /// Judul section statistik perdagangan Yahoo Finance
+  ///
+  /// In id, this message translates to:
+  /// **'Data Perdagangan'**
+  String get marketStatsTitle;
+
+  /// Label statistik penutupan hari sebelumnya
+  ///
+  /// In id, this message translates to:
+  /// **'Penutupan Sebelumnya'**
+  String get statPrevClose;
+
+  /// Label statistik harga tertinggi hari ini
+  ///
+  /// In id, this message translates to:
+  /// **'Tertinggi Hari Ini'**
+  String get statDayHigh;
+
+  /// Label statistik harga terendah hari ini
+  ///
+  /// In id, this message translates to:
+  /// **'Terendah Hari Ini'**
+  String get statDayLow;
+
+  /// Label statistik volume perdagangan
+  ///
+  /// In id, this message translates to:
+  /// **'Volume'**
+  String get statVolume;
+
+  /// Label statistik harga tertinggi 52 minggu
+  ///
+  /// In id, this message translates to:
+  /// **'Tertinggi 52 Minggu'**
+  String get statFiftyTwoWeekHigh;
+
+  /// Label statistik harga terendah 52 minggu
+  ///
+  /// In id, this message translates to:
+  /// **'Terendah 52 Minggu'**
+  String get statFiftyTwoWeekLow;
+
   /// Tombol menuju halaman edit aset
   ///
   /// In id, this message translates to:

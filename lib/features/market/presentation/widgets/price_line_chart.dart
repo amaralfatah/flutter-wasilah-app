@@ -142,7 +142,7 @@ class _PriceLineChartState extends State<PriceLineChart> {
                         8,
                     right: 0,
                     child: Text(
-                      formatPrice(tick, widget.currency),
+                      formatAxisPrice(tick, widget.currency),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),

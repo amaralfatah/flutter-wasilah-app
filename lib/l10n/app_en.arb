@@ -332,6 +332,13 @@
   },
   "marketUnavailable": "Price couldn't be loaded. Pull to try again.",
   "marketChartEmpty": "Chart data isn't available yet.",
+  "marketStatsTitle": "Trading data",
+  "statPrevClose": "Previous close",
+  "statDayHigh": "Day high",
+  "statDayLow": "Day low",
+  "statVolume": "Volume",
+  "statFiftyTwoWeekHigh": "52-week high",
+  "statFiftyTwoWeekLow": "52-week low",
   "editAssetButton": "Edit Asset",
 
   "chartRange1D": "1D",
