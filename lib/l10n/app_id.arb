@@ -321,6 +321,17 @@
   "@googleAuthorizationRequiredMessage": {"description": "Pesan error otorisasi Google Drive dibutuhkan"},
   "invalidBackupFileMessage": "File backup tidak valid.",
   "@invalidBackupFileMessage": {"description": "Pesan error file backup tidak valid"},
+  "autoBackupFailedMessage": "Backup otomatis terakhir gagal. Coba backup sekarang.",
+  "@autoBackupFailedMessage": {"description": "Pesan saat auto-backup terakhir gagal"},
+  "incompatibleBackupVersionMessage": "Backup ini dibuat versi aplikasi yang lebih baru. Perbarui aplikasi dulu.",
+  "@incompatibleBackupVersionMessage": {"description": "Pesan restore ditolak karena skema backup lebih baru"},
+  "restoreVerificationFailedMessage": "File backup rusak. Data sebelumnya sudah dikembalikan.",
+  "@restoreVerificationFailedMessage": {"description": "Pesan restore gagal diverifikasi dan data lama dipulihkan"},
+  "backupStaleMessage": "Backup terakhir sudah lebih dari {days} hari lalu.",
+  "@backupStaleMessage": {
+    "description": "Peringatan backup sudah lama tidak berjalan",
+    "placeholders": {"days": {"type": "int"}}
+  },
 
   "emptyAssetsDashboardMessage": "Catat aset pertama untuk melihat ringkasan.",
   "@emptyAssetsDashboardMessage": {"description": "Pesan state kosong dashboard"},

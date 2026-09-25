@@ -460,6 +460,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidBackupFileMessage => 'Invalid backup file.';
 
   @override
+  String get autoBackupFailedMessage =>
+      'The last automatic backup failed. Try backing up now.';
+
+  @override
+  String get incompatibleBackupVersionMessage =>
+      'This backup was made by a newer app version. Update the app first.';
+
+  @override
+  String get restoreVerificationFailedMessage =>
+      'The backup file is corrupted. Your previous data has been kept.';
+
+  @override
+  String backupStaleMessage(int days) {
+    return 'Last backup was more than $days days ago.';
+  }
+
+  @override
   String get emptyAssetsDashboardMessage =>
       'Record your first asset to see a summary.';
 

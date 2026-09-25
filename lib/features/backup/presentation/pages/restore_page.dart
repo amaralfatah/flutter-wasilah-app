@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.dart';
@@ -95,11 +96,22 @@ class RestorePage extends ConsumerWidget {
         );
         Navigator.of(context).pop();
       }
-    } catch (_) {
+    } on Object catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.restoreFailedMessage)),
-        );
+        final message = switch (error) {
+          InvalidBackupFileException() => l10n.invalidBackupFileMessage,
+          IncompatibleBackupVersionException() =>
+            l10n.incompatibleBackupVersionMessage,
+          RestoreVerificationFailedException() =>
+            l10n.restoreVerificationFailedMessage,
+          GoogleNotConnectedException() => l10n.googleNotConnectedMessage,
+          GoogleAuthorizationRequiredException() =>
+            l10n.googleAuthorizationRequiredMessage,
+          _ => l10n.restoreFailedMessage,
+        };
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }

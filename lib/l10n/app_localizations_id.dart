@@ -464,6 +464,23 @@ class AppLocalizationsId extends AppLocalizations {
   String get invalidBackupFileMessage => 'File backup tidak valid.';
 
   @override
+  String get autoBackupFailedMessage =>
+      'Backup otomatis terakhir gagal. Coba backup sekarang.';
+
+  @override
+  String get incompatibleBackupVersionMessage =>
+      'Backup ini dibuat versi aplikasi yang lebih baru. Perbarui aplikasi dulu.';
+
+  @override
+  String get restoreVerificationFailedMessage =>
+      'File backup rusak. Data sebelumnya sudah dikembalikan.';
+
+  @override
+  String backupStaleMessage(int days) {
+    return 'Backup terakhir sudah lebih dari $days hari lalu.';
+  }
+
+  @override
   String get emptyAssetsDashboardMessage =>
       'Catat aset pertama untuk melihat ringkasan.';
 

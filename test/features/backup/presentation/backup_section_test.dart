@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/features/backup/presentation/widgets/backup_section.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
@@ -59,6 +60,41 @@ void main() {
       expect(find.text('Bagikan file backup'), findsNothing);
     });
 
+    testWidgets('shows a failed auto backup', (tester) async {
+      await tester.pumpWidget(
+        _connectedSection(
+          error: const AutoBackupFailedException(),
+          lastBackupAt: DateTime.now(),
+        ),
+      );
+
+      expect(
+        find.text('Backup otomatis terakhir gagal. Coba backup sekarang.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('warns when the last backup is over a week old', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _connectedSection(
+          lastBackupAt: DateTime.now().subtract(const Duration(days: 8)),
+        ),
+      );
+
+      expect(
+        find.text('Backup terakhir sudah lebih dari 7 hari lalu.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('does not warn about a recent backup', (tester) async {
+      await tester.pumpWidget(_connectedSection(lastBackupAt: DateTime.now()));
+
+      expect(find.textContaining('lebih dari 7 hari'), findsNothing);
+    });
+
     testWidgets('asks for confirmation before backing up', (tester) async {
       await tester.pumpWidget(_connectedSection());
 
@@ -89,14 +125,16 @@ void main() {
   });
 }
 
-Widget _connectedSection() {
+Widget _connectedSection({Object? error, DateTime? lastBackupAt}) {
   return ProviderScope(
     overrides: [
       backupControllerProvider.overrideWith(
         () => _FakeBackupController(
-          const BackupState(
+          BackupState(
             connectionStatus: BackupConnectionStatus.connected,
             accountEmail: 'user@gmail.com',
+            lastBackupAt: lastBackupAt,
+            error: error,
           ),
         ),
       ),

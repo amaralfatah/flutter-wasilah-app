@@ -86,20 +86,13 @@ class BackupSection extends ConsumerWidget {
           ),
         ],
         if (state.error != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.sm,
-              AppSpacing.xl,
-              0,
-            ),
-            child: Text(
-              _describeError(l10n, state.error!),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ),
+          _ErrorLine(_describeError(l10n, state.error!))
+        else if (state.isConnected &&
+            isBackupStale(
+              now: DateTime.now(),
+              lastBackupAt: state.lastBackupAt,
+            ))
+          _ErrorLine(l10n.backupStaleMessage(backupStaleAfter.inDays)),
       ],
     );
   }
@@ -112,6 +105,7 @@ class BackupSection extends ConsumerWidget {
       GoogleAuthorizationRequiredException() =>
         l10n.googleAuthorizationRequiredMessage,
       InvalidBackupFileException() => l10n.invalidBackupFileMessage,
+      AutoBackupFailedException() => l10n.autoBackupFailedMessage,
       _ => l10n.backupFailedMessage,
     };
   }
@@ -147,5 +141,29 @@ class BackupSection extends ConsumerWidget {
     if (confirmed) {
       await controller.disconnect();
     }
+  }
+}
+
+class _ErrorLine extends StatelessWidget {
+  const _ErrorLine(this.message);
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.sm,
+        AppSpacing.xl,
+        0,
+      ),
+      child: Text(
+        message,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.error,
+        ),
+      ),
+    );
   }
 }

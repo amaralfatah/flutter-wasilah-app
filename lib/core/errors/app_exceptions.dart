@@ -53,6 +53,12 @@ class BackupFailedException implements Exception {
   const BackupFailedException();
 }
 
+/// Auto-backup terakhir gagal; ditampilkan di pengaturan sampai ada backup
+/// yang berhasil.
+class AutoBackupFailedException implements Exception {
+  const AutoBackupFailedException();
+}
+
 class MarketSymbolNotFoundException implements Exception {
   const MarketSymbolNotFoundException();
 }

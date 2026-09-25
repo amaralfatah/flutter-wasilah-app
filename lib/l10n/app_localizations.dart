@@ -938,6 +938,30 @@ abstract class AppLocalizations {
   /// **'File backup tidak valid.'**
   String get invalidBackupFileMessage;
 
+  /// Pesan saat auto-backup terakhir gagal
+  ///
+  /// In id, this message translates to:
+  /// **'Backup otomatis terakhir gagal. Coba backup sekarang.'**
+  String get autoBackupFailedMessage;
+
+  /// Pesan restore ditolak karena skema backup lebih baru
+  ///
+  /// In id, this message translates to:
+  /// **'Backup ini dibuat versi aplikasi yang lebih baru. Perbarui aplikasi dulu.'**
+  String get incompatibleBackupVersionMessage;
+
+  /// Pesan restore gagal diverifikasi dan data lama dipulihkan
+  ///
+  /// In id, this message translates to:
+  /// **'File backup rusak. Data sebelumnya sudah dikembalikan.'**
+  String get restoreVerificationFailedMessage;
+
+  /// Peringatan backup sudah lama tidak berjalan
+  ///
+  /// In id, this message translates to:
+  /// **'Backup terakhir sudah lebih dari {days} hari lalu.'**
+  String backupStaleMessage(int days);
+
   /// Pesan state kosong dashboard
   ///
   /// In id, this message translates to:

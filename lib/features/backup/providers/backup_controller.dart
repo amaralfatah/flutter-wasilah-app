@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
+import 'package:flutter_wasilah_app/core/errors/error_reporter.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
 import 'package:flutter_wasilah_app/features/backup/data/backup_snapshot.dart';
 import 'package:flutter_wasilah_app/features/backup/data/drive_backup_service.dart';
@@ -226,12 +227,24 @@ class BackupController extends Notifier<BackupState> {
     try {
       await _performBackup(promptIfNecessary: true);
       state = state.copyWith(isBackingUp: false);
-    } catch (_) {
+    } on Object catch (error, stackTrace) {
+      final isAuthError = _isAuthError(error);
+      if (!isAuthError) {
+        _report(error, stackTrace, reason: 'Manual backup failed');
+      }
       state = state.copyWith(
         isBackingUp: false,
-        error: const BackupFailedException(),
+        error: isAuthError ? error : const BackupFailedException(),
       );
     }
+  }
+
+  static bool _isAuthError(Object error) =>
+      error is GoogleNotConnectedException ||
+      error is GoogleAuthorizationRequiredException;
+
+  void _report(Object error, StackTrace stackTrace, {required String reason}) {
+    ref.read(errorReporterProvider).report(error, stackTrace, reason: reason);
   }
 
   Future<void> maybeAutoBackup() async {
@@ -253,10 +266,17 @@ class BackupController extends Notifier<BackupState> {
     state = state.copyWith(isBackingUp: true);
     try {
       await _performBackup(promptIfNecessary: false);
-    } catch (_) {
-      // Diam: dicoba lagi otomatis pada resume/launch berikutnya.
-    } finally {
       state = state.copyWith(isBackingUp: false);
+    } on Object catch (error, stackTrace) {
+      // Dicoba lagi otomatis pada resume/launch berikutnya, tapi tetap
+      // ditampilkan di pengaturan supaya kegagalan beruntun tidak luput.
+      if (!_isAuthError(error)) {
+        _report(error, stackTrace, reason: 'Auto backup failed');
+      }
+      state = state.copyWith(
+        isBackingUp: false,
+        error: _isAuthError(error) ? error : const AutoBackupFailedException(),
+      );
     }
   }
 
@@ -276,6 +296,15 @@ class BackupController extends Notifier<BackupState> {
     state = state.copyWith(isRestoring: true, clearError: true);
     try {
       await _performRestore(fileId);
+    } on Object catch (error, stackTrace) {
+      final isExpected =
+          _isAuthError(error) ||
+          error is InvalidBackupFileException ||
+          error is IncompatibleBackupVersionException;
+      if (!isExpected) {
+        _report(error, stackTrace, reason: 'Restore failed');
+      }
+      rethrow;
     } finally {
       state = state.copyWith(isRestoring: false);
     }
@@ -402,9 +431,16 @@ class BackupController extends Notifier<BackupState> {
 
     final now = DateTime.now();
     await ref.read(preferencesServiceProvider).writeLastBackupAt(now);
-    state = state.copyWith(lastBackupAt: now);
+    state = state.copyWith(lastBackupAt: now, clearError: true);
   }
 }
+
+/// Auto-backup hanya jalan saat app dibuka; lewat dari rentang ini berarti
+/// backup sudah lama tidak berjalan dan perlu diingatkan.
+const backupStaleAfter = Duration(days: 7);
+
+bool isBackupStale({required DateTime now, required DateTime? lastBackupAt}) =>
+    lastBackupAt != null && now.difference(lastBackupAt) > backupStaleAfter;
 
 bool shouldAutoBackup({
   required DateTime now,
