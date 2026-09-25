@@ -472,6 +472,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Backup ini dibuat versi aplikasi yang lebih baru. Perbarui aplikasi dulu.';
 
   @override
+  String get outdatedBackupVersionMessage =>
+      'Backup ini terlalu lama dan tidak bisa dipulihkan lagi. Pilih backup yang lebih baru.';
+
+  @override
   String get restoreVerificationFailedMessage =>
       'File backup rusak. Data sebelumnya sudah dikembalikan.';
 

@@ -300,7 +300,8 @@ class BackupController extends Notifier<BackupState> {
       final isExpected =
           _isAuthError(error) ||
           error is InvalidBackupFileException ||
-          error is IncompatibleBackupVersionException;
+          error is IncompatibleBackupVersionException ||
+          error is OutdatedBackupVersionException;
       if (!isExpected) {
         _report(error, stackTrace, reason: 'Restore failed');
       }
@@ -339,6 +340,11 @@ class BackupController extends Notifier<BackupState> {
     if (backupVersion != null && backupVersion > appDatabaseSchemaVersion) {
       await downloadFile.delete();
       throw const IncompatibleBackupVersionException();
+    }
+    // Langkah migrasi untuk skema setua ini sudah dihapus dari app.
+    if (backupVersion != null && backupVersion < minSupportedSchemaVersion) {
+      await downloadFile.delete();
+      throw const OutdatedBackupVersionException();
     }
 
     await ref.read(appDatabaseProvider).close();

@@ -468,6 +468,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This backup was made by a newer app version. Update the app first.';
 
   @override
+  String get outdatedBackupVersionMessage =>
+      'This backup is too old to restore. Choose a newer backup.';
+
+  @override
   String get restoreVerificationFailedMessage =>
       'The backup file is corrupted. Your previous data has been kept.';
 

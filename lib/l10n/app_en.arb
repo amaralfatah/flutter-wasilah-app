@@ -183,6 +183,7 @@
   "invalidBackupFileMessage": "Invalid backup file.",
   "autoBackupFailedMessage": "The last automatic backup failed. Try backing up now.",
   "incompatibleBackupVersionMessage": "This backup was made by a newer app version. Update the app first.",
+  "outdatedBackupVersionMessage": "This backup is too old to restore. Choose a newer backup.",
   "restoreVerificationFailedMessage": "The backup file is corrupted. Your previous data has been kept.",
   "backupStaleMessage": "Last backup was more than {days} days ago.",
   "@backupStaleMessage": {

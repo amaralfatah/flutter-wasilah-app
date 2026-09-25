@@ -325,6 +325,8 @@
   "@autoBackupFailedMessage": {"description": "Pesan saat auto-backup terakhir gagal"},
   "incompatibleBackupVersionMessage": "Backup ini dibuat versi aplikasi yang lebih baru. Perbarui aplikasi dulu.",
   "@incompatibleBackupVersionMessage": {"description": "Pesan restore ditolak karena skema backup lebih baru"},
+  "outdatedBackupVersionMessage": "Backup ini terlalu lama dan tidak bisa dipulihkan lagi. Pilih backup yang lebih baru.",
+  "@outdatedBackupVersionMessage": {"description": "Pesan restore ditolak karena skema backup terlalu lama"},
   "restoreVerificationFailedMessage": "File backup rusak. Data sebelumnya sudah dikembalikan.",
   "@restoreVerificationFailedMessage": {"description": "Pesan restore gagal diverifikasi dan data lama dipulihkan"},
   "backupStaleMessage": "Backup terakhir sudah lebih dari {days} hari lalu.",

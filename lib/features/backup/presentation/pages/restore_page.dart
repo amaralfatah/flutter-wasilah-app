@@ -102,6 +102,8 @@ class RestorePage extends ConsumerWidget {
           InvalidBackupFileException() => l10n.invalidBackupFileMessage,
           IncompatibleBackupVersionException() =>
             l10n.incompatibleBackupVersionMessage,
+          OutdatedBackupVersionException() =>
+            l10n.outdatedBackupVersionMessage,
           RestoreVerificationFailedException() =>
             l10n.restoreVerificationFailedMessage,
           GoogleNotConnectedException() => l10n.googleNotConnectedMessage,

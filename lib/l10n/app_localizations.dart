@@ -950,6 +950,12 @@ abstract class AppLocalizations {
   /// **'Backup ini dibuat versi aplikasi yang lebih baru. Perbarui aplikasi dulu.'**
   String get incompatibleBackupVersionMessage;
 
+  /// Pesan restore ditolak karena skema backup terlalu lama
+  ///
+  /// In id, this message translates to:
+  /// **'Backup ini terlalu lama dan tidak bisa dipulihkan lagi. Pilih backup yang lebih baru.'**
+  String get outdatedBackupVersionMessage;
+
   /// Pesan restore gagal diverifikasi dan data lama dipulihkan
   ///
   /// In id, this message translates to:

@@ -47,6 +47,18 @@ void main() {
     );
   });
 
+  testWidgets('explains a backup too old to migrate', (tester) async {
+    await restoreFailingWith(tester, const OutdatedBackupVersionException());
+
+    expect(
+      find.text(
+        'Backup ini terlalu lama dan tidak bisa dipulihkan lagi. '
+        'Pilih backup yang lebih baru.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('explains a corrupted backup that was rolled back', (
     tester,
   ) async {

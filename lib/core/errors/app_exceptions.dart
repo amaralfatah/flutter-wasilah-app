@@ -32,6 +32,12 @@ class IncompatibleBackupVersionException implements Exception {
   const IncompatibleBackupVersionException();
 }
 
+/// Backup file berasal dari versi skema yang terlalu lama untuk dimigrasikan
+/// oleh app terpasang.
+class OutdatedBackupVersionException implements Exception {
+  const OutdatedBackupVersionException();
+}
+
 /// Database hasil restore gagal dibuka/dimigrasikan setelah file diganti.
 class RestoreVerificationFailedException implements Exception {
   const RestoreVerificationFailedException();
