@@ -10,6 +10,7 @@ import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
@@ -182,6 +183,9 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                       );
                     }
 
+                    final changeMap = buildHistoryChangeMap(history);
+                    final firstSnapshotId = history.last.id;
+
                     return Column(
                       children: [
                         Padding(
@@ -209,7 +213,21 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                                     );
                                     _deleteSnapshot(assetId, snapshot.id);
                                   },
-                                  child: HistoryRow(snapshot: snapshot),
+                                  child: HistoryRow(
+                                    snapshot: snapshot,
+                                    changeLabel: formatHistoryChange(
+                                      changeMap[snapshot.id],
+                                      isFirstSnapshot:
+                                          snapshot.id == firstSnapshotId,
+                                      initialDataLabel: l10n.initialDataLabel,
+                                    ),
+                                    changeColor: historyChangeColor(
+                                      context,
+                                      changeMap[snapshot.id],
+                                      isFirstSnapshot:
+                                          snapshot.id == firstSnapshotId,
+                                    ),
+                                  ),
                                 ),
                               )
                               .toList(growable: false),

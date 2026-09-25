@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/time_weighted_return.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -63,7 +62,7 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
               : visibleHistory
                     .where((item) => item.recordedAt.year == _selectedYear)
                     .toList();
-          final changeMap = _buildChangeMap(history);
+          final changeMap = buildHistoryChangeMap(history);
           final twr = timeWeightedReturn(visibleHistory, year: _selectedYear);
           final firstSnapshotId = history.last.id;
 
@@ -157,12 +156,12 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                             },
                             child: HistoryRow(
                               snapshot: item,
-                              changeLabel: _formatChange(
+                              changeLabel: formatHistoryChange(
                                 changeMap[item.id],
                                 isFirstSnapshot: item.id == firstSnapshotId,
                                 initialDataLabel: l10n.initialDataLabel,
                               ),
-                              changeColor: _changeColor(
+                              changeColor: historyChangeColor(
                                 context,
                                 changeMap[item.id],
                                 isFirstSnapshot: item.id == firstSnapshotId,
@@ -217,53 +216,6 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     }
   }
 
-  Map<String, double> _buildChangeMap(List<ValueSnapshot> history) {
-    final map = <String, double>{};
-    for (var index = 0; index < history.length; index++) {
-      final current = history[index];
-      final next = index + 1 < history.length ? history[index + 1] : null;
-      if (next == null || next.totalValue == 0) {
-        map[current.id] = 0;
-        continue;
-      }
-
-      map[current.id] =
-          ((current.totalValue - next.totalValue) / next.totalValue) * 100;
-    }
-
-    return map;
-  }
-
-  String _formatChange(
-    double? value, {
-    required bool isFirstSnapshot,
-    required String initialDataLabel,
-  }) {
-    if (isFirstSnapshot || value == null) {
-      return initialDataLabel;
-    }
-
-    return formatSignedPercentage(value);
-  }
-
-  Color _changeColor(
-    BuildContext context,
-    double? value, {
-    required bool isFirstSnapshot,
-  }) {
-    if (isFirstSnapshot || value == null) {
-      return Theme.of(context).colorScheme.onSurfaceVariant;
-    }
-
-    if (value > 0) {
-      return AppColors.positiveOf(context);
-    }
-    if (value < 0) {
-      return AppColors.negativeOf(context);
-    }
-
-    return Theme.of(context).colorScheme.onSurfaceVariant;
-  }
 }
 
 /// Kemampuan investasi dalam satu angka: time-weighted return, supaya
