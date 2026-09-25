@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
@@ -12,6 +14,7 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_delete.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
@@ -206,12 +209,12 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                                   direction: DismissDirection.endToStart,
                                   background: const DeleteSwipeBackground(),
                                   confirmDismiss: (_) =>
-                                      _confirmDeleteSnapshot(context),
+                                      confirmDeleteHistory(context),
                                   onDismissed: (_) {
                                     setState(
                                       () => _removedIds.add(snapshot.id),
                                     );
-                                    _deleteSnapshot(assetId, snapshot.id);
+                                    unawaited(_deleteSnapshot(snapshot.id));
                                   },
                                   child: HistoryRow(
                                     snapshot: snapshot,
@@ -291,34 +294,11 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
     return context.l10n.fxRateHistoryLabel(currency, formatCurrency(rate));
   }
 
-  Future<void> _deleteSnapshot(String assetId, String snapshotId) async {
-    final l10n = context.l10n;
-    try {
-      await ref
-          .read(portfolioRepositoryProvider)
-          .deleteAssetSnapshot(snapshotId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.commonHistoryDeletedMessage)),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _removedIds.remove(snapshotId));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.commonDeleteHistoryFailedMessage)),
-      );
-    }
-  }
-}
-
-Future<bool> _confirmDeleteSnapshot(BuildContext context) {
-  final l10n = context.l10n;
-  return showConfirmDialog(
+  Future<void> _deleteSnapshot(String snapshotId) => deleteHistoryEntry(
     context,
-    title: l10n.commonDeleteHistoryTitle,
-    message: l10n.commonDeleteHistoryMessage,
-    confirmLabel: l10n.commonDelete,
-    isDestructive: true,
+    delete: () =>
+        ref.read(portfolioRepositoryProvider).deleteAssetSnapshot(snapshotId),
+    onFailed: () => setState(() => _removedIds.remove(snapshotId)),
   );
 }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/time_weighted_return.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_delete.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -15,7 +18,6 @@ import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
-import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 
@@ -149,10 +151,11 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
                             key: ValueKey(item.id),
                             direction: DismissDirection.endToStart,
                             background: const DeleteSwipeBackground(),
-                            confirmDismiss: (_) => _confirmDelete(context),
+                            confirmDismiss: (_) =>
+                                confirmDeleteHistory(context),
                             onDismissed: (_) {
                               setState(() => _removedIds.add(item.id));
-                              _deleteSnapshot(item.id);
+                              unawaited(_deleteSnapshot(item.id));
                             },
                             child: HistoryRow(
                               snapshot: item,
@@ -184,34 +187,14 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
     );
   }
 
-  Future<bool> _confirmDelete(BuildContext context) {
-    final l10n = context.l10n;
-    return showConfirmDialog(
+  Future<void> _deleteSnapshot(String snapshotId) {
+    return deleteHistoryEntry(
       context,
-      title: l10n.commonDeleteHistoryTitle,
-      message: l10n.commonDeleteHistoryMessage,
-      confirmLabel: l10n.commonDelete,
-      isDestructive: true,
-    );
-  }
-
-  Future<void> _deleteSnapshot(String snapshotId) async {
-    final l10n = context.l10n;
-    try {
-      await ref
+      delete: () => ref
           .read(portfolioRepositoryProvider)
-          .deletePortfolioSnapshot(snapshotId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.commonHistoryDeletedMessage)),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _removedIds.remove(snapshotId));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.commonDeleteHistoryFailedMessage)),
-      );
-    }
+          .deletePortfolioSnapshot(snapshotId),
+      onFailed: () => setState(() => _removedIds.remove(snapshotId)),
+    );
   }
 }
 
