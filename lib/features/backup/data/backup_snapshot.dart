@@ -44,4 +44,22 @@ class BackupSnapshotService {
       database?.dispose();
     }
   }
+
+  /// Skema drift (`PRAGMA user_version`) yang tersimpan di [file], atau null
+  /// kalau file tidak bisa dibuka. Panggil hanya setelah [isValidSqliteFile].
+  int? readSchemaVersion(File file) {
+    sqlite3.Database? database;
+    try {
+      database = sqlite3.sqlite3.open(
+        file.path,
+        mode: sqlite3.OpenMode.readOnly,
+      );
+      final result = database.select('PRAGMA user_version');
+      return result.first.values.first as int?;
+    } catch (_) {
+      return null;
+    } finally {
+      database?.dispose();
+    }
+  }
 }

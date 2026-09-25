@@ -271,7 +271,7 @@ class BackupController extends Notifier<BackupState> {
 
   Future<void> restore(String fileId) async {
     if (state.isBusy) {
-      throw StateError('Proses backup/restore lain sedang berjalan.');
+      throw const RestoreInProgressException();
     }
     state = state.copyWith(isRestoring: true, clearError: true);
     try {
@@ -303,6 +303,15 @@ class BackupController extends Notifier<BackupState> {
       throw const InvalidBackupFileException();
     }
 
+    // Tolak backup dari versi skema yang lebih baru daripada yang dipahami
+    // build ini: drift di sini tidak tahu cara downgrade, jadi database bisa
+    // gagal dibuka kalau dipaksakan.
+    final backupVersion = snapshotService.readSchemaVersion(downloadFile);
+    if (backupVersion != null && backupVersion > appDatabaseSchemaVersion) {
+      await downloadFile.delete();
+      throw const IncompatibleBackupVersionException();
+    }
+
     await ref.read(appDatabaseProvider).close();
 
     final currentDbFile = await resolveDatabaseFile();
@@ -324,6 +333,24 @@ class BackupController extends Notifier<BackupState> {
     }
 
     ref.invalidate(appDatabaseProvider);
+
+    // Buka database baru dan paksa migrasi jalan sekarang, bukan lazy pada
+    // baca UI pertama, supaya restore yang rusak ketahuan sebelum safety
+    // copy dibuang.
+    try {
+      await ref
+          .read(appDatabaseProvider)
+          .customSelect('PRAGMA user_version')
+          .get();
+    } catch (_) {
+      await ref.read(appDatabaseProvider).close();
+      await currentDbFile.delete();
+      if (safetyCopy.existsSync()) {
+        await safetyCopy.rename(currentDbFile.path);
+      }
+      ref.invalidate(appDatabaseProvider);
+      throw const RestoreVerificationFailedException();
+    }
 
     if (safetyCopy.existsSync()) {
       await safetyCopy.delete();
@@ -362,7 +389,7 @@ class BackupController extends Notifier<BackupState> {
     final snapshotFile = await snapshotService.createSnapshot(database);
     try {
       if (!snapshotService.isValidSqliteFile(snapshotFile)) {
-        throw StateError('Snapshot database tidak valid.');
+        throw const InvalidSnapshotException();
       }
       await authorized.service.upload(snapshotFile);
       await authorized.service.pruneOldBackups();

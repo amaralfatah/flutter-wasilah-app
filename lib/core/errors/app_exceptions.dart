@@ -26,6 +26,25 @@ class InvalidBackupFileException implements Exception {
   const InvalidBackupFileException();
 }
 
+/// Backup file berasal dari versi skema database yang lebih baru daripada
+/// yang dipahami app terpasang saat ini.
+class IncompatibleBackupVersionException implements Exception {
+  const IncompatibleBackupVersionException();
+}
+
+/// Database hasil restore gagal dibuka/dimigrasikan setelah file diganti.
+class RestoreVerificationFailedException implements Exception {
+  const RestoreVerificationFailedException();
+}
+
+class RestoreInProgressException implements Exception {
+  const RestoreInProgressException();
+}
+
+class InvalidSnapshotException implements Exception {
+  const InvalidSnapshotException();
+}
+
 class GoogleConnectFailedException implements Exception {
   const GoogleConnectFailedException();
 }

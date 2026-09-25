@@ -7,13 +7,17 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
+/// Versi skema saat ini. Dipisah dari [AppDatabase.schemaVersion] supaya bisa
+/// dibaca (mis. untuk validasi file backup) tanpa membuka koneksi database.
+const int appDatabaseSchemaVersion = 8;
+
 class AppDatabase extends GeneratedDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? openConnection());
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => appDatabaseSchemaVersion;
 
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
