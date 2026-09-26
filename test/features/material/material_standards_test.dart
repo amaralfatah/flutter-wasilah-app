@@ -134,7 +134,7 @@ void main() {
 
     await tester.pumpAndSettle();
     // Master aset dikelola dari Setelan, terpisah dari tab Portofolio.
-    expect(find.text('Master aset'), findsOneWidget);
+    expect(find.text('Assets'), findsOneWidget);
     expect(find.text('Tentang aplikasi'), findsOneWidget);
     await tester.ensureVisible(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
