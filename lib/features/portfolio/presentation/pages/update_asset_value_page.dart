@@ -64,6 +64,11 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   String _valueCurrency = 'IDR';
   double? _marketUsdRate;
 
+  /// Tombol autofill modal hanya muncul setelah jumlah unit atau harga beli
+  /// diubah; tombol autofill nilai juga setelah modal diubah.
+  bool _costAutofillOffered = false;
+  bool _valueAutofillOffered = false;
+
   /// Mata uang harga pasar aset terpilih (mis. `USD` untuk BTC-USD).
   String? _marketQuoteCurrency;
 
@@ -201,7 +206,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                       ),
                       inputFormatters: const [DecimalInputFormatter()],
                       validator: (_) => _validateAtLeastOne(selectedAsset),
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) => setState(_offerAutofill),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
@@ -212,7 +217,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                       ),
                       inputFormatters: const [DecimalInputFormatter()],
                       validator: _validateDecimal,
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) => setState(_offerAutofill),
                       suffixIcon: _CurrencyPicker(
                         value: _avgCurrency,
                         onChanged: isLoading ? null : _switchAvgCurrency,
@@ -229,6 +234,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                         _moneyIdr(_costController, _costCurrency),
                         _derivedCostIdr(selectedAsset),
                       ),
+                      // Nilai tanpa harga pasar mengikuti modal.
+                      onEdited: () => _valueAutofillOffered = true,
                       onCurrencyChanged: isLoading
                           ? null
                           : (currency) => setState(() {
@@ -240,6 +247,17 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                               _costCurrency = currency;
                             }),
                     ),
+                    if (_costAutofillOffered)
+                      _autofillButton(
+                        controller: _costController,
+                        currency: _costCurrency,
+                        idr: _derivedCostIdr(selectedAsset),
+                        onFilled: () {
+                          _costAutofillOffered = false;
+                          _valueAutofillOffered = true;
+                        },
+                        enabled: !isLoading,
+                      ),
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   _moneyField(
@@ -268,6 +286,16 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                             _valueCurrency = currency;
                           }),
                   ),
+                  if (showHoldingFields && _valueAutofillOffered)
+                    _autofillButton(
+                      controller: _valueController,
+                      currency: _valueCurrency,
+                      // Nilai pasar (unit × harga terkini) bila ada; tanpa
+                      // harga pasar nilai mengikuti modal.
+                      idr: _marketValue ?? _resolveTotalCost(selectedAsset),
+                      onFilled: () => _valueAutofillOffered = false,
+                      enabled: !isLoading,
+                    ),
                   const SizedBox(height: AppSpacing.lg),
                   if (_usesUsd) ...[
                     AppTextField(
@@ -416,6 +444,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     required String? helperText,
     required ValueChanged<String>? onCurrencyChanged,
     String? Function(String?)? validator,
+    VoidCallback? onEdited,
   }) {
     final isIdr = currency == 'IDR';
     return AppTextField(
@@ -430,10 +459,58 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
           : const [DecimalInputFormatter(maxDecimals: 2)],
       validator: (value) =>
           _validateMoney(value, currency) ?? validator?.call(value),
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) => setState(() => onEdited?.call()),
       suffixIcon: _CurrencyPicker(
         value: currency,
         onChanged: onCurrencyChanged,
+      ),
+    );
+  }
+
+  /// Tombol kecil di bawah field nominal untuk mengisinya dengan [idr].
+  /// Disembunyikan bila field masih kosong (helper "Otomatis" sudah
+  /// menampilkan nilai yang akan dipakai), [idr] belum bisa dihitung, atau
+  /// sudah sama dengan isi field.
+  Widget _autofillButton({
+    required TextEditingController controller,
+    required String currency,
+    required double? idr,
+    required VoidCallback onFilled,
+    required bool enabled,
+  }) {
+    final rate = _rateOf(currency);
+    final current = _moneyIdr(controller, currency);
+    if (_isBlank(controller) ||
+        idr == null ||
+        rate == null ||
+        (current != null && (current - idr).abs() < 0.5)) {
+      return const SizedBox.shrink();
+    }
+    // Nominal ber-USD ditampilkan dolar sekaligus rupiahnya
+    // (`$1,000.00 · Rp16.000.000`).
+    final amount = currency == 'IDR'
+        ? formatCurrency(idr)
+        : '${formatPrice(idr / rate, currency)} · ${formatCurrency(idr)}';
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Tooltip(
+        message: context.l10n.autofillButton(amount),
+        child: TextButton.icon(
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            textStyle: Theme.of(context).textTheme.labelMedium,
+          ),
+          icon: const Icon(Icons.auto_fix_high, size: 14),
+          label: Text(amount),
+          onPressed: enabled
+              ? () => setState(() {
+                  _setMoney(controller, currency, idr, rate);
+                  onFilled();
+                })
+              : null,
+        ),
       ),
     );
   }
@@ -603,6 +680,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     }
     _holdingPrefilledFor = asset.id;
     _moneyPrefilledFor = null;
+    _costAutofillOffered = false;
+    _valueAutofillOffered = false;
     final currency = _currencies.contains(asset.effectivePriceCurrency)
         ? asset.effectivePriceCurrency
         : 'IDR';
@@ -674,6 +753,13 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         _lotToShareFactor(asset?.marketSymbol) *
         avgBuyPrice *
         rate;
+  }
+
+  /// Jumlah unit atau harga beli diubah: modal & nilai yang dihitung darinya
+  /// ditawarkan lewat tombol autofill.
+  void _offerAutofill() {
+    _costAutofillOffered = true;
+    _valueAutofillOffered = true;
   }
 
   /// Modal baru dari field modal atau unit × harga beli; `null` berarti

@@ -849,6 +849,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String autofillButton(String value) {
+    return 'Isi otomatis: $value';
+  }
+
+  @override
   String get atLeastOneValueMessage =>
       'Isi minimal salah satu: jumlah unit, harga beli, modal, atau nilai.';
 

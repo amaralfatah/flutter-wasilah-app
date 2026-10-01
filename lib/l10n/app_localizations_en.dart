@@ -850,6 +850,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String autofillButton(String value) {
+    return 'Autofill: $value';
+  }
+
+  @override
   String get atLeastOneValueMessage =>
       'Fill in at least one: quantity, buy price, cost, or value.';
 

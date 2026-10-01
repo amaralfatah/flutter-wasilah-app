@@ -347,4 +347,110 @@ void main() {
     expect(position?.avgBuyPrice, 500);
     expect(position?.priceCurrency, 'USD');
   });
+
+  testWidgets('autofill button shows dollar and rupiah for USD cost', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(() => repository.createAsset(_spy));
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(of: _field('Total modal'), matching: find.text('IDR')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USD').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_field('Total modal'), '2');
+    await tester.enterText(_field('Jumlah unit'), '2');
+    await tester.enterText(_field('Harga rata-rata beli'), '8.000');
+    await tester.pumpAndSettle();
+
+    // 2 × Rp8.000 = Rp16.000 = $1 pada kurs 16.000.
+    expect(find.text(r'$1.00 · Rp16.000'), findsOneWidget);
+    expect(
+      find.byTooltip(r'Isi otomatis: $1.00 · Rp16.000'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('autofill button stays hidden while the field is empty', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(() => repository.createAsset(_spy));
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+    await tester.enterText(_field('Jumlah unit'), '3');
+    await tester.enterText(_field('Harga rata-rata beli'), '1000');
+    await tester.pumpAndSettle();
+
+    // Helper "Otomatis" sudah menampilkan nilai yang dipakai.
+    expect(find.byIcon(Icons.auto_fix_high), findsNothing);
+    expect(find.text('Otomatis: Rp3.000'), findsNWidgets(2));
+  });
+
+  testWidgets(
+    'autofill buttons fill cost and value after quantity or price changes',
+    (tester) async {
+      _useTallView(tester);
+      final repository = MockPortfolioRepository(
+        simulatedDelay: Duration.zero,
+      );
+      await tester.runAsync(() => repository.createAsset(_spy));
+
+      await _pumpPage(tester, repository, assetId: 'spy');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(_field('Total modal'), '1.000');
+      await tester.enterText(_field('Total nilai aset'), '1.000');
+      expect(find.byIcon(Icons.auto_fix_high), findsNothing);
+
+      await tester.enterText(_field('Jumlah unit'), '3');
+      await tester.enterText(_field('Harga rata-rata beli'), '1000');
+      await tester.pumpAndSettle();
+
+      // Modal: unit × harga beli. Nilai tanpa harga pasar mengikuti modal,
+      // yang saat ini masih 1.000 sehingga sama dan tak ditawarkan.
+      await tester.tap(find.byTooltip('Isi otomatis: Rp3.000'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: _field('Total modal'),
+          matching: find.text('3.000'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byTooltip('Isi otomatis: Rp3.000'));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: _field('Total nilai aset'),
+          matching: find.text('3.000'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.auto_fix_high), findsNothing);
+
+      // Modal tetap bisa ditimpa manual, mis. untuk fee; nilai ditawarkan
+      // lagi tanpa langsung berubah.
+      await tester.enterText(_field('Total modal'), '3.100');
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Isi otomatis: Rp3.100'), findsOneWidget);
+      await tester.tap(find.byType(AppPrimaryButton));
+      await tester.pumpAndSettle();
+
+      final position = await tester.runAsync(
+        () => repository.getPositionByAssetId('spy'),
+      );
+      expect(position?.totalCost, 3100);
+      expect(position?.currentValue, 3000);
+    },
+  );
 }

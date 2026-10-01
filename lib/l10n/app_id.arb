@@ -638,6 +638,8 @@
 
   "autoValueHelper": "Otomatis: {value}",
   "@autoValueHelper": {"description": "Helper field nominal kosong: nilai yang dipakai otomatis", "placeholders": {"value": {"type": "String"}}},
+  "autofillButton": "Isi otomatis: {value}",
+  "@autofillButton": {"description": "Tombol kecil pengisi field nominal dari hasil hitung field lain", "placeholders": {"value": {"type": "String"}}},
   "atLeastOneValueMessage": "Isi minimal salah satu: jumlah unit, harga beli, modal, atau nilai.",
   "@atLeastOneValueMessage": {"description": "Validasi minimal satu field nilai terisi"},
   "invalidNumberMessage": "Angka tidak valid.",

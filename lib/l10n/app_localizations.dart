@@ -1566,6 +1566,12 @@ abstract class AppLocalizations {
   /// **'Otomatis: {value}'**
   String autoValueHelper(String value);
 
+  /// Tombol kecil pengisi field nominal dari hasil hitung field lain
+  ///
+  /// In id, this message translates to:
+  /// **'Isi otomatis: {value}'**
+  String autofillButton(String value);
+
   /// Validasi minimal satu field nilai terisi
   ///
   /// In id, this message translates to:

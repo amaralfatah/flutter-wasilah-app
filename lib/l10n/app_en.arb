@@ -382,6 +382,7 @@
   "addToPortfolioLabel": "Record asset value",
 
   "autoValueHelper": "Automatic: {value}",
+  "autofillButton": "Autofill: {value}",
   "atLeastOneValueMessage": "Fill in at least one: quantity, buy price, cost, or value.",
   "invalidNumberMessage": "Invalid number.",
   "valueUnresolvedMessage": "Asset value cannot be calculated yet. Enter the total value or quantity."
