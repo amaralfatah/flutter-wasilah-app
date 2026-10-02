@@ -29,7 +29,12 @@ class MarketRepository {
   Future<QuoteResult> getQuote(String symbol) async {
     try {
       final result = await _client.fetch(symbol, ChartRange.oneDay);
-      await _upsertQuote(result.quote);
+      try {
+        await _upsertQuote(result.quote);
+      } on Exception {
+        // Cache hanya cadangan offline: gagal menulisnya tidak boleh
+        // membuang quote segar yang sudah didapat.
+      }
       return (
         quote: result.quote,
         oneDaySeries: result.series,
@@ -68,13 +73,19 @@ class MarketRepository {
       return null;
     }
 
+    // Baris lama bisa tersimpan sebelum satuan minor (GBp, ZAc, ILA)
+    // dinormalisasi oleh YahooFinanceClient; normalisasi ulang saat dibaca.
+    final unit = majorCurrencyUnitOf(row.read<String>('currency'));
+    final previousClose = row.readNullable<double>('previous_close');
     return MarketQuote(
       symbol: row.read<String>('symbol'),
-      currency: row.read<String>('currency'),
-      price: row.read<double>('price'),
+      currency: unit.currency,
+      price: row.read<double>('price') / unit.divisor,
       marketTime: row.read<DateTime>('market_time'),
       fetchedAt: row.read<DateTime>('fetched_at'),
-      previousClose: row.readNullable<double>('previous_close'),
+      previousClose: previousClose == null
+          ? null
+          : previousClose / unit.divisor,
     );
   }
 

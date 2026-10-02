@@ -48,14 +48,18 @@ class YahooFinanceClient {
       throw const MarketDataUnavailableException();
     }
 
-    final Map<String, dynamic> body;
+    // Bentuk response diperiksa dengan `is`/pattern, bukan cast `as`: cast
+    // yang meleset melempar TypeError (Error, bukan Exception) yang lolos
+    // dari fallback cache di MarketRepository. Bentuk apa pun yang tak
+    // terduga menjadi MarketDataUnavailableException.
+    final Object? body;
     try {
-      body = jsonDecode(response.body) as Map<String, dynamic>;
+      body = jsonDecode(response.body);
     } on FormatException {
       throw const MarketDataUnavailableException();
     }
 
-    final chart = body['chart'] as Map<String, dynamic>?;
+    final chart = _mapOf(_mapOf(body)?['chart']);
     if (chart == null) {
       throw const MarketDataUnavailableException();
     }
@@ -63,91 +67,114 @@ class YahooFinanceClient {
       throw const MarketSymbolNotFoundException();
     }
 
-    final results = chart['result'] as List<dynamic>?;
-    if (results == null || results.isEmpty) {
+    final results = chart['result'];
+    if (results == null || (results is List && results.isEmpty)) {
       throw const MarketSymbolNotFoundException();
     }
 
-    final result = results.first as Map<String, dynamic>;
-    final meta = result['meta'] as Map<String, dynamic>?;
-    if (meta == null) {
+    final result = results is List ? _mapOf(results.first) : null;
+    final meta = _mapOf(result?['meta']);
+    if (result == null || meta == null) {
       throw const MarketDataUnavailableException();
     }
 
-    final price = (meta['regularMarketPrice'] as num?)?.toDouble();
-    if (price == null) {
+    final rawPrice = _doubleOf(meta['regularMarketPrice']);
+    if (rawPrice == null) {
       throw const MarketDataUnavailableException();
     }
 
-    final currency = meta['currency'] as String? ?? 'IDR';
-    final previousClose =
-        (meta['chartPreviousClose'] as num?)?.toDouble() ??
-        (meta['previousClose'] as num?)?.toDouble();
-    final marketTimeEpoch = meta['regularMarketTime'] as num?;
-    final marketTime = marketTimeEpoch == null
-        ? _clock()
-        : DateTime.fromMillisecondsSinceEpoch(
-            marketTimeEpoch.toInt() * 1000,
-          );
+    final unit = majorCurrencyUnitOf(_currencyOf(symbol, meta['currency']));
+    final currency = unit.currency;
+    double? toMajor(double? value) =>
+        value == null ? null : value / unit.divisor;
+
+    final previousClose = toMajor(
+      _doubleOf(meta['chartPreviousClose']) ?? _doubleOf(meta['previousClose']),
+    );
 
     final quote = MarketQuote(
       symbol: symbol,
       currency: currency,
-      price: price,
-      marketTime: marketTime,
+      price: rawPrice / unit.divisor,
+      marketTime: _dateTimeOf(meta['regularMarketTime']) ?? _clock(),
       fetchedAt: _clock(),
       previousClose: previousClose,
-      dayHigh: (meta['regularMarketDayHigh'] as num?)?.toDouble(),
-      dayLow: (meta['regularMarketDayLow'] as num?)?.toDouble(),
-      fiftyTwoWeekHigh: (meta['fiftyTwoWeekHigh'] as num?)?.toDouble(),
-      fiftyTwoWeekLow: (meta['fiftyTwoWeekLow'] as num?)?.toDouble(),
-      volume: (meta['regularMarketVolume'] as num?)?.toDouble(),
+      dayHigh: toMajor(_doubleOf(meta['regularMarketDayHigh'])),
+      dayLow: toMajor(_doubleOf(meta['regularMarketDayLow'])),
+      fiftyTwoWeekHigh: toMajor(_doubleOf(meta['fiftyTwoWeekHigh'])),
+      fiftyTwoWeekLow: toMajor(_doubleOf(meta['fiftyTwoWeekLow'])),
+      volume: _doubleOf(meta['regularMarketVolume']),
     );
 
     final series = PriceSeries(
       symbol: symbol,
       currency: currency,
       range: range,
-      points: _parsePoints(result),
+      points: _parsePoints(result, unit.divisor),
       previousClose: previousClose,
     );
 
     return (quote: quote, series: series);
   }
 
-  List<PricePoint> _parsePoints(Map<String, dynamic> result) {
-    final timestamps = result['timestamp'] as List<dynamic>?;
-    if (timestamps == null) {
-      return const [];
+  /// Mata uang dari `meta.currency`. Tanpa mata uang, harga tidak bisa
+  /// dikonversi dengan benar (mengasumsikan IDR untuk aset USD membuat
+  /// nilainya ~16.000x terlalu kecil), jadi data dianggap tidak tersedia --
+  /// kecuali saham IDX (`.JK`), yang selalu dikutip dalam IDR.
+  static String _currencyOf(String symbol, Object? raw) {
+    if (raw is String && raw.trim().isNotEmpty) {
+      return raw.trim();
     }
+    if (symbol.toUpperCase().endsWith('.JK')) {
+      return 'IDR';
+    }
+    throw const MarketDataUnavailableException();
+  }
 
-    final indicators = result['indicators'] as Map<String, dynamic>?;
-    final quoteList = indicators?['quote'] as List<dynamic>?;
-    final closes = quoteList == null || quoteList.isEmpty
-        ? null
-        : (quoteList.first as Map<String, dynamic>)['close'] as List<dynamic>?;
-    if (closes == null) {
+  List<PricePoint> _parsePoints(Map<String, dynamic> result, double divisor) {
+    final timestamps = result['timestamp'];
+    final quoteList = _mapOf(result['indicators'])?['quote'];
+    final closes = quoteList is List && quoteList.isNotEmpty
+        ? (_mapOf(quoteList.first)?['close'])
+        : null;
+    if (timestamps is! List || closes is! List) {
       return const [];
     }
 
     final points = <PricePoint>[];
     for (var i = 0; i < timestamps.length && i < closes.length; i++) {
-      final close = (closes[i] as num?)?.toDouble();
-      if (close == null) {
+      final close = _doubleOf(closes[i]);
+      final time = _dateTimeOf(timestamps[i]);
+      if (close == null || time == null) {
         // Yahoo mengisi null di menit/hari tanpa transaksi; titik ini
         // dibuang, bukan digambar sebagai nol atau interpolasi.
         continue;
       }
-      final epoch = timestamps[i] as num;
-      points.add(
-        PricePoint(
-          time: DateTime.fromMillisecondsSinceEpoch(epoch.toInt() * 1000),
-          close: close,
-        ),
-      );
+      points.add(PricePoint(time: time, close: close / divisor));
     }
     return points;
   }
+
+  static Map<String, dynamic>? _mapOf(Object? value) =>
+      value is Map<String, dynamic> ? value : null;
+
+  static double? _doubleOf(Object? value) =>
+      value is num && value.isFinite ? value.toDouble() : null;
+
+  /// Epoch detik Yahoo ke [DateTime]; `null` bila bukan angka atau di luar
+  /// rentang [DateTime].
+  static DateTime? _dateTimeOf(Object? value) {
+    if (value is! num || !value.isFinite) {
+      return null;
+    }
+    final millis = value * 1000;
+    if (millis.abs() > _maxEpochMillis) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(millis.toInt());
+  }
+
+  static const _maxEpochMillis = 8640000000000000;
 
   Uri _buildUri(String symbol, ChartRange range) {
     final encodedSymbol = Uri.encodeComponent(symbol);
@@ -160,9 +187,8 @@ class YahooFinanceClient {
       // ChartRange.threeYears: '3y' bukan validRange Yahoo.
       final now = _clock();
       final threeYearsAgo = DateTime(now.year - 3, now.month, now.day);
-      queryParameters['period1'] = (threeYearsAgo.millisecondsSinceEpoch ~/
-              1000)
-          .toString();
+      queryParameters['period1'] =
+          (threeYearsAgo.millisecondsSinceEpoch ~/ 1000).toString();
       queryParameters['period2'] = (now.millisecondsSinceEpoch ~/ 1000)
           .toString();
     }
@@ -171,4 +197,18 @@ class YahooFinanceClient {
       '$_baseUrl/$encodedSymbol',
     ).replace(queryParameters: queryParameters);
   }
+}
+
+/// Yahoo mengutip sebagian bursa dalam satuan minor: LSE dalam pence
+/// (`GBp`/`GBX`), JSE dalam sen rand (`ZAc`), TASE dalam agorot (`ILA`).
+/// Harga dibagi `divisor` dan mata uang dipetakan ke satuan mayornya supaya
+/// kurs forex (`GBPIDR=X`, dst.) bisa langsung dipakai. Kode dicocokkan
+/// case-sensitive: `GBp` (pence) berbeda dengan `GBP` (pound).
+({String currency, double divisor}) majorCurrencyUnitOf(String currency) {
+  return switch (currency.trim()) {
+    'GBp' || 'GBX' => (currency: 'GBP', divisor: 100),
+    'ZAc' || 'ZAC' => (currency: 'ZAR', divisor: 100),
+    'ILA' => (currency: 'ILS', divisor: 100),
+    final other => (currency: other, divisor: 1),
+  };
 }

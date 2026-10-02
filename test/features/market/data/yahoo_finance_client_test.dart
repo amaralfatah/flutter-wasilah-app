@@ -212,5 +212,194 @@ void main() {
         );
       },
     );
+
+    group('malformed but valid JSON', () {
+      Future<void> expectUnavailable(Object? body) async {
+        final client = YahooFinanceClient(
+          MockClient((request) async => http.Response(jsonEncode(body), 200)),
+        );
+        await expectLater(
+          client.fetch('BMRI.JK', ChartRange.oneDay),
+          throwsA(isA<MarketDataUnavailableException>()),
+        );
+      }
+
+      test('top-level array', () => expectUnavailable([1, 2]));
+
+      test('chart is a string', () => expectUnavailable({'chart': 'x'}));
+
+      test(
+        'result is not a list',
+        () => expectUnavailable({
+          'chart': {'result': 'x', 'error': null},
+        }),
+      );
+
+      test(
+        'result entry is not a map',
+        () => expectUnavailable({
+          'chart': {
+            'result': [42],
+            'error': null,
+          },
+        }),
+      );
+
+      test(
+        'meta is a list',
+        () => expectUnavailable({
+          'chart': {
+            'result': [
+              {'meta': <Object>[]},
+            ],
+            'error': null,
+          },
+        }),
+      );
+
+      test(
+        'regularMarketPrice is a string',
+        () => expectUnavailable({
+          'chart': {
+            'result': [
+              {
+                'meta': {'currency': 'IDR', 'regularMarketPrice': '4070'},
+              },
+            ],
+            'error': null,
+          },
+        }),
+      );
+    });
+
+    test('ignores wrong-typed optional fields and chart points', () async {
+      final body = jsonEncode({
+        'chart': {
+          'result': [
+            {
+              'meta': {
+                'currency': 'IDR',
+                'regularMarketPrice': 4070,
+                'chartPreviousClose': 'n/a',
+                'regularMarketTime': 'soon',
+                'regularMarketDayHigh': true,
+              },
+              'timestamp': [1727168100, 'x', 1727168220],
+              'indicators': {
+                'quote': [
+                  {
+                    'close': [4180, 4100, '4090'],
+                  },
+                ],
+              },
+            },
+          ],
+          'error': null,
+        },
+      });
+      final now = DateTime(2026, 10, 2);
+      final client = YahooFinanceClient(
+        MockClient((request) async => http.Response(body, 200)),
+        clock: () => now,
+      );
+
+      final result = await client.fetch('BMRI.JK', ChartRange.oneDay);
+
+      expect(result.quote.price, 4070);
+      expect(result.quote.previousClose, isNull);
+      expect(result.quote.dayHigh, isNull);
+      expect(result.quote.marketTime, now);
+      expect(result.series.points.map((p) => p.close), [4180]);
+    });
+
+    test('normalizes minor-unit currencies to the major unit', () async {
+      final body = jsonEncode({
+        'chart': {
+          'result': [
+            {
+              'meta': {
+                'currency': 'GBp',
+                'regularMarketPrice': 1250.0,
+                'chartPreviousClose': 1200.0,
+                'regularMarketDayHigh': 1260.0,
+                'regularMarketVolume': 5000,
+              },
+              'timestamp': [1727168100],
+              'indicators': {
+                'quote': [
+                  {
+                    'close': [1240.0],
+                  },
+                ],
+              },
+            },
+          ],
+          'error': null,
+        },
+      });
+      final client = YahooFinanceClient(
+        MockClient((request) async => http.Response(body, 200)),
+      );
+
+      final result = await client.fetch('VOD.L', ChartRange.oneDay);
+
+      expect(result.quote.currency, 'GBP');
+      expect(result.quote.price, 12.5);
+      expect(result.quote.previousClose, 12);
+      expect(result.quote.dayHigh, 12.6);
+      expect(result.quote.volume, 5000);
+      expect(result.series.currency, 'GBP');
+      expect(result.series.points.single.close, 12.4);
+      expect(result.series.previousClose, 12);
+    });
+
+    group('missing currency', () {
+      String bodyWithoutCurrency() => jsonEncode({
+        'chart': {
+          'result': [
+            {
+              'meta': {'regularMarketPrice': 100.0},
+            },
+          ],
+          'error': null,
+        },
+      });
+
+      test('is unavailable for non-IDX symbols', () async {
+        final client = YahooFinanceClient(
+          MockClient(
+            (request) async => http.Response(bodyWithoutCurrency(), 200),
+          ),
+        );
+
+        await expectLater(
+          client.fetch('AAPL', ChartRange.oneDay),
+          throwsA(isA<MarketDataUnavailableException>()),
+        );
+      });
+
+      test('defaults to IDR for IDX (.JK) symbols', () async {
+        final client = YahooFinanceClient(
+          MockClient(
+            (request) async => http.Response(bodyWithoutCurrency(), 200),
+          ),
+        );
+
+        final result = await client.fetch('BMRI.JK', ChartRange.oneDay);
+
+        expect(result.quote.currency, 'IDR');
+      });
+    });
+  });
+
+  group('majorCurrencyUnitOf', () {
+    test('maps minor units and leaves major currencies as-is', () {
+      expect(majorCurrencyUnitOf('GBp'), (currency: 'GBP', divisor: 100.0));
+      expect(majorCurrencyUnitOf('GBX'), (currency: 'GBP', divisor: 100.0));
+      expect(majorCurrencyUnitOf('ZAc'), (currency: 'ZAR', divisor: 100.0));
+      expect(majorCurrencyUnitOf('ILA'), (currency: 'ILS', divisor: 100.0));
+      expect(majorCurrencyUnitOf('GBP'), (currency: 'GBP', divisor: 1.0));
+      expect(majorCurrencyUnitOf('USD'), (currency: 'USD', divisor: 1.0));
+    });
   });
 }
