@@ -17,8 +17,7 @@ variant once a release keystore exists.
 
 ## 2. Google Cloud Console
 
-1. Go to https://console.cloud.google.com/ and select or create a project
-   (the existing Firebase project for this app can be reused).
+1. Go to https://console.cloud.google.com/ and select or create a project.
 2. **APIs & Services > Library** — enable the **Google Drive API**.
 3. **APIs & Services > OAuth consent screen**:
    - User type: External.
@@ -39,8 +38,8 @@ variant once a release keystore exists.
    provided on Android)`. The client *secret* of this web client is not
    used anywhere — never embed it in the app.
 
-No changes to `google-services.json` are needed for sign-in itself — that
-file is currently only used for Firebase Crashlytics.
+No `google-services.json` is needed for sign-in — the app does not use
+Firebase.
 
 ## 3. Verify
 
