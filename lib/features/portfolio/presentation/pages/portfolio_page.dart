@@ -36,7 +36,10 @@ class PortfolioPage extends ConsumerStatefulWidget {
 class _PortfolioPageState extends ConsumerState<PortfolioPage> {
   AssetCategory? _selectedCategory;
 
-  Future<void> _refresh() => ref.refresh(positionListProvider.future);
+  Future<void> _refresh() {
+    ref.invalidate(holdingQuotesProvider);
+    return ref.refresh(positionListProvider.future);
+  }
 
   @override
   Widget build(BuildContext context) {

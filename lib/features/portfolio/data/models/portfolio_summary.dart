@@ -1,3 +1,5 @@
+import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -41,4 +43,33 @@ abstract class PortfolioSummary with _$PortfolioSummary {
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
     };
   }
+}
+
+/// Seberapa dekat alokasi aktual per kategori dengan [targets], 0-100:
+/// 100 dikurangi separuh total selisih persentase.
+double calculateTargetProgress(
+  List<PortfolioPosition> positions,
+  List<AllocationTarget> targets,
+) {
+  if (positions.isEmpty || targets.isEmpty) {
+    return 0;
+  }
+
+  final actualByCategory = <AssetCategory, double>{};
+  for (final position in positions) {
+    actualByCategory.update(
+      position.category,
+      (value) => value + position.allocationPercentage,
+      ifAbsent: () => position.allocationPercentage,
+    );
+  }
+
+  var totalDifference = 0.0;
+  for (final target in targets) {
+    totalDifference +=
+        ((actualByCategory[target.category] ?? 0) - target.targetPercentage)
+            .abs();
+  }
+
+  return (100 - (totalDifference / 2)).clamp(0, 100).toDouble();
 }

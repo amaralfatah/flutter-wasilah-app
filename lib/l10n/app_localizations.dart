@@ -482,6 +482,12 @@ abstract class AppLocalizations {
   /// **'Alokasi portofolio'**
   String get allocationLabel;
 
+  /// Keterangan nilai holding yang dihitung dari harga pasar terkini
+  ///
+  /// In id, this message translates to:
+  /// **'Harga pasar {time}'**
+  String marketValueAsOf(String time);
+
   /// Label metrik terakhir diperbarui
   ///
   /// In id, this message translates to:

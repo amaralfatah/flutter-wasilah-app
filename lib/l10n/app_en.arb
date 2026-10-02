@@ -76,6 +76,7 @@
   "assetNotFoundMessage": "The asset you opened is not available.",
   "totalCostLabel": "Total cost",
   "allocationLabel": "Portfolio allocation",
+  "marketValueAsOf": "Market price {time}",
   "lastUpdatedLabel": "Last updated",
   "updateValueButton": "Update value",
   "historySectionTitle": "Value history",

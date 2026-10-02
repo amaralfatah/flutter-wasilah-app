@@ -40,10 +40,9 @@ class DriftPortfolioRepository implements PortfolioRepository {
             category: category,
             targetPercentage: row.read<double>('target_percentage'),
           ),
-    ]
-      ..sort(
-        (left, right) => left.category.index.compareTo(right.category.index),
-      );
+    ]..sort(
+      (left, right) => left.category.index.compareTo(right.category.index),
+    );
   }
 
   @override
@@ -238,7 +237,7 @@ class DriftPortfolioRepository implements PortfolioRepository {
     return PortfolioSummary(
       totalValue: totalValue,
       monthlyChangePercentage: _calculateMonthlyChange(history),
-      targetProgressPercentage: _calculateTargetProgress(positions, targets),
+      targetProgressPercentage: calculateTargetProgress(positions, targets),
       positions: positions,
       lastUpdatedAt: lastUpdatedAt,
     );
@@ -511,33 +510,6 @@ class DriftPortfolioRepository implements PortfolioRepository {
     }
 
     return ((latest - previous) / previous) * 100;
-  }
-
-  double _calculateTargetProgress(
-    List<PortfolioPosition> positions,
-    List<AllocationTarget> targets,
-  ) {
-    if (positions.isEmpty || targets.isEmpty) {
-      return 0;
-    }
-
-    final actualByCategory = <AssetCategory, double>{};
-    for (final position in positions) {
-      actualByCategory.update(
-        position.category,
-        (value) => value + position.allocationPercentage,
-        ifAbsent: () => position.allocationPercentage,
-      );
-    }
-
-    var totalDifference = 0.0;
-    for (final target in targets) {
-      totalDifference +=
-          ((actualByCategory[target.category] ?? 0) - target.targetPercentage)
-              .abs();
-    }
-
-    return (100 - (totalDifference / 2)).clamp(0, 100).toDouble();
   }
 
   Holding _mapHolding(QueryRow row, {String? assetId}) {

@@ -209,6 +209,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allocationLabel => 'Portfolio allocation';
 
   @override
+  String marketValueAsOf(String time) {
+    return 'Market price $time';
+  }
+
+  @override
   String get lastUpdatedLabel => 'Last updated';
 
   @override

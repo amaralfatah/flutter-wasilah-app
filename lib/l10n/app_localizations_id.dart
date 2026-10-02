@@ -209,6 +209,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get allocationLabel => 'Alokasi portofolio';
 
   @override
+  String marketValueAsOf(String time) {
+    return 'Harga pasar $time';
+  }
+
+  @override
   String get lastUpdatedLabel => 'Terakhir diperbarui';
 
   @override

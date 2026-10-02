@@ -140,6 +140,8 @@
   "@totalCostLabel": {"description": "Label metrik total modal"},
   "allocationLabel": "Alokasi portofolio",
   "@allocationLabel": {"description": "Label metrik alokasi portofolio"},
+  "marketValueAsOf": "Harga pasar {time}",
+  "@marketValueAsOf": {"description": "Keterangan nilai holding yang dihitung dari harga pasar terkini", "placeholders": {"time": {"type": "String"}}},
   "lastUpdatedLabel": "Terakhir diperbarui",
   "@lastUpdatedLabel": {"description": "Label metrik terakhir diperbarui"},
   "updateValueButton": "Update nilai",

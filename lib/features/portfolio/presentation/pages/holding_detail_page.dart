@@ -80,7 +80,9 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
             onRefresh: () {
               ref.invalidate(assetHistoryProvider(assetId));
               if (asset.marketSymbol case final marketSymbol?) {
-                ref.invalidate(marketQuoteProvider(marketSymbol));
+                ref
+                  ..invalidate(marketQuoteProvider(marketSymbol))
+                  ..invalidate(holdingQuotesProvider);
               }
               return ref.refresh(positionDetailProvider(assetId).future);
             },
@@ -112,6 +114,15 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                     _MetricTile(
                       label: l10n.commonCurrentValueLabel,
                       value: formatCurrency(position.currentValue),
+                      subtitle: switch (position.marketPriceAt) {
+                        final priceAt? => l10n.marketValueAsOf(
+                          formatFullDateTime(
+                            priceAt,
+                            Localizations.localeOf(context),
+                          ),
+                        ),
+                        null => null,
+                      },
                     ),
                     // Kas tak untung/rugi (modal = nilai), jadi modal &
                     // untung/rugi hanya mengulang nilai.
@@ -466,10 +477,15 @@ class _AllocationRow extends StatelessWidget {
 }
 
 class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.label, required this.value});
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    this.subtitle,
+  });
 
   final String label;
   final String value;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -479,6 +495,7 @@ class _MetricTile extends StatelessWidget {
         vertical: AppSpacing.sm,
       ),
       title: Text(label),
+      subtitle: subtitle == null ? null : Text(subtitle!),
       trailing: Text(
         value,
         style: Theme.of(context).textTheme.titleMedium,

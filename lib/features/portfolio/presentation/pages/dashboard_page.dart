@@ -32,7 +32,10 @@ class DashboardPage extends ConsumerWidget {
         data: (summary) {
           if (summary.positions.isEmpty) {
             return RefreshablePageBody(
-              onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
+              onRefresh: () {
+                ref.invalidate(holdingQuotesProvider);
+                return ref.refresh(portfolioSummaryProvider.future);
+              },
               child: AppEmptyState(
                 title: l10n.commonEmptyAssetsTitle,
                 message: l10n.emptyAssetsDashboardMessage,
@@ -49,7 +52,10 @@ class DashboardPage extends ConsumerWidget {
               .toList(growable: false);
 
           return RefreshablePageBody(
-            onRefresh: () => ref.refresh(portfolioSummaryProvider.future),
+            onRefresh: () {
+              ref.invalidate(holdingQuotesProvider);
+              return ref.refresh(portfolioSummaryProvider.future);
+            },
             // Horizontal 0: daftar "Aset utama" full-bleed sampai tepi layar.
             // Konten lain (kartu ringkasan, target) mengatur padding
             // horizontalnya sendiri lewat Padding di bawah.

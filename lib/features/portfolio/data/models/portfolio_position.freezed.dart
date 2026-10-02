@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PortfolioPosition {
 
- Asset get asset; Holding get holding; double get allocationPercentage;
+ Asset get asset; Holding get holding; double get allocationPercentage;/// Waktu harga pasar yang dipakai menghitung nilai [holding]; `null`
+/// bila nilainya nilai tercatat (snapshot terakhir). Diisi saat baca,
+/// tidak disimpan -- lihat `applyMarketPrices`.
+ DateTime? get marketPriceAt;
 /// Create a copy of PortfolioPosition
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $PortfolioPositionCopyWith<PortfolioPosition> get copyWith => _$PortfolioPositio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortfolioPosition&&(identical(other.asset, asset) || other.asset == asset)&&(identical(other.holding, holding) || other.holding == holding)&&(identical(other.allocationPercentage, allocationPercentage) || other.allocationPercentage == allocationPercentage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortfolioPosition&&(identical(other.asset, asset) || other.asset == asset)&&(identical(other.holding, holding) || other.holding == holding)&&(identical(other.allocationPercentage, allocationPercentage) || other.allocationPercentage == allocationPercentage)&&(identical(other.marketPriceAt, marketPriceAt) || other.marketPriceAt == marketPriceAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,asset,holding,allocationPercentage);
+int get hashCode => Object.hash(runtimeType,asset,holding,allocationPercentage,marketPriceAt);
 
 @override
 String toString() {
-  return 'PortfolioPosition(asset: $asset, holding: $holding, allocationPercentage: $allocationPercentage)';
+  return 'PortfolioPosition(asset: $asset, holding: $holding, allocationPercentage: $allocationPercentage, marketPriceAt: $marketPriceAt)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $PortfolioPositionCopyWith<$Res>  {
   factory $PortfolioPositionCopyWith(PortfolioPosition value, $Res Function(PortfolioPosition) _then) = _$PortfolioPositionCopyWithImpl;
 @useResult
 $Res call({
- Asset asset, Holding holding, double allocationPercentage
+ Asset asset, Holding holding, double allocationPercentage, DateTime? marketPriceAt
 });
 
 
@@ -62,12 +65,13 @@ class _$PortfolioPositionCopyWithImpl<$Res>
 
 /// Create a copy of PortfolioPosition
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? asset = null,Object? holding = null,Object? allocationPercentage = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? asset = null,Object? holding = null,Object? allocationPercentage = null,Object? marketPriceAt = freezed,}) {
   return _then(_self.copyWith(
 asset: null == asset ? _self.asset : asset // ignore: cast_nullable_to_non_nullable
 as Asset,holding: null == holding ? _self.holding : holding // ignore: cast_nullable_to_non_nullable
 as Holding,allocationPercentage: null == allocationPercentage ? _self.allocationPercentage : allocationPercentage // ignore: cast_nullable_to_non_nullable
-as double,
+as double,marketPriceAt: freezed == marketPriceAt ? _self.marketPriceAt : marketPriceAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 /// Create a copy of PortfolioPosition
@@ -170,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Asset asset,  Holding holding,  double allocationPercentage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Asset asset,  Holding holding,  double allocationPercentage,  DateTime? marketPriceAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PortfolioPosition() when $default != null:
-return $default(_that.asset,_that.holding,_that.allocationPercentage);case _:
+return $default(_that.asset,_that.holding,_that.allocationPercentage,_that.marketPriceAt);case _:
   return orElse();
 
 }
@@ -191,10 +195,10 @@ return $default(_that.asset,_that.holding,_that.allocationPercentage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Asset asset,  Holding holding,  double allocationPercentage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Asset asset,  Holding holding,  double allocationPercentage,  DateTime? marketPriceAt)  $default,) {final _that = this;
 switch (_that) {
 case _PortfolioPosition():
-return $default(_that.asset,_that.holding,_that.allocationPercentage);case _:
+return $default(_that.asset,_that.holding,_that.allocationPercentage,_that.marketPriceAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -211,10 +215,10 @@ return $default(_that.asset,_that.holding,_that.allocationPercentage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Asset asset,  Holding holding,  double allocationPercentage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Asset asset,  Holding holding,  double allocationPercentage,  DateTime? marketPriceAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PortfolioPosition() when $default != null:
-return $default(_that.asset,_that.holding,_that.allocationPercentage);case _:
+return $default(_that.asset,_that.holding,_that.allocationPercentage,_that.marketPriceAt);case _:
   return null;
 
 }
@@ -226,12 +230,16 @@ return $default(_that.asset,_that.holding,_that.allocationPercentage);case _:
 
 
 class _PortfolioPosition extends PortfolioPosition {
-  const _PortfolioPosition({required this.asset, required this.holding, required this.allocationPercentage}): super._();
+  const _PortfolioPosition({required this.asset, required this.holding, required this.allocationPercentage, this.marketPriceAt}): super._();
   
 
 @override final  Asset asset;
 @override final  Holding holding;
 @override final  double allocationPercentage;
+/// Waktu harga pasar yang dipakai menghitung nilai [holding]; `null`
+/// bila nilainya nilai tercatat (snapshot terakhir). Diisi saat baca,
+/// tidak disimpan -- lihat `applyMarketPrices`.
+@override final  DateTime? marketPriceAt;
 
 /// Create a copy of PortfolioPosition
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +251,16 @@ _$PortfolioPositionCopyWith<_PortfolioPosition> get copyWith => __$PortfolioPosi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortfolioPosition&&(identical(other.asset, asset) || other.asset == asset)&&(identical(other.holding, holding) || other.holding == holding)&&(identical(other.allocationPercentage, allocationPercentage) || other.allocationPercentage == allocationPercentage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortfolioPosition&&(identical(other.asset, asset) || other.asset == asset)&&(identical(other.holding, holding) || other.holding == holding)&&(identical(other.allocationPercentage, allocationPercentage) || other.allocationPercentage == allocationPercentage)&&(identical(other.marketPriceAt, marketPriceAt) || other.marketPriceAt == marketPriceAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,asset,holding,allocationPercentage);
+int get hashCode => Object.hash(runtimeType,asset,holding,allocationPercentage,marketPriceAt);
 
 @override
 String toString() {
-  return 'PortfolioPosition(asset: $asset, holding: $holding, allocationPercentage: $allocationPercentage)';
+  return 'PortfolioPosition(asset: $asset, holding: $holding, allocationPercentage: $allocationPercentage, marketPriceAt: $marketPriceAt)';
 }
 
 
@@ -263,7 +271,7 @@ abstract mixin class _$PortfolioPositionCopyWith<$Res> implements $PortfolioPosi
   factory _$PortfolioPositionCopyWith(_PortfolioPosition value, $Res Function(_PortfolioPosition) _then) = __$PortfolioPositionCopyWithImpl;
 @override @useResult
 $Res call({
- Asset asset, Holding holding, double allocationPercentage
+ Asset asset, Holding holding, double allocationPercentage, DateTime? marketPriceAt
 });
 
 
@@ -280,12 +288,13 @@ class __$PortfolioPositionCopyWithImpl<$Res>
 
 /// Create a copy of PortfolioPosition
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? asset = null,Object? holding = null,Object? allocationPercentage = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? asset = null,Object? holding = null,Object? allocationPercentage = null,Object? marketPriceAt = freezed,}) {
   return _then(_PortfolioPosition(
 asset: null == asset ? _self.asset : asset // ignore: cast_nullable_to_non_nullable
 as Asset,holding: null == holding ? _self.holding : holding // ignore: cast_nullable_to_non_nullable
 as Holding,allocationPercentage: null == allocationPercentage ? _self.allocationPercentage : allocationPercentage // ignore: cast_nullable_to_non_nullable
-as double,
+as double,marketPriceAt: freezed == marketPriceAt ? _self.marketPriceAt : marketPriceAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

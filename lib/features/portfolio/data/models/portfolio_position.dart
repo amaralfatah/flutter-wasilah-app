@@ -19,6 +19,11 @@ abstract class PortfolioPosition with _$PortfolioPosition {
     required Asset asset,
     required Holding holding,
     required double allocationPercentage,
+
+    /// Waktu harga pasar yang dipakai menghitung nilai [holding]; `null`
+    /// bila nilainya nilai tercatat (snapshot terakhir). Diisi saat baca,
+    /// tidak disimpan -- lihat `applyMarketPrices`.
+    DateTime? marketPriceAt,
   }) = _PortfolioPosition;
   const PortfolioPosition._();
 
@@ -56,6 +61,9 @@ abstract class PortfolioPosition with _$PortfolioPosition {
   String get code => asset.code;
   AssetCategory get category => asset.category;
   String? get marketSymbol => asset.marketSymbol;
+
+  /// `true` bila nilai holding dihitung dari harga pasar terkini.
+  bool get isMarketValued => marketPriceAt != null;
 
   double get currentValue => holding.currentValue;
   double? get totalCost => holding.totalCost;

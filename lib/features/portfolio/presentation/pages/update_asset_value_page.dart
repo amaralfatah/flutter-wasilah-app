@@ -9,6 +9,7 @@ import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/market_valuation.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -576,13 +577,13 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     if (rate == null) {
       return null;
     }
-    return quantity * _lotToShareFactor(symbol) * quote.price * rate;
+    return marketValueIdr(
+      quantity: quantity,
+      symbol: symbol,
+      price: quote.price,
+      rateToIdr: rate,
+    );
   }
-
-  /// Saham IDX (simbol `.JK`) dicatat dalam lot, sedangkan harga per
-  /// lembar; 1 lot = 100 lembar. Aset lain 1:1.
-  double _lotToShareFactor(String? symbol) =>
-      symbol != null && symbol.toUpperCase().endsWith('.JK') ? 100 : 1;
 
   double? _rateOf(String currency) =>
       currency == 'IDR' ? 1 : _manualUsdRate ?? _marketUsdRate;
@@ -750,7 +751,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       return null;
     }
     return quantity *
-        _lotToShareFactor(asset?.marketSymbol) *
+        lotToShareFactor(asset?.marketSymbol) *
         avgBuyPrice *
         rate;
   }
