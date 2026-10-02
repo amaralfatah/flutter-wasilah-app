@@ -209,6 +209,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allocationLabel => 'Portfolio allocation';
 
   @override
+  String get recordMarketValuesTooltip => 'Record market values';
+
+  @override
+  String get recordMarketValuesTitle => 'Record market values?';
+
+  @override
+  String recordMarketValuesMessage(int count, String month) {
+    return 'The values of $count assets at current market prices will be recorded to the $month history. That month\'s values for these assets are replaced; cost, quantity, and notes are kept.';
+  }
+
+  @override
+  String get recordMarketValuesButton => 'Record';
+
+  @override
+  String recordMarketValuesSuccess(int count) {
+    return 'Recorded market values for $count assets';
+  }
+
+  @override
   String marketValueAsOf(String time) {
     return 'Market price $time';
   }

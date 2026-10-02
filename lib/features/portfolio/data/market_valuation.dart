@@ -1,6 +1,7 @@
 import 'package:flutter_wasilah_app/features/market/data/models/market_quote.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 
 /// Kategori yang nilainya mengikuti harga pasar: jumlah unit × harga Yahoo
 /// mewakili nilai sebenarnya. Logam mulia (harga spot global ≠ harga
@@ -112,4 +113,29 @@ PortfolioPosition? _valueAtMarket(
     ),
     marketPriceAt: quote.marketTime,
   );
+}
+
+/// Nilai pasar holding di [positions] (nilai tercatat) yang bisa dihitung
+/// dari [quotes], siap dicatat ke histori lewat
+/// `PortfolioRepository.recordAssetValues`. Kurs non-IDR ikut disimpan.
+List<AssetValueRecord> marketValueRecordsOf(
+  List<PortfolioPosition> positions,
+  Map<String, MarketQuote> quotes,
+) {
+  final records = <AssetValueRecord>[];
+  for (final position in positions) {
+    final valued = _valueAtMarket(position, quotes);
+    if (valued == null) {
+      continue;
+    }
+    final currency = quotes[valued.marketSymbol]!.currency.trim().toUpperCase();
+    final isIdr = currency.isEmpty || currency == 'IDR';
+    records.add((
+      assetId: valued.id,
+      totalValue: valued.currentValue,
+      fxCurrency: isIdr ? null : currency,
+      fxRate: isIdr ? null : rateToIdrFrom(currency, quotes),
+    ));
+  }
+  return records;
 }

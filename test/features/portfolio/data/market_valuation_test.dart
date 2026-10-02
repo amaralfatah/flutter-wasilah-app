@@ -117,4 +117,46 @@ void main() {
     ];
     expect(applyMarketPrices(positions, const {}), same(positions));
   });
+
+  test('builds records only for market-valued holdings, with the FX rate', () {
+    final records = marketValueRecordsOf(
+      [
+        position(
+          id: 'btc',
+          category: AssetCategory.crypto,
+          value: 1,
+          symbol: 'BTC-USD',
+          quantity: 0.01,
+        ),
+        position(
+          id: 'bmri',
+          category: AssetCategory.stock,
+          value: 1,
+          symbol: 'BMRI.JK',
+          quantity: 2,
+        ),
+        position(id: 'cash', category: AssetCategory.cash, value: 100),
+      ],
+      {
+        'BTC-USD': quote('BTC-USD', 60000, 'USD'),
+        'BMRI.JK': quote('BMRI.JK', 5000, 'IDR'),
+        'USDIDR=X': quote('USDIDR=X', 16000, 'IDR'),
+      },
+    );
+
+    expect(records, [
+      (
+        assetId: 'btc',
+        totalValue: 0.01 * 60000 * 16000,
+        fxCurrency: 'USD',
+        fxRate: 16000.0,
+      ),
+      (
+        assetId: 'bmri',
+        totalValue: 2.0 * 100 * 5000,
+        fxCurrency: null,
+        fxRate: null,
+      ),
+    ]);
+  });
 }

@@ -257,65 +257,137 @@ class DriftPortfolioRepository implements PortfolioRepository {
     double? fxRate,
   }) async {
     await _database.writePortfolio(() async {
-      final assetRow = await _database
-          .customSelect(
-            'SELECT id FROM assets WHERE id = ? LIMIT 1',
-            variables: [Variable.withString(assetId)],
-          )
-          .getSingleOrNull();
-      if (assetRow == null) {
-        throw StateError('Asset tidak ditemukan.');
-      }
-      final existing = await _holdingOrNull(assetId);
-
-      await _saveSnapshot(
+      await _writeHolding(
         assetId: assetId,
         totalValue: totalValue,
         recordedAt: recordedAt,
         note: note,
-        // Tanpa input modal, bawa modal terakhir per tanggal itu supaya
-        // histori PnL tidak bolong di bulan yang hanya update nilai.
-        totalCost:
-            totalCost ??
-            await _historicalAssetCost(assetId, recordedAt) ??
-            existing?.totalCost,
-        fxCurrency: fxRate == null ? null : _normalizePriceCurrency(fxCurrency),
+        totalCost: totalCost,
+        quantity: quantity,
+        avgBuyPrice: avgBuyPrice,
+        priceCurrency: priceCurrency,
+        fxCurrency: fxCurrency,
         fxRate: fxRate,
       );
-
-      // current_value/last_updated_at harus mengikuti snapshot paling baru
-      // secara kronologis, bukan nilai yang baru saja diinput -- input bisa
-      // saja backdate (tanggal mundur) dan tidak boleh menimpa nilai terkini.
-      final latestSnapshot = (await _latestSnapshotOrNull(assetId))!;
-      await _database.customStatement(
-        '''
-        INSERT INTO holdings (
-          asset_id, current_value, total_cost, quantity, avg_buy_price,
-          price_currency, last_updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (asset_id) DO UPDATE SET
-          current_value = excluded.current_value,
-          total_cost = excluded.total_cost,
-          quantity = excluded.quantity,
-          avg_buy_price = excluded.avg_buy_price,
-          price_currency = excluded.price_currency,
-          last_updated_at = excluded.last_updated_at
-        ''',
-        [
-          assetId,
-          latestSnapshot.totalValue,
-          latestSnapshot.totalCost,
-          // null berarti field tak diubah di form ini: pertahankan nilai lama.
-          quantity ?? existing?.quantity,
-          avgBuyPrice ?? existing?.avgBuyPrice,
-          _normalizePriceCurrency(priceCurrency) ?? existing?.priceCurrency,
-          _dateToSql(latestSnapshot.recordedAt),
-        ],
-      );
-
       await _savePortfolioSnapshot(recordedAt, note: note);
       await _refreshPortfolioSnapshotsAfter(recordedAt);
     });
+  }
+
+  @override
+  Future<void> recordAssetValues(
+    List<AssetValueRecord> records, {
+    required DateTime recordedAt,
+  }) async {
+    if (records.isEmpty) {
+      return;
+    }
+    await _database.writePortfolio(() async {
+      for (final record in records) {
+        await _writeHolding(
+          assetId: record.assetId,
+          totalValue: record.totalValue,
+          recordedAt: recordedAt,
+          // Catatan manual bulan itu dipertahankan; yang diganti hanya nilai.
+          note: await _snapshotNote(
+            'asset_snapshots',
+            _buildSnapshotId(record.assetId, recordedAt),
+          ),
+          fxCurrency: record.fxCurrency,
+          fxRate: record.fxRate,
+        );
+      }
+      await _savePortfolioSnapshot(
+        recordedAt,
+        note: await _snapshotNote(
+          'portfolio_snapshots',
+          _buildSnapshotId(_portfolioSnapshotPrefix, recordedAt),
+        ),
+      );
+      await _refreshPortfolioSnapshotsAfter(recordedAt);
+    });
+  }
+
+  Future<String?> _snapshotNote(String table, String snapshotId) async {
+    final row = await _database
+        .customSelect(
+          'SELECT note FROM $table WHERE id = ? LIMIT 1',
+          variables: [Variable.withString(snapshotId)],
+        )
+        .getSingleOrNull();
+    return row?.readNullable<String>('note');
+  }
+
+  /// Snapshot aset bulan [recordedAt] + baris holding-nya. Snapshot
+  /// portofolio diurus pemanggil, supaya penulisan banyak aset sekaligus
+  /// cukup menghitungnya sekali.
+  Future<void> _writeHolding({
+    required String assetId,
+    required double totalValue,
+    required DateTime recordedAt,
+    String? note,
+    double? totalCost,
+    double? quantity,
+    double? avgBuyPrice,
+    String? priceCurrency,
+    String? fxCurrency,
+    double? fxRate,
+  }) async {
+    final assetRow = await _database
+        .customSelect(
+          'SELECT id FROM assets WHERE id = ? LIMIT 1',
+          variables: [Variable.withString(assetId)],
+        )
+        .getSingleOrNull();
+    if (assetRow == null) {
+      throw StateError('Asset tidak ditemukan.');
+    }
+    final existing = await _holdingOrNull(assetId);
+
+    await _saveSnapshot(
+      assetId: assetId,
+      totalValue: totalValue,
+      recordedAt: recordedAt,
+      note: note,
+      // Tanpa input modal, bawa modal terakhir per tanggal itu supaya
+      // histori PnL tidak bolong di bulan yang hanya update nilai.
+      totalCost:
+          totalCost ??
+          await _historicalAssetCost(assetId, recordedAt) ??
+          existing?.totalCost,
+      fxCurrency: fxRate == null ? null : _normalizePriceCurrency(fxCurrency),
+      fxRate: fxRate,
+    );
+
+    // current_value/last_updated_at harus mengikuti snapshot paling baru
+    // secara kronologis, bukan nilai yang baru saja diinput -- input bisa
+    // saja backdate (tanggal mundur) dan tidak boleh menimpa nilai terkini.
+    final latestSnapshot = (await _latestSnapshotOrNull(assetId))!;
+    await _database.customStatement(
+      '''
+      INSERT INTO holdings (
+        asset_id, current_value, total_cost, quantity, avg_buy_price,
+        price_currency, last_updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (asset_id) DO UPDATE SET
+        current_value = excluded.current_value,
+        total_cost = excluded.total_cost,
+        quantity = excluded.quantity,
+        avg_buy_price = excluded.avg_buy_price,
+        price_currency = excluded.price_currency,
+        last_updated_at = excluded.last_updated_at
+      ''',
+      [
+        assetId,
+        latestSnapshot.totalValue,
+        latestSnapshot.totalCost,
+        // null berarti field tak diubah di form ini: pertahankan nilai lama.
+        quantity ?? existing?.quantity,
+        avgBuyPrice ?? existing?.avgBuyPrice,
+        _normalizePriceCurrency(priceCurrency) ?? existing?.priceCurrency,
+        _dateToSql(latestSnapshot.recordedAt),
+      ],
+    );
   }
 
   @override

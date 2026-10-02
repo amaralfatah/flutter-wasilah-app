@@ -209,6 +209,25 @@ class AppLocalizationsId extends AppLocalizations {
   String get allocationLabel => 'Alokasi portofolio';
 
   @override
+  String get recordMarketValuesTooltip => 'Catat nilai pasar';
+
+  @override
+  String get recordMarketValuesTitle => 'Catat nilai pasar?';
+
+  @override
+  String recordMarketValuesMessage(int count, String month) {
+    return 'Nilai $count aset dari harga pasar terkini dicatat ke histori $month. Nilai bulan itu untuk aset tersebut diganti; modal, jumlah unit, dan catatan tetap.';
+  }
+
+  @override
+  String get recordMarketValuesButton => 'Catat';
+
+  @override
+  String recordMarketValuesSuccess(int count) {
+    return 'Nilai pasar $count aset dicatat';
+  }
+
+  @override
   String marketValueAsOf(String time) {
     return 'Harga pasar $time';
   }

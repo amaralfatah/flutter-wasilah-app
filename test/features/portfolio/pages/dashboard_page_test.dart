@@ -170,6 +170,14 @@ class _DashboardNoTargetRepository implements PortfolioRepository {
   }
 
   @override
+  Future<void> recordAssetValues(
+    List<AssetValueRecord> records, {
+    required DateTime recordedAt,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> removeFromPortfolio(String assetId) {
     throw UnimplementedError();
   }

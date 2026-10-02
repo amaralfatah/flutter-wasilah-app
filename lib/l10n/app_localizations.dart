@@ -482,6 +482,36 @@ abstract class AppLocalizations {
   /// **'Alokasi portofolio'**
   String get allocationLabel;
 
+  /// Aksi mencatat nilai pasar semua holding ke histori bulan ini
+  ///
+  /// In id, this message translates to:
+  /// **'Catat nilai pasar'**
+  String get recordMarketValuesTooltip;
+
+  /// Aksi mencatat nilai pasar semua holding ke histori bulan ini
+  ///
+  /// In id, this message translates to:
+  /// **'Catat nilai pasar?'**
+  String get recordMarketValuesTitle;
+
+  /// Aksi mencatat nilai pasar semua holding ke histori bulan ini
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai {count} aset dari harga pasar terkini dicatat ke histori {month}. Nilai bulan itu untuk aset tersebut diganti; modal, jumlah unit, dan catatan tetap.'**
+  String recordMarketValuesMessage(int count, String month);
+
+  /// Aksi mencatat nilai pasar semua holding ke histori bulan ini
+  ///
+  /// In id, this message translates to:
+  /// **'Catat'**
+  String get recordMarketValuesButton;
+
+  /// Aksi mencatat nilai pasar semua holding ke histori bulan ini
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai pasar {count} aset dicatat'**
+  String recordMarketValuesSuccess(int count);
+
   /// Keterangan nilai holding yang dihitung dari harga pasar terkini
   ///
   /// In id, this message translates to:

@@ -317,6 +317,22 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
   }
 
   @override
+  Future<void> recordAssetValues(
+    List<AssetValueRecord> records, {
+    required DateTime recordedAt,
+  }) async {
+    for (final record in records) {
+      await updateAssetValue(
+        assetId: record.assetId,
+        totalValue: record.totalValue,
+        recordedAt: recordedAt,
+        fxCurrency: record.fxCurrency,
+        fxRate: record.fxRate,
+      );
+    }
+  }
+
+  @override
   Future<void> updateAssetValue({
     required String assetId,
     required double totalValue,

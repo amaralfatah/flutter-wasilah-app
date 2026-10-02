@@ -162,6 +162,17 @@ final positionListProvider = FutureProvider<List<PortfolioPosition>>((
   return applyMarketPrices(positions, quotes ?? const {});
 });
 
+/// Nilai pasar holding yang siap dicatat ke histori (lihat
+/// `marketValueRecordsOf`); kosong selama posisi atau harga belum dimuat.
+final marketValueRecordsProvider = Provider<List<AssetValueRecord>>((ref) {
+  final positions = ref.watch(storedPositionListProvider).valueOrNull;
+  final quotes = ref.watch(holdingQuotesProvider).valueOrNull;
+  if (positions == null || quotes == null) {
+    return const [];
+  }
+  return marketValueRecordsOf(positions, quotes);
+});
+
 final FutureProviderFamily<PortfolioPosition?, String> positionDetailProvider =
     FutureProvider.family<PortfolioPosition?, String>((
       ref,

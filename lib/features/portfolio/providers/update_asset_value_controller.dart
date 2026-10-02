@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 
 final updateAssetValueControllerProvider =
@@ -61,6 +62,21 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             fxCurrency: fxCurrency,
             fxRate: fxRate,
           );
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Mencatat nilai pasar [records] ke histori bulan ini.
+  Future<void> recordMarketValues(List<AssetValueRecord> records) async {
+    state = const AsyncLoading();
+
+    try {
+      await ref
+          .read(portfolioRepositoryProvider)
+          .recordAssetValues(records, recordedAt: DateTime.now());
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

@@ -510,6 +510,72 @@ void main() {
       },
     );
 
+    test(
+      'records many values at once keeping cost, quantity, and notes',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        final assets = DriftAssetRepository(database);
+        await assets.createAsset(_btc);
+        await assets.createAsset(
+          const Asset(
+            id: 'bmri',
+            name: 'Bank Mandiri',
+            code: 'BMRI',
+            category: AssetCategory.stock,
+            marketSymbol: 'BMRI.JK',
+          ),
+        );
+        final repository = DriftPortfolioRepository(database);
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 50000000,
+          recordedAt: DateTime(2026, 10, 1),
+          note: 'Beli lagi',
+          totalCost: 40000000,
+          quantity: 0.05,
+        );
+        await repository.updateAssetValue(
+          assetId: 'bmri',
+          totalValue: 10000000,
+          recordedAt: DateTime(2026, 10, 1),
+          totalCost: 9000000,
+          quantity: 20,
+        );
+
+        await repository.recordAssetValues(
+          [
+            (
+              assetId: 'btc',
+              totalValue: 60000000,
+              fxCurrency: 'USD',
+              fxRate: 16000,
+            ),
+            (
+              assetId: 'bmri',
+              totalValue: 11000000,
+              fxCurrency: null,
+              fxRate: null,
+            ),
+          ],
+          recordedAt: DateTime(2026, 10, 2),
+        );
+
+        final btc = (await repository.getPositionByAssetId('btc'))!;
+        expect(btc.currentValue, 60000000);
+        expect(btc.totalCost, 40000000);
+        expect(btc.quantity, 0.05);
+        final btcHistory = await repository.getAssetHistory('btc');
+        expect(btcHistory, hasLength(1));
+        expect(btcHistory.single.note, 'Beli lagi');
+        expect(btcHistory.single.fxRate, 16000);
+        final portfolio = await repository.getPortfolioHistory();
+        expect(portfolio, hasLength(1));
+        expect(portfolio.single.totalValue, 71000000);
+        expect(portfolio.single.totalCost, 49000000);
+      },
+    );
+
     test('throws when updating the value of an unknown asset', () async {
       final database = openDatabase();
       addTearDown(database.close);

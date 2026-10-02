@@ -4,6 +4,15 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_pos
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_summary.dart';
 
+/// Nilai satu aset untuk [PortfolioRepository.recordAssetValues], beserta
+/// kurs ke IDR yang dipakai (disimpan di histori).
+typedef AssetValueRecord = ({
+  String assetId,
+  double totalValue,
+  String? fxCurrency,
+  double? fxRate,
+});
+
 /// Sisi porto: holding, histori, dan target alokasi. Master data aset
 /// (nama/kode/kategori/simbol) ada di `AssetRepository`.
 abstract interface class PortfolioRepository {
@@ -42,6 +51,14 @@ abstract interface class PortfolioRepository {
     /// Kurs konversi ke IDR yang dipakai input ini; disimpan di histori.
     String? fxCurrency,
     double? fxRate,
+  });
+
+  /// Mencatat nilai banyak holding sekaligus ke histori bulan [recordedAt]
+  /// (mis. dari harga pasar). Modal, jumlah unit, harga beli, dan catatan
+  /// bulan itu dipertahankan; snapshot portofolio dihitung ulang sekali.
+  Future<void> recordAssetValues(
+    List<AssetValueRecord> records, {
+    required DateTime recordedAt,
   });
 
   /// Mengeluarkan aset dari portofolio: holding dan seluruh histori per-aset

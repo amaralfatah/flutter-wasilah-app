@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
+import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
 
@@ -41,13 +45,59 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     return ref.refresh(positionListProvider.future);
   }
 
+  /// Catat nilai pasar semua holding yang dinilai pasar ke histori bulan
+  /// ini, setelah konfirmasi.
+  Future<void> _recordMarketValues(List<AssetValueRecord> records) async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.recordMarketValuesTitle,
+      message: l10n.recordMarketValuesMessage(
+        records.length,
+        formatMonthYear(DateTime.now(), Localizations.localeOf(context)),
+      ),
+      confirmLabel: l10n.recordMarketValuesButton,
+    );
+    if (!confirmed || !mounted) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(updateAssetValueControllerProvider.notifier)
+          .recordMarketValues(records);
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.recordMarketValuesSuccess(records.length))),
+      );
+    } on Exception catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.updateAssetValueFailedMessage)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final assetsValue = ref.watch(positionListProvider);
+    final marketRecords = ref.watch(marketValueRecordsProvider);
+    final isSaving = ref.watch(updateAssetValueControllerProvider).isLoading;
     final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.portfolioTitle)),
+      appBar: AppBar(
+        title: Text(l10n.portfolioTitle),
+        actions: [
+          if (marketRecords.isNotEmpty)
+            IconButton(
+              onPressed: isSaving
+                  ? null
+                  : () => _recordMarketValues(marketRecords),
+              tooltip: l10n.recordMarketValuesTooltip,
+              icon: const Icon(Icons.price_check),
+            ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'portfolio_update_value_fab',
         onPressed: () => context.push(RouteNames.portfolioUpdate),
