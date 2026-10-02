@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 class GoogleAuthService {
   static const List<String> scopes = <String>[
@@ -19,12 +23,17 @@ class GoogleAuthService {
       _signIn.authenticationEvents;
 
   Future<void> ensureInitialized() {
-    return _initialization ??= _signIn
-        .initialize(serverClientId: _serverClientId)
-        .catchError((Object error) {
-          _initialization = null;
-          throw error;
-        });
+    return _initialization ??= _initialize();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      await _signIn.initialize(serverClientId: _serverClientId);
+    } on Object {
+      // Boleh dicoba lagi pada panggilan berikutnya.
+      _initialization = null;
+      rethrow;
+    }
   }
 
   Future<GoogleSignInAccount> signIn() async {
@@ -63,20 +72,62 @@ class GoogleAuthService {
       return null;
     }
 
-    return _BearerTokenClient(authorization.accessToken);
+    return BearerTokenClient(authorization.accessToken);
   }
 }
 
-class _BearerTokenClient extends http.BaseClient {
-  _BearerTokenClient(this._accessToken);
+/// Klien HTTP yang menyisipkan token Drive dan membatasi waktu tunggu.
+///
+/// Tanpa batas waktu, koneksi yang menggantung membuat backup/restore tidak
+/// pernah selesai (`isBackingUp` tertahan true). [TimeoutException] yang
+/// dilempar di sini dianggap gangguan jaringan sesaat oleh
+/// `isTransientNetworkError`, jadi tetap dicoba ulang sekali.
+class BearerTokenClient extends http.BaseClient {
+  BearerTokenClient(
+    this._accessToken, {
+    http.Client? inner,
+    this.responseTimeout = const Duration(seconds: 30),
+    this.uploadResponseTimeout = const Duration(minutes: 2),
+    this.idleTimeout = const Duration(seconds: 30),
+  }) : _inner = inner ?? _defaultClient();
+
+  static const Duration _connectionTimeout = Duration(seconds: 30);
 
   final String _accessToken;
-  final http.Client _inner = http.Client();
+  final http.Client _inner;
+
+  /// Batas menunggu header respons untuk request biasa.
+  final Duration responseTimeout;
+
+  /// Batas menunggu header respons untuk upload: isi file dikirim dulu
+  /// sebelum respons datang, jadi butuh rentang lebih panjang.
+  final Duration uploadResponseTimeout;
+
+  /// Batas jeda antar potongan data saat body respons (mis. download backup)
+  /// dialirkan. Berbasis jeda, bukan total, supaya file besar di koneksi
+  /// lambat tetap bisa selesai selama datanya terus mengalir.
+  final Duration idleTimeout;
+
+  static http.Client _defaultClient() =>
+      IOClient(HttpClient()..connectionTimeout = _connectionTimeout);
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
     request.headers['Authorization'] = 'Bearer $_accessToken';
-    return _inner.send(request);
+    final isUpload = request.url.path.startsWith('/upload/');
+    final response = await _inner
+        .send(request)
+        .timeout(isUpload ? uploadResponseTimeout : responseTimeout);
+    return http.StreamedResponse(
+      response.stream.timeout(idleTimeout),
+      response.statusCode,
+      contentLength: response.contentLength,
+      request: response.request,
+      headers: response.headers,
+      isRedirect: response.isRedirect,
+      persistentConnection: response.persistentConnection,
+      reasonPhrase: response.reasonPhrase,
+    );
   }
 
   @override

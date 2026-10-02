@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_wasilah_app/core/database/database_file_recovery.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
@@ -210,6 +211,7 @@ Future<File> resolveDatabaseFile() async {
 QueryExecutor openConnection() {
   return LazyDatabase(() async {
     final file = await resolveDatabaseFile();
+    await recoverInterruptedRestore(file);
     final tempDirectory = await getTemporaryDirectory();
     sqlite3.sqlite3.tempDirectory = tempDirectory.path;
     return NativeDatabase.createInBackground(file);

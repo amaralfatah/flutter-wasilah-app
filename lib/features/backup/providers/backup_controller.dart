@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
+import 'package:flutter_wasilah_app/core/database/database_file_recovery.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/errors/error_reporter.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
@@ -117,7 +118,7 @@ class BackupController extends Notifier<BackupState> {
     final authService = ref.read(googleAuthServiceProvider);
     try {
       await authService.ensureInitialized();
-    } catch (error) {
+    } on Object catch (error) {
       // Diam: Google Sign-In tidak tersedia (mis. tanpa Play Services),
       // tetap tampil sebagai belum terhubung.
       if (kDebugMode) {
@@ -156,7 +157,7 @@ class BackupController extends Notifier<BackupState> {
         connectionStatus: BackupConnectionStatus.disconnected,
         clearAccountEmail: true,
       );
-      unawaited(preferences.writeBackupConnected(false));
+      unawaited(preferences.writeBackupConnected(connected: false));
       unawaited(preferences.writeBackupAccountEmail(null));
       return;
     }
@@ -164,7 +165,7 @@ class BackupController extends Notifier<BackupState> {
       connectionStatus: BackupConnectionStatus.connected,
       accountEmail: account.email,
     );
-    unawaited(preferences.writeBackupConnected(true));
+    unawaited(preferences.writeBackupConnected(connected: true));
     unawaited(preferences.writeBackupAccountEmail(account.email));
   }
 
@@ -178,8 +179,8 @@ class BackupController extends Notifier<BackupState> {
       final account = await authService.signIn();
       _account = account;
       final preferences = ref.read(preferencesServiceProvider);
-      await preferences.writeAutoBackupEnabled(true);
-      await preferences.writeBackupConnected(true);
+      await preferences.writeAutoBackupEnabled(enabled: true);
+      await preferences.writeBackupConnected(connected: true);
       await preferences.writeBackupAccountEmail(account.email);
       state = state.copyWith(
         connectionStatus: BackupConnectionStatus.connected,
@@ -206,20 +207,33 @@ class BackupController extends Notifier<BackupState> {
       return;
     }
     final authService = ref.read(googleAuthServiceProvider);
-    await authService.disconnect();
-    _account = null;
-    _lastAutoBackupAttemptAt = null;
-    final preferences = ref.read(preferencesServiceProvider);
-    await preferences.writeBackupConnected(false);
-    await preferences.writeBackupAccountEmail(null);
-    state = state.copyWith(
-      connectionStatus: BackupConnectionStatus.disconnected,
-      clearAccountEmail: true,
-    );
+    try {
+      await authService.disconnect();
+    } on Object catch (error, stackTrace) {
+      // Mis. offline: grant di sisi Google mungkin masih ada, tapi di app ini
+      // akun tetap diputus supaya UI tidak tertahan di status terhubung.
+      // Kegagalan sisi Google hanya dilaporkan, tidak ditampilkan sebagai
+      // error backup.
+      _report(error, stackTrace, reason: 'Google disconnect failed');
+    } finally {
+      _account = null;
+      _lastAutoBackupAttemptAt = null;
+      final preferences = ref.read(preferencesServiceProvider);
+      await preferences.writeBackupConnected(connected: false);
+      await preferences.writeBackupAccountEmail(null);
+      state = state.copyWith(
+        connectionStatus: BackupConnectionStatus.disconnected,
+        clearAccountEmail: true,
+      );
+    }
   }
 
+  // Dipakai langsung sebagai `onChanged` Switch (ValueChanged<bool>).
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setAutoBackupEnabled(bool enabled) async {
-    await ref.read(preferencesServiceProvider).writeAutoBackupEnabled(enabled);
+    await ref
+        .read(preferencesServiceProvider)
+        .writeAutoBackupEnabled(enabled: enabled);
     state = state.copyWith(autoBackupEnabled: enabled);
   }
 
@@ -366,48 +380,101 @@ class BackupController extends Notifier<BackupState> {
       throw const OutdatedBackupVersionException();
     }
 
-    await ref.read(appDatabaseProvider).close();
-
     final currentDbFile = await resolveDatabaseFile();
-    final safetyCopy = File('${currentDbFile.path}.bak');
-    if (currentDbFile.existsSync()) {
-      if (safetyCopy.existsSync()) {
-        await safetyCopy.delete();
-      }
-      await currentDbFile.rename(safetyCopy.path);
-    }
-
-    try {
-      await downloadFile.rename(currentDbFile.path);
-    } catch (_) {
-      if (safetyCopy.existsSync()) {
-        await safetyCopy.rename(currentDbFile.path);
-      }
-      rethrow;
-    }
-
-    ref.invalidate(appDatabaseProvider);
-
-    // Buka database baru dan paksa migrasi jalan sekarang, bukan lazy pada
-    // baca UI pertama, supaya restore yang rusak ketahuan sebelum safety
-    // copy dibuang.
-    try {
-      await ref
-          .read(appDatabaseProvider)
-          .customSelect('PRAGMA user_version')
-          .get();
-    } catch (_) {
-      await ref.read(appDatabaseProvider).close();
-      await currentDbFile.delete();
-      if (safetyCopy.existsSync()) {
-        await safetyCopy.rename(currentDbFile.path);
-      }
-      ref.invalidate(appDatabaseProvider);
-      throw const RestoreVerificationFailedException();
-    }
-
+    final safetyCopy = databaseSafetyCopyFile(currentDbFile);
+    // Salinan pengaman sisa restore sebelumnya dibuang sebelum penanda
+    // ditulis: selama penanda ada, `.bak` harus berasal dari restore ini.
     if (safetyCopy.existsSync()) {
       await safetyCopy.delete();
+    }
+
+    await ref.read(appDatabaseProvider).close();
+
+    var movedAside = false;
+    var movedIn = false;
+    var committed = false;
+    try {
+      // Penanda tahan crash: kalau proses mati sebelum verifikasi selesai,
+      // pembukaan database berikutnya mengembalikan salinan pengaman (lihat
+      // [recoverInterruptedRestore]).
+      await beginRestoreSwap(currentDbFile);
+      if (currentDbFile.existsSync()) {
+        await currentDbFile.rename(safetyCopy.path);
+        movedAside = true;
+      }
+      await downloadFile.rename(currentDbFile.path);
+      movedIn = true;
+
+      ref.invalidate(appDatabaseProvider);
+
+      // Buka database baru dan paksa migrasi jalan sekarang, bukan lazy pada
+      // baca UI pertama, supaya restore yang rusak ketahuan sebelum safety
+      // copy dibuang.
+      try {
+        await ref
+            .read(appDatabaseProvider)
+            .customSelect('PRAGMA user_version')
+            .get();
+      } on Object {
+        throw const RestoreVerificationFailedException();
+      }
+      committed = true;
+    } finally {
+      try {
+        var settled = committed;
+        if (!committed) {
+          try {
+            await _rollBackRestore(
+              currentDbFile: currentDbFile,
+              safetyCopy: safetyCopy,
+              movedAside: movedAside,
+              movedIn: movedIn,
+            );
+            settled = true;
+          } on Object catch (error, stackTrace) {
+            // Error asli restore tetap yang dilempar. Penanda dibiarkan:
+            // pemulihan diulang saat database dibuka di launch berikutnya.
+            _report(error, stackTrace, reason: 'Restore rollback failed');
+          }
+        }
+        if (settled) {
+          // Titik commit: setelah penanda hilang, isi file database dianggap
+          // sah.
+          await endRestoreSwap(currentDbFile);
+        }
+        if (committed && safetyCopy.existsSync()) {
+          await safetyCopy.delete();
+        }
+      } finally {
+        if (downloadFile.existsSync()) {
+          await downloadFile.delete();
+        }
+        // Apa pun yang terjadi, database yang tadi ditutup tidak boleh
+        // tertinggal di provider: app akan macet tanpa koneksi.
+        ref.invalidate(appDatabaseProvider);
+      }
+    }
+  }
+
+  /// Kembalikan database lama setelah restore gagal.
+  Future<void> _rollBackRestore({
+    required File currentDbFile,
+    required File safetyCopy,
+    required bool movedAside,
+    required bool movedIn,
+  }) async {
+    if (movedIn) {
+      try {
+        await ref.read(appDatabaseProvider).close();
+      } on Object {
+        // Database hasil restore mungkin memang gagal dibuka.
+      }
+      if (currentDbFile.existsSync()) {
+        await currentDbFile.delete();
+      }
+    }
+    if (movedAside) {
+      await safetyCopy.rename(currentDbFile.path);
     }
   }
 

@@ -67,8 +67,21 @@ class DriveBackupService {
             as drive.Media;
 
     final sink = destination.openWrite();
-    await media.stream.pipe(sink);
-    await sink.close();
+    try {
+      await media.stream.pipe(sink);
+    } on Object {
+      // `pipe` tidak menutup sink saat stream error. Tutup dan buang file
+      // setengah jadi supaya tidak menumpuk di direktori temp.
+      try {
+        await sink.close();
+      } on Object {
+        // Error asli download yang dilaporkan.
+      }
+      if (destination.existsSync()) {
+        await destination.delete();
+      }
+      rethrow;
+    }
 
     return destination;
   }

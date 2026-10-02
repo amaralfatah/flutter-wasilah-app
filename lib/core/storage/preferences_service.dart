@@ -13,11 +13,11 @@ abstract interface class PreferencesService {
 
   bool readAutoBackupEnabled();
 
-  Future<void> writeAutoBackupEnabled(bool enabled);
+  Future<void> writeAutoBackupEnabled({required bool enabled});
 
   bool readBackupConnected();
 
-  Future<void> writeBackupConnected(bool connected);
+  Future<void> writeBackupConnected({required bool connected});
 
   String? readBackupAccountEmail();
 
@@ -78,7 +78,7 @@ class SharedPreferencesService implements PreferencesService {
   }
 
   @override
-  Future<void> writeAutoBackupEnabled(bool enabled) {
+  Future<void> writeAutoBackupEnabled({required bool enabled}) {
     return _preferences.setBool(_autoBackupEnabledKey, enabled);
   }
 
@@ -88,7 +88,7 @@ class SharedPreferencesService implements PreferencesService {
   }
 
   @override
-  Future<void> writeBackupConnected(bool connected) {
+  Future<void> writeBackupConnected({required bool connected}) {
     return _preferences.setBool(_backupConnectedKey, connected);
   }
 

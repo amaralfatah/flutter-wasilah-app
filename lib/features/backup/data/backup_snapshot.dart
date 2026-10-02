@@ -38,7 +38,7 @@ class BackupSnapshotService {
       );
       final result = database.select('PRAGMA integrity_check');
       return result.isNotEmpty && result.first.values.first == 'ok';
-    } catch (_) {
+    } on Object {
       return false;
     } finally {
       database?.dispose();
@@ -56,7 +56,7 @@ class BackupSnapshotService {
       );
       final result = database.select('PRAGMA user_version');
       return result.first.values.first as int?;
-    } catch (_) {
+    } on Object {
       return null;
     } finally {
       database?.dispose();

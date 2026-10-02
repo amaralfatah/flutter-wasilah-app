@@ -25,7 +25,7 @@ void main() {
       final backupTime = DateTime(2026, 7, 18, 9, 30);
 
       await preferences.writeLastBackupAt(backupTime);
-      await preferences.writeAutoBackupEnabled(false);
+      await preferences.writeAutoBackupEnabled(enabled: false);
 
       expect(preferences.readLastBackupAt(), backupTime);
       expect(preferences.readAutoBackupEnabled(), isFalse);
@@ -38,10 +38,10 @@ void main() {
           await SharedPreferences.getInstance(),
         );
 
-        await preferences.writeBackupConnected(true);
+        await preferences.writeBackupConnected(connected: true);
         expect(preferences.readBackupConnected(), isTrue);
 
-        await preferences.writeBackupConnected(false);
+        await preferences.writeBackupConnected(connected: false);
         expect(preferences.readBackupConnected(), isFalse);
       },
     );
