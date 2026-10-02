@@ -1,12 +1,19 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_wasilah_app/core/database/app_database.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/errors/error_reporter.dart';
 import 'package:flutter_wasilah_app/core/storage/preferences_service.dart';
+import 'package:flutter_wasilah_app/features/backup/data/backup_snapshot.dart';
 import 'package:flutter_wasilah_app/features/backup/data/google_auth_service.dart';
 import 'package:flutter_wasilah_app/features/backup/providers/backup_controller.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -25,6 +32,15 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(preferences),
           googleAuthServiceProvider.overrideWithValue(_FakeAuth(authorize)),
           errorReporterProvider.overrideWithValue(reporter),
+          backupSnapshotServiceProvider.overrideWithValue(
+            const _FakeSnapshotService(),
+          ),
+          appDatabaseProvider.overrideWith((ref) {
+            final database = AppDatabase.forTesting(NativeDatabase.memory());
+            ref.onDispose(database.close);
+            return database;
+          }),
+          backupRetryDelayProvider.overrideWithValue(Duration.zero),
         ],
       );
       addTearDown(container.dispose);
@@ -44,14 +60,79 @@ void main() {
       expect(reporter.reasons, ['Auto backup failed']);
     });
 
-    test('missing Drive authorization is shown but not reported', () async {
+    test('missing Drive authorization is shown and reported apart', () async {
       final (container, reporter) = await createContainer(() async => null);
 
       await container.read(backupControllerProvider.notifier).maybeAutoBackup();
 
       final state = container.read(backupControllerProvider);
       expect(state.error, isA<GoogleAuthorizationRequiredException>());
+      expect(reporter.reasons, ['Drive authorization required']);
+    });
+
+    test('a failed cleanup after upload still counts as backed up', () async {
+      final (container, reporter) = await createContainer(
+        () async => MockClient((request) async {
+          if (request.url.path.startsWith('/upload/')) {
+            return _uploadedResponse();
+          }
+          return http.Response('boom', 500);
+        }),
+      );
+
+      await container.read(backupControllerProvider.notifier).maybeAutoBackup();
+
+      final state = container.read(backupControllerProvider);
+      expect(state.isBackingUp, isFalse);
+      expect(state.error, isNull);
+      expect(state.lastBackupAt, isNotNull);
+      expect(reporter.reasons, ['Backup cleanup failed']);
+    });
+
+    test('a transient network failure is retried once', () async {
+      var uploads = 0;
+      final (container, reporter) = await createContainer(
+        () async => MockClient((request) async {
+          if (request.url.path.startsWith('/upload/')) {
+            uploads++;
+            if (uploads == 1) {
+              throw http.ClientException('connection reset');
+            }
+            return _uploadedResponse();
+          }
+          return http.Response(
+            jsonEncode({'files': <Object>[]}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
+
+      await container.read(backupControllerProvider.notifier).maybeAutoBackup();
+
+      final state = container.read(backupControllerProvider);
+      expect(uploads, 2);
+      expect(state.error, isNull);
+      expect(state.lastBackupAt, isNotNull);
       expect(reporter.reasons, isEmpty);
+    });
+  });
+
+  group('isTransientNetworkError', () {
+    test('accepts connection and timeout errors', () {
+      expect(isTransientNetworkError(const SocketException('x')), isTrue);
+      expect(isTransientNetworkError(http.ClientException('x')), isTrue);
+    });
+
+    test('rejects auth and logic errors', () {
+      expect(
+        isTransientNetworkError(const GoogleAuthorizationRequiredException()),
+        isFalse,
+      );
+      expect(
+        isTransientNetworkError(const InvalidSnapshotException()),
+        isFalse,
+      );
     });
   });
 
@@ -191,4 +272,28 @@ class _RecordingReporter extends ErrorReporter {
   void report(Object error, StackTrace stackTrace, {required String reason}) {
     reasons.add(reason);
   }
+}
+
+http.Response _uploadedResponse() => http.Response(
+  jsonEncode({
+    'id': 'new',
+    'name': 'backup.sqlite',
+    'createdTime': '2026-10-02T00:00:00Z',
+    'size': '4',
+  }),
+  200,
+  headers: {'content-type': 'application/json'},
+);
+
+class _FakeSnapshotService extends BackupSnapshotService {
+  const _FakeSnapshotService();
+
+  @override
+  Future<File> createSnapshot(AppDatabase database) async {
+    final directory = Directory.systemTemp.createTempSync('wasilah_test_');
+    return File('${directory.path}/backup.sqlite')..writeAsStringSync('data');
+  }
+
+  @override
+  bool isValidSqliteFile(File file) => true;
 }

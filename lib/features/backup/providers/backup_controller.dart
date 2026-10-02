@@ -186,13 +186,17 @@ class BackupController extends Notifier<BackupState> {
         accountEmail: account.email,
         autoBackupEnabled: true,
       );
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('Google sign-in connect failed: $error');
+    } on Object catch (error, stackTrace) {
+      // User menutup sendiri dialog akun: bukan kegagalan.
+      final canceled =
+          error is GoogleSignInException &&
+          error.code == GoogleSignInExceptionCode.canceled;
+      if (!canceled) {
+        _report(error, stackTrace, reason: 'Google connect failed');
       }
       state = state.copyWith(
         connectionStatus: BackupConnectionStatus.disconnected,
-        error: const GoogleConnectFailedException(),
+        error: canceled ? null : const GoogleConnectFailedException(),
       );
     }
   }
@@ -225,13 +229,11 @@ class BackupController extends Notifier<BackupState> {
     }
     state = state.copyWith(isBackingUp: true, clearError: true);
     try {
-      await _performBackup(promptIfNecessary: true);
+      await _performBackupWithRetry(promptIfNecessary: true);
       state = state.copyWith(isBackingUp: false);
     } on Object catch (error, stackTrace) {
       final isAuthError = _isAuthError(error);
-      if (!isAuthError) {
-        _report(error, stackTrace, reason: 'Manual backup failed');
-      }
+      _reportBackupFailure(error, stackTrace, reason: 'Manual backup failed');
       state = state.copyWith(
         isBackingUp: false,
         error: isAuthError ? error : const BackupFailedException(),
@@ -245,6 +247,25 @@ class BackupController extends Notifier<BackupState> {
 
   void _report(Object error, StackTrace stackTrace, {required String reason}) {
     ref.read(errorReporterProvider).report(error, stackTrace, reason: reason);
+  }
+
+  /// Belum terhubung adalah keadaan normal, tidak dilaporkan. Otorisasi Drive
+  /// yang hilang dilaporkan terpisah supaya bisa dibedakan dari error lain.
+  void _reportBackupFailure(
+    Object error,
+    StackTrace stackTrace, {
+    required String reason,
+  }) {
+    if (error is GoogleNotConnectedException) {
+      return;
+    }
+    _report(
+      error,
+      stackTrace,
+      reason: error is GoogleAuthorizationRequiredException
+          ? 'Drive authorization required'
+          : reason,
+    );
   }
 
   Future<void> maybeAutoBackup() async {
@@ -265,14 +286,12 @@ class BackupController extends Notifier<BackupState> {
     _lastAutoBackupAttemptAt = now;
     state = state.copyWith(isBackingUp: true);
     try {
-      await _performBackup(promptIfNecessary: false);
+      await _performBackupWithRetry(promptIfNecessary: false);
       state = state.copyWith(isBackingUp: false);
     } on Object catch (error, stackTrace) {
       // Dicoba lagi otomatis pada resume/launch berikutnya, tapi tetap
       // ditampilkan di pengaturan supaya kegagalan beruntun tidak luput.
-      if (!_isAuthError(error)) {
-        _report(error, stackTrace, reason: 'Auto backup failed');
-      }
+      _reportBackupFailure(error, stackTrace, reason: 'Auto backup failed');
       state = state.copyWith(
         isBackingUp: false,
         error: _isAuthError(error) ? error : const AutoBackupFailedException(),
@@ -414,6 +433,25 @@ class BackupController extends Notifier<BackupState> {
     );
   }
 
+  /// Satu kali coba ulang untuk gangguan jaringan sesaat, mis. koneksi belum
+  /// siap tepat setelah app resume. Kalau upload pertama sebenarnya sampai
+  /// tapi responsnya hilang, percobaan ulang menghasilkan backup ganda —
+  /// tidak masalah, kelebihannya dipangkas
+  /// [DriveBackupService.pruneOldBackups].
+  Future<void> _performBackupWithRetry({
+    required bool promptIfNecessary,
+  }) async {
+    try {
+      await _performBackup(promptIfNecessary: promptIfNecessary);
+    } on Object catch (error) {
+      if (!isTransientNetworkError(error)) {
+        rethrow;
+      }
+      await Future<void>.delayed(ref.read(backupRetryDelayProvider));
+      await _performBackup(promptIfNecessary: promptIfNecessary);
+    }
+  }
+
   Future<void> _performBackup({required bool promptIfNecessary}) async {
     final authorized = await _authorizedDriveService(
       promptIfNecessary: promptIfNecessary,
@@ -421,24 +459,55 @@ class BackupController extends Notifier<BackupState> {
     final snapshotService = ref.read(backupSnapshotServiceProvider);
     final database = ref.read(appDatabaseProvider);
 
-    final snapshotFile = await snapshotService.createSnapshot(database);
     try {
-      if (!snapshotService.isValidSqliteFile(snapshotFile)) {
-        throw const InvalidSnapshotException();
+      final snapshotFile = await snapshotService.createSnapshot(database);
+      try {
+        if (!snapshotService.isValidSqliteFile(snapshotFile)) {
+          throw const InvalidSnapshotException();
+        }
+        await authorized.service.upload(snapshotFile);
+      } finally {
+        if (snapshotFile.existsSync()) {
+          await snapshotFile.delete();
+        }
       }
-      await authorized.service.upload(snapshotFile);
-      await authorized.service.pruneOldBackups();
+
+      // Backup sudah aman di Drive begitu upload selesai: catat sekarang,
+      // sebelum pemangkasan, supaya gagal pangkas tidak membuat backup yang
+      // sebenarnya berhasil tercatat gagal.
+      final now = DateTime.now();
+      await ref.read(preferencesServiceProvider).writeLastBackupAt(now);
+      state = state.copyWith(lastBackupAt: now, clearError: true);
+
+      try {
+        await authorized.service.pruneOldBackups();
+      } on Object catch (error, stackTrace) {
+        // Dicoba lagi pada backup berikutnya.
+        _report(error, stackTrace, reason: 'Backup cleanup failed');
+      }
     } finally {
       authorized.client.close();
-      if (snapshotFile.existsSync()) {
-        await snapshotFile.delete();
-      }
     }
-
-    final now = DateTime.now();
-    await ref.read(preferencesServiceProvider).writeLastBackupAt(now);
-    state = state.copyWith(lastBackupAt: now, clearError: true);
   }
+}
+
+final backupRetryDelayProvider = Provider<Duration>(
+  (ref) => const Duration(seconds: 5),
+);
+
+/// Error jaringan yang layak dicoba ulang: koneksi putus/timeout, atau Drive
+/// sedang sibuk (5xx, 429).
+bool isTransientNetworkError(Object error) {
+  if (error is IOException ||
+      error is http.ClientException ||
+      error is TimeoutException) {
+    return true;
+  }
+  if (error is drive.DetailedApiRequestError) {
+    final status = error.status;
+    return status == null || status == 429 || status >= 500;
+  }
+  return false;
 }
 
 /// Auto-backup hanya jalan saat app dibuka; lewat dari rentang ini berarti
