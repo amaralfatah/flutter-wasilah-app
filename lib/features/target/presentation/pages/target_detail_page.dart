@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
@@ -102,7 +102,9 @@ class TargetDetailPage extends ConsumerWidget {
                       horizontal: AppSpacing.xl,
                     ),
                     child: SectionHeader(
-                      title: l10n.assetsInCategoryTitle(item.category.label),
+                      title: l10n.assetsInCategoryTitle(
+                        item.category.localizedLabel(l10n),
+                      ),
                       onInfoTap: () => _showToleranceInfo(context, item),
                     ),
                   ),

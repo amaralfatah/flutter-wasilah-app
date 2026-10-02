@@ -24,45 +24,66 @@ class RestorePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final backupsAsync = ref.watch(_backupListProvider);
+    final isRestoring = ref.watch(
+      backupControllerProvider.select((state) => state.isRestoring),
+    );
+    // Backup/restore lain yang sedang jalan juga mengunci daftar, supaya tap
+    // kedua tidak berujung RestoreInProgressException.
+    final isBusy = ref.watch(
+      backupControllerProvider.select((state) => state.isBusy),
+    );
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.restoreTitle)),
-      body: SafeArea(
-        child: backupsAsync.when(
-          loading: () => const AppLoading(),
-          error: (error, stackTrace) => AppErrorView(
-            title: l10n.backupListLoadFailedTitle,
-            onRetry: () => ref.invalidate(_backupListProvider),
-          ),
-          data: (backups) {
-            if (backups.isEmpty) {
-              return AppEmptyState(
-                title: l10n.emptyBackupTitle,
-                message: l10n.emptyBackupMessage,
-                icon: Icons.cloud_off_outlined,
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              itemCount: backups.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final backup = backups[index];
-                return ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(
-                    formatFullDateTime(
-                      backup.createdAt,
-                      Localizations.localeOf(context),
-                    ),
+    return PopScope(
+      // Jangan tinggalkan halaman di tengah unduh & penggantian database.
+      canPop: !isRestoring,
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.restoreTitle)),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: backupsAsync.when(
+                  loading: () => const AppLoading(),
+                  error: (error, stackTrace) => AppErrorView(
+                    title: l10n.backupListLoadFailedTitle,
+                    onRetry: () => ref.invalidate(_backupListProvider),
                   ),
-                  subtitle: Text(_formatFileSize(backup.sizeBytes)),
-                  onTap: () => _confirmRestore(context, ref, backup),
-                );
-              },
-            );
-          },
+                  data: (backups) {
+                    if (backups.isEmpty) {
+                      return AppEmptyState(
+                        title: l10n.emptyBackupTitle,
+                        message: l10n.emptyBackupMessage,
+                        icon: Icons.cloud_off_outlined,
+                      );
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      itemCount: backups.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppSpacing.sm),
+                      itemBuilder: (context, index) {
+                        final backup = backups[index];
+                        return ListTile(
+                          enabled: !isBusy,
+                          leading: const Icon(Icons.description_outlined),
+                          title: Text(
+                            formatFullDateTime(
+                              backup.createdAt,
+                              Localizations.localeOf(context),
+                            ),
+                          ),
+                          subtitle: Text(_formatFileSize(backup.sizeBytes)),
+                          onTap: () => _confirmRestore(context, ref, backup),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              if (isRestoring) const _RestoringOverlay(),
+            ],
+          ),
         ),
       ),
     );
@@ -102,13 +123,13 @@ class RestorePage extends ConsumerWidget {
           InvalidBackupFileException() => l10n.invalidBackupFileMessage,
           IncompatibleBackupVersionException() =>
             l10n.incompatibleBackupVersionMessage,
-          OutdatedBackupVersionException() =>
-            l10n.outdatedBackupVersionMessage,
+          OutdatedBackupVersionException() => l10n.outdatedBackupVersionMessage,
           RestoreVerificationFailedException() =>
             l10n.restoreVerificationFailedMessage,
           GoogleNotConnectedException() => l10n.googleNotConnectedMessage,
           GoogleAuthorizationRequiredException() =>
             l10n.googleAuthorizationRequiredMessage,
+          RestoreInProgressException() => l10n.restoreInProgressMessage,
           _ => l10n.restoreFailedMessage,
         };
         ScaffoldMessenger.of(
@@ -116,6 +137,43 @@ class RestorePage extends ConsumerWidget {
         ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
+  }
+}
+
+/// Penghalang modal selama restore: unduh backup lalu penggantian file
+/// database bisa makan waktu, dan app tak boleh disentuh di tengahnya.
+class _RestoringOverlay extends StatelessWidget {
+  const _RestoringOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: colorScheme.scrim.withValues(alpha: 0.32),
+          ),
+          Center(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(context.l10n.restoringMessage),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

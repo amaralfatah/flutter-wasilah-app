@@ -3,30 +3,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/decimal_input_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/rupiah_input_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/market_valuation.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/value_as_of.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/autofill_button.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/currency_picker.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/money_field.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/recorded_date_field.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/update_type_selector.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/value_preview_card.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 
-enum AssetValueUpdateType {
-  /// Penyesuaian total nilai aset (menimpa nilai lama).
-  override,
-
-  /// Penambahan ke nilai aset saat ini.
-  increment,
-}
+export 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/update_type_selector.dart'
+    show AssetValueUpdateType;
 
 class UpdateAssetValuePage extends ConsumerStatefulWidget {
   const UpdateAssetValuePage({super.key, this.assetId});
@@ -39,8 +37,6 @@ class UpdateAssetValuePage extends ConsumerStatefulWidget {
 }
 
 class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
-  static const _currencies = ['IDR', 'USD'];
-
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final _avgBuyPriceController = TextEditingController();
@@ -70,12 +66,22 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   bool _costAutofillOffered = false;
   bool _valueAutofillOffered = false;
 
+  /// Pengguna sendiri mengosongkan jumlah unit / harga beli yang sebelumnya
+  /// terisi; saat simpan, nilai tersimpan ikut dikosongkan (bukan
+  /// dipertahankan).
+  bool _quantityClearedByUser = false;
+  bool _avgBuyPriceClearedByUser = false;
+
   /// Mata uang harga pasar aset terpilih (mis. `USD` untuk BTC-USD).
   String? _marketQuoteCurrency;
 
   /// Nilai pasar (IDR) dari jumlah unit × harga terkini; dipakai otomatis
   /// bila field nilai kosong.
   double? _marketValue;
+
+  /// Nilai kas per tanggal catat, dasar mode tambah; `null` selama histori
+  /// dimuat atau bukan mode tambah.
+  double? _incrementBase;
   AssetValueUpdateType _updateType = AssetValueUpdateType.override;
 
   @override
@@ -100,10 +106,22 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   @override
   Widget build(BuildContext context) {
     final assetsValue = ref.watch(assetOverviewProvider);
-    final submitState = ref.watch(updateAssetValueControllerProvider);
+    final isLoading = ref.watch(updateAssetValueControllerProvider).isLoading;
     final usdRate = ref.watch(fxRateToIdrProvider('USD'));
     _marketUsdRate = usdRate.valueOrNull;
     final l10n = context.l10n;
+
+    // Semua `ref.watch` (quote pasar, kurs, histori) dilakukan di sini, bukan
+    // di builder AsyncValueView: watch di builder anak membuat langganan
+    // provider autoDispose dibongkar-pasang setiap ketikan.
+    final selectedAsset = switch (assetsValue.valueOrNull) {
+      final assets? => _findSelectedAsset(assets),
+      null => null,
+    };
+    _prefillHolding(selectedAsset);
+    _prefillMoney(selectedAsset);
+    _marketValue = _watchMarketValue(selectedAsset);
+    _incrementBase = _watchIncrementBase(selectedAsset);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.updateAssetValueTitle)),
@@ -111,337 +129,247 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         child: AsyncValueView(
           value: assetsValue,
           onRetry: () => ref.invalidate(assetOverviewProvider),
-          data: (assets) {
-            final selectedAsset = _findSelectedAsset(assets);
-            _prefillHolding(selectedAsset);
-            _prefillMoney(selectedAsset);
-            _marketValue = _watchMarketValue(selectedAsset);
-
-            // Opsi tambah/timpa hanya untuk kas; aset lain selalu timpa.
-            final allowIncrement = _allowsIncrement(selectedAsset);
-            final isOverride =
-                _resolveUpdateType(selectedAsset) ==
-                AssetValueUpdateType.override;
-            // Kas cukup satu input (nilai); unit, harga beli, dan modal
-            // tak relevan.
-            final showHoldingFields = !allowIncrement;
-            final isLoading = submitState.isLoading;
-
-            final previousValue = selectedAsset?.currentValue ?? 0;
-            final inputValue = _moneyIdr(_valueController, _valueCurrency);
-            final latestValue =
-                _resolveTotalValue(selectedAsset) ?? previousValue;
-            final previousCost = selectedAsset?.totalCost;
-            final latestCost = showHoldingFields
-                ? _resolveTotalCost(selectedAsset) ?? previousCost
-                : null;
-
-            return Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                children: [
-                  DropdownButtonFormField<String>(
-                    key: ValueKey(_selectedAssetId),
-                    initialValue: _selectedAssetId,
-                    decoration: InputDecoration(
-                      labelText: l10n.assetDropdownLabel,
-                    ),
-                    items: assets
-                        .map(
-                          (asset) => DropdownMenuItem<String>(
-                            value: asset.id,
-                            child: Text(asset.name),
-                          ),
-                        )
-                        .toList(),
-                    validator: validateSelectedAsset,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedAssetId = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  if (allowIncrement) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<AssetValueUpdateType>(
-                        showSelectedIcon: false,
-                        segments: [
-                          ButtonSegment<AssetValueUpdateType>(
-                            value: AssetValueUpdateType.override,
-                            label: Text(l10n.updateTypeOverride),
-                            icon: const Icon(Icons.edit_outlined),
-                          ),
-                          ButtonSegment<AssetValueUpdateType>(
-                            value: AssetValueUpdateType.increment,
-                            label: Text(l10n.updateTypeIncrement),
-                            icon: const Icon(Icons.add_circle_outline),
-                          ),
-                        ],
-                        selected: {_updateType},
-                        onSelectionChanged: (newSelection) {
-                          setState(() {
-                            _updateType = newSelection.first;
-                            // Arti field nilai & modal ikut berganti (total
-                            // vs. penambahan), jadi isinya disiapkan ulang:
-                            // mode ubah diisi nilai existing, mode tambah
-                            // dikosongkan.
-                            _moneyPrefilledFor = null;
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-                  // Urutan mengikuti rantai hitung: unit × harga beli =
-                  // modal; unit × harga pasar = nilai. Cukup isi salah satu,
-                  // sisanya dihitung otomatis bila memungkinkan.
-                  if (showHoldingFields) ...[
-                    AppTextField(
-                      label: l10n.quantityLabel,
-                      controller: _quantityController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: const [DecimalInputFormatter()],
-                      validator: (_) => _validateAtLeastOne(selectedAsset),
-                      onChanged: (_) => setState(_offerAutofill),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppTextField(
-                      label: l10n.avgBuyPriceLabel,
-                      controller: _avgBuyPriceController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: const [DecimalInputFormatter()],
-                      validator: _validateDecimal,
-                      onChanged: (_) => setState(_offerAutofill),
-                      suffixIcon: _CurrencyPicker(
-                        value: _avgCurrency,
-                        onChanged: isLoading ? null : _switchAvgCurrency,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _moneyField(
-                      label: l10n.totalCostLabel,
-                      controller: _costController,
-                      currency: _costCurrency,
-                      helperText: _moneyHelper(
-                        _costController,
-                        _costCurrency,
-                        _moneyIdr(_costController, _costCurrency),
-                        _derivedCostIdr(selectedAsset),
-                      ),
-                      // Nilai tanpa harga pasar mengikuti modal.
-                      onEdited: () => _valueAutofillOffered = true,
-                      onCurrencyChanged: isLoading
-                          ? null
-                          : (currency) => setState(() {
-                              _switchMoneyCurrency(
-                                _costController,
-                                _costCurrency,
-                                currency,
-                              );
-                              _costCurrency = currency;
-                            }),
-                    ),
-                    if (_costAutofillOffered)
-                      _autofillButton(
-                        controller: _costController,
-                        currency: _costCurrency,
-                        idr: _derivedCostIdr(selectedAsset),
-                        onFilled: () {
-                          _costAutofillOffered = false;
-                          _valueAutofillOffered = true;
-                        },
-                        enabled: !isLoading,
-                      ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-                  _moneyField(
-                    label: !isOverride
-                        ? l10n.incrementValueFieldLabel
-                        : _tracksMarket(selectedAsset)
-                        ? l10n.totalValueOptionalFieldLabel
-                        : l10n.totalValueFieldLabel,
-                    controller: _valueController,
-                    currency: _valueCurrency,
-                    helperText:
-                        _marketValueHelper(selectedAsset) ??
-                        _moneyHelper(
-                          _valueController,
-                          _valueCurrency,
-                          inputValue,
-                          isOverride ? latestValue : null,
-                        ),
-                    validator: showHoldingFields
-                        ? (_) => _validateManualValue(selectedAsset)
-                        : (_) => _validateAtLeastOne(selectedAsset),
-                    onCurrencyChanged: isLoading
-                        ? null
-                        : (currency) => setState(() {
-                            _switchMoneyCurrency(
-                              _valueController,
-                              _valueCurrency,
-                              currency,
-                            );
-                            _valueCurrency = currency;
-                          }),
-                  ),
-                  if (showHoldingFields && _valueAutofillOffered)
-                    _autofillButton(
-                      controller: _valueController,
-                      currency: _valueCurrency,
-                      // Nilai pasar (unit × harga terkini) bila ada; tanpa
-                      // harga pasar nilai mengikuti modal.
-                      idr: _marketValue ?? _resolveTotalCost(selectedAsset),
-                      onFilled: () => _valueAutofillOffered = false,
-                      enabled: !isLoading,
-                    ),
-                  const SizedBox(height: AppSpacing.lg),
-                  if (_usesUsd) ...[
-                    AppTextField(
-                      label: l10n.fxRateFieldLabel('USD'),
-                      helperText: _rateHelper(),
-                      controller: _rateController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: const [
-                        DecimalInputFormatter(maxDecimals: 2),
-                      ],
-                      validator: _validateDecimal,
-                      // Nominal hasil prefill dihitung ulang dengan kurs
-                      // baru, bukan memakai nilai IDR lamanya.
-                      onChanged: (_) => setState(_exactIdr.clear),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-                  FormField<DateTime>(
-                    initialValue: _selectedDate,
-                    validator: validateSelectedDate,
-                    builder: (field) {
-                      final selectedDate = field.value;
-                      final hasValue = selectedDate != null;
-
-                      return InkWell(
-                        onTap: isLoading
-                            ? null
-                            : () => _selectDate(context, field),
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: l10n.commonRecordedAtLabel,
-                            errorText: field.errorText,
-                            suffixIcon: const Icon(
-                              Icons.calendar_today_outlined,
-                            ),
-                          ),
-                          child: Text(
-                            hasValue
-                                ? formatFullDate(
-                                    selectedDate,
-                                    Localizations.localeOf(context),
-                                  )
-                                : l10n.commonSelectDatePlaceholder,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: hasValue
-                                      ? null
-                                      : Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppTextField(
-                    label: l10n.noteFieldLabel,
-                    controller: _noteController,
-                    maxLines: 2,
-                    maxLength: 200,
-                    validator: validateNote,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.previewLabel,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        _PreviewRow(
-                          label: l10n.recordedValueLabel,
-                          value: formatCurrency(previousValue),
-                        ),
-                        if (!isOverride) ...[
-                          const SizedBox(height: AppSpacing.sm),
-                          _PreviewRow(
-                            label: l10n.addedValueLabel,
-                            value: '+ ${formatCurrency(inputValue ?? 0)}',
-                          ),
-                        ],
-                        const SizedBox(height: AppSpacing.sm),
-                        _PreviewRow(
-                          label: l10n.latestValueLabel,
-                          value: formatCurrency(latestValue),
-                        ),
-                        if (latestCost != null) ...[
-                          const Divider(height: AppSpacing.xl),
-                          _PreviewRow(
-                            label: l10n.currentCostLabel,
-                            value: previousCost == null
-                                ? '-'
-                                : formatCurrency(previousCost),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _PreviewRow(
-                            label: l10n.latestCostLabel,
-                            value: formatCurrency(latestCost),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          _PreviewRow(
-                            label: profitLossLabel(
-                              context,
-                              latestValue - latestCost,
-                            ),
-                            value: formatProfitLoss(
-                              latestValue - latestCost,
-                              cost: latestCost,
-                            ),
-                            valueColor: profitLossColorOf(
-                              context,
-                              latestValue - latestCost,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  AppPrimaryButton(
-                    label: l10n.commonSave,
-                    onPressed: isLoading ? null : () => _submit(selectedAsset),
-                    isLoading: isLoading,
-                  ),
-                ],
-              ),
-            );
-          },
+          data: (assets) => _buildForm(
+            context,
+            assets: assets,
+            selectedAsset: selectedAsset,
+            isLoading: isLoading,
+          ),
         ),
       ),
     );
   }
 
-  /// Field nominal (modal/nilai) dengan pilihan mata uang inline. IDR diisi
-  /// bilangan bulat berpemisah ribuan; mata uang lain boleh 2 desimal.
+  Widget _buildForm(
+    BuildContext context, {
+    required List<PortfolioPosition> assets,
+    required PortfolioPosition? selectedAsset,
+    required bool isLoading,
+  }) {
+    final l10n = context.l10n;
+
+    // Opsi tambah/timpa hanya untuk kas; aset lain selalu timpa.
+    final allowIncrement = _allowsIncrement(selectedAsset);
+    final isOverride =
+        _resolveUpdateType(selectedAsset) == AssetValueUpdateType.override;
+    // Kas cukup satu input (nilai); unit, harga beli, dan modal tak relevan.
+    final showHoldingFields = !allowIncrement;
+
+    // Mode tambah berpijak pada nilai per tanggal catat, bukan nilai
+    // terkini, supaya catatan mundur tidak memakai saldo hari ini.
+    final storedValue = selectedAsset?.currentValue ?? 0;
+    final previousValue = isOverride
+        ? storedValue
+        : _incrementBase ?? storedValue;
+    final inputValue = _moneyIdr(_valueController, _valueCurrency);
+    final latestValue = _resolveTotalValue(selectedAsset) ?? previousValue;
+    final previousCost = selectedAsset?.totalCost;
+    final latestCost = showHoldingFields
+        ? _resolveTotalCost(selectedAsset) ?? previousCost
+        : null;
+
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        children: [
+          DropdownButtonFormField<String>(
+            key: ValueKey(_selectedAssetId),
+            initialValue: _selectedAssetId,
+            decoration: InputDecoration(labelText: l10n.assetDropdownLabel),
+            items: assets
+                .map(
+                  (asset) => DropdownMenuItem<String>(
+                    value: asset.id,
+                    child: Text(asset.name),
+                  ),
+                )
+                .toList(),
+            validator: (value) => validateSelectedAsset(value, l10n),
+            onChanged: (value) {
+              setState(() {
+                _selectedAssetId = value;
+              });
+            },
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          if (allowIncrement) ...[
+            UpdateTypeSelector(
+              value: _updateType,
+              onChanged: (type) {
+                setState(() {
+                  _updateType = type;
+                  // Arti field nilai & modal ikut berganti (total vs.
+                  // penambahan), jadi isinya disiapkan ulang: mode ubah
+                  // diisi nilai existing, mode tambah dikosongkan.
+                  _moneyPrefilledFor = null;
+                });
+              },
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          // Urutan mengikuti rantai hitung: unit × harga beli = modal;
+          // unit × harga pasar = nilai. Cukup isi salah satu, sisanya
+          // dihitung otomatis bila memungkinkan.
+          if (showHoldingFields) ...[
+            AppTextField(
+              label: l10n.quantityLabel,
+              controller: _quantityController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: const [DecimalInputFormatter()],
+              validator: (_) => _validateAtLeastOne(selectedAsset),
+              onChanged: (text) => setState(() {
+                _quantityClearedByUser = text.trim().isEmpty;
+                _offerAutofill();
+              }),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              label: l10n.avgBuyPriceLabel,
+              controller: _avgBuyPriceController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: const [DecimalInputFormatter()],
+              validator: _validateDecimal,
+              onChanged: (text) => setState(() {
+                _avgBuyPriceClearedByUser = text.trim().isEmpty;
+                _offerAutofill();
+              }),
+              suffixIcon: CurrencyPicker(
+                value: _avgCurrency,
+                onChanged: isLoading ? null : _switchAvgCurrency,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _moneyField(
+              label: l10n.totalCostLabel,
+              controller: _costController,
+              currency: _costCurrency,
+              helperText: _moneyHelper(
+                _costController,
+                _costCurrency,
+                _moneyIdr(_costController, _costCurrency),
+                _derivedCostIdr(selectedAsset),
+              ),
+              // Nilai tanpa harga pasar mengikuti modal.
+              onEdited: () => _valueAutofillOffered = true,
+              onCurrencyChanged: isLoading
+                  ? null
+                  : (currency) => setState(() {
+                      _switchMoneyCurrency(
+                        _costController,
+                        _costCurrency,
+                        currency,
+                      );
+                      _costCurrency = currency;
+                    }),
+            ),
+            if (_costAutofillOffered)
+              _autofillButton(
+                controller: _costController,
+                currency: _costCurrency,
+                idr: _derivedCostIdr(selectedAsset),
+                onFilled: () {
+                  _costAutofillOffered = false;
+                  _valueAutofillOffered = true;
+                },
+                enabled: !isLoading,
+              ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          _moneyField(
+            label: !isOverride
+                ? l10n.incrementValueFieldLabel
+                : _tracksMarket(selectedAsset)
+                ? l10n.totalValueOptionalFieldLabel
+                : l10n.totalValueFieldLabel,
+            controller: _valueController,
+            currency: _valueCurrency,
+            helperText:
+                _marketValueHelper(selectedAsset) ??
+                _moneyHelper(
+                  _valueController,
+                  _valueCurrency,
+                  inputValue,
+                  isOverride ? latestValue : null,
+                ),
+            validator: showHoldingFields
+                ? (_) => _validateManualValue(selectedAsset)
+                : (_) => _validateAtLeastOne(selectedAsset),
+            onCurrencyChanged: isLoading
+                ? null
+                : (currency) => setState(() {
+                    _switchMoneyCurrency(
+                      _valueController,
+                      _valueCurrency,
+                      currency,
+                    );
+                    _valueCurrency = currency;
+                  }),
+          ),
+          if (showHoldingFields && _valueAutofillOffered)
+            _autofillButton(
+              controller: _valueController,
+              currency: _valueCurrency,
+              // Nilai pasar (unit × harga terkini) bila ada; tanpa harga
+              // pasar nilai mengikuti modal.
+              idr: _marketValue ?? _resolveTotalCost(selectedAsset),
+              onFilled: () => _valueAutofillOffered = false,
+              enabled: !isLoading,
+            ),
+          const SizedBox(height: AppSpacing.lg),
+          if (_usesUsd) ...[
+            AppTextField(
+              label: l10n.fxRateFieldLabel('USD'),
+              helperText: _rateHelper(),
+              controller: _rateController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: const [DecimalInputFormatter(maxDecimals: 2)],
+              validator: _validateDecimal,
+              // Nominal hasil prefill dihitung ulang dengan kurs baru, bukan
+              // memakai nilai IDR lamanya.
+              onChanged: (_) => setState(_exactIdr.clear),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          RecordedDateField(
+            initialValue: _selectedDate,
+            enabled: !isLoading,
+            onChanged: (date) => setState(() => _selectedDate = date),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppTextField(
+            label: l10n.noteFieldLabel,
+            controller: _noteController,
+            maxLines: 2,
+            maxLength: noteMaxLength,
+            validator: (value) => validateNote(value, l10n),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ValuePreviewCard(
+            previousValue: previousValue,
+            latestValue: latestValue,
+            addedValue: isOverride ? null : inputValue ?? 0,
+            previousCost: previousCost,
+            latestCost: latestCost,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppPrimaryButton(
+            label: l10n.commonSave,
+            onPressed: isLoading ? null : () => _submit(selectedAsset),
+            isLoading: isLoading,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// [MoneyField] dengan validasi nominal/kurs dan rebuild saat diketik.
   Widget _moneyField({
     required String label,
     required TextEditingController controller,
@@ -451,28 +379,19 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     String? Function(String?)? validator,
     VoidCallback? onEdited,
   }) {
-    final isIdr = currency == 'IDR';
-    return AppTextField(
+    return MoneyField(
       label: label,
-      helperText: helperText,
       controller: controller,
-      keyboardType: isIdr
-          ? TextInputType.number
-          : const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: isIdr
-          ? const [RupiahInputFormatter()]
-          : const [DecimalInputFormatter(maxDecimals: 2)],
+      currency: currency,
+      helperText: helperText,
       validator: (value) =>
           _validateMoney(value, currency) ?? validator?.call(value),
       onChanged: (_) => setState(() => onEdited?.call()),
-      suffixIcon: _CurrencyPicker(
-        value: currency,
-        onChanged: onCurrencyChanged,
-      ),
+      onCurrencyChanged: onCurrencyChanged,
     );
   }
 
-  /// Tombol kecil di bawah field nominal untuk mengisinya dengan [idr].
+  /// Tombol autofill di bawah field nominal untuk mengisinya dengan [idr].
   /// Disembunyikan bila field masih kosong (helper "Otomatis" sudah
   /// menampilkan nilai yang akan dipakai), [idr] belum bisa dihitung, atau
   /// sudah sama dengan isi field.
@@ -496,27 +415,14 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     final amount = currency == 'IDR'
         ? formatCurrency(idr)
         : '${formatPrice(idr / rate, currency)} · ${formatCurrency(idr)}';
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Tooltip(
-        message: context.l10n.autofillButton(amount),
-        child: TextButton.icon(
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            textStyle: Theme.of(context).textTheme.labelMedium,
-          ),
-          icon: const Icon(Icons.auto_fix_high, size: 14),
-          label: Text(amount),
-          onPressed: enabled
-              ? () => setState(() {
-                  _setMoney(controller, currency, idr, rate);
-                  onFilled();
-                })
-              : null,
-        ),
-      ),
+    return AutofillButton(
+      amount: amount,
+      onPressed: enabled
+          ? () => setState(() {
+              _setMoney(controller, currency, idr, rate);
+              onFilled();
+            })
+          : null,
     );
   }
 
@@ -592,6 +498,24 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       price: quote.price,
       rateToIdr: rate,
     );
+  }
+
+  /// Nilai kas per tanggal catat untuk mode tambah (lihat [valueAsOf]);
+  /// `null` bila bukan mode tambah atau histori belum dimuat.
+  double? _watchIncrementBase(PortfolioPosition? asset) {
+    if (asset == null ||
+        _resolveUpdateType(asset) != AssetValueUpdateType.increment) {
+      return null;
+    }
+    final history = ref.watch(assetHistoryProvider(asset.id)).valueOrNull;
+    if (history == null) {
+      return null;
+    }
+    // Tanpa histori sama sekali (aset baru), nilai tersimpan yang dipakai.
+    if (history.isEmpty) {
+      return asset.currentValue;
+    }
+    return valueAsOf(history, _selectedDate ?? DateTime.now());
   }
 
   /// Aset yang nilainya mengikuti harga pasar (lihat `tracksMarketPrice`):
@@ -732,7 +656,10 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _moneyPrefilledFor = null;
     _costAutofillOffered = false;
     _valueAutofillOffered = false;
-    final currency = _currencies.contains(asset.effectivePriceCurrency)
+    _quantityClearedByUser = false;
+    _avgBuyPriceClearedByUser = false;
+    final currency =
+        updateValueCurrencies.contains(asset.effectivePriceCurrency)
         ? asset.effectivePriceCurrency
         : 'IDR';
     _avgCurrency = currency;
@@ -833,14 +760,16 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     return _moneyIdr(_costController, _costCurrency) ?? _derivedCostIdr(asset);
   }
 
-  /// Nilai total baru dalam IDR. Bila field nilai kosong, dipakai (urut):
+  /// Nilai total baru dalam IDR. Mode tambah: nilai per tanggal catat +
+  /// penambahan. Bila field nilai kosong, dipakai (urut):
   /// nilai pasar, nilai tersimpan, lalu modal -- kecuali aset pasar yang
   /// dicatat untuk bulan lain, yang wajib diisi. `null` bila tak bisa
   /// dihitung.
   double? _resolveTotalValue(PortfolioPosition? asset) {
     final inputValue = _moneyIdr(_valueController, _valueCurrency);
     if (_resolveUpdateType(asset) == AssetValueUpdateType.increment) {
-      return (asset?.currentValue ?? 0) + (inputValue ?? 0);
+      final base = _incrementBase;
+      return base == null ? null : base + (inputValue ?? 0);
     }
     if (inputValue != null || _requiresManualValue(asset)) {
       return inputValue;
@@ -857,7 +786,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   /// untuk kas, nilai wajib diisi.
   String? _validateAtLeastOne(PortfolioPosition? asset) {
     if (_allowsIncrement(asset)) {
-      return validateCurrencyValue(_valueController.text);
+      return validateCurrencyValue(_valueController.text, context.l10n);
     }
     if (_isBlank(_quantityController) &&
         _isBlank(_avgBuyPriceController) &&
@@ -929,6 +858,18 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     }
 
     final isCash = _allowsIncrement(selectedAsset);
+    // Hanya mengosongkan yang memang tersimpan dan dikosongkan pengguna;
+    // field kosong sejak awal berarti "tidak diubah".
+    final clearQuantity =
+        !isCash &&
+        _quantityClearedByUser &&
+        selectedAsset?.quantity != null &&
+        _isBlank(_quantityController);
+    final clearAvgBuyPrice =
+        !isCash &&
+        _avgBuyPriceClearedByUser &&
+        selectedAsset?.avgBuyPrice != null &&
+        _isBlank(_avgBuyPriceController);
 
     try {
       await ref
@@ -947,6 +888,8 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             avgBuyPrice: isCash
                 ? null
                 : _parseDecimalInput(_avgBuyPriceController.text),
+            clearQuantity: clearQuantity,
+            clearAvgBuyPrice: clearAvgBuyPrice,
             // Kas tak punya harga beli; mata uang nilainya yang disimpan
             // supaya kas USD (mis. saldo Gotrade) tetap USD saat dibuka lagi.
             priceCurrency: isCash ? _valueCurrency : _avgCurrency,
@@ -965,7 +908,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         ),
       );
       Navigator.of(context).pop();
-    } catch (error) {
+    } on Object catch (error) {
       if (!mounted) {
         return;
       }
@@ -973,98 +916,15 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       final message = switch (error) {
         InvalidCurrentValueException() => l10n.invalidCurrentValueMessage,
         InvalidTotalCostException() => l10n.invalidTotalCostMessage,
-        ArgumentError() => error.message.toString(),
+        ValidationException(:final failure) => validationMessage(
+          l10n,
+          failure,
+        ),
         _ => l10n.updateAssetValueFailedMessage,
       };
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     }
-  }
-
-  Future<void> _selectDate(
-    BuildContext context,
-    FormFieldState<DateTime> field,
-  ) async {
-    final now = DateTime.now();
-    final initialDate = _selectedDate ?? now;
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(now.year - 10),
-      lastDate: DateTime(now.year + 1),
-    );
-
-    if (pickedDate == null) {
-      return;
-    }
-
-    setState(() {
-      _selectedDate = pickedDate;
-    });
-    field.didChange(pickedDate);
-  }
-}
-
-/// Pilihan mata uang inline di ujung field nominal.
-class _CurrencyPicker extends StatelessWidget {
-  const _CurrencyPicker({required this.value, required this.onChanged});
-
-  final String value;
-  final ValueChanged<String>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.sm),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isDense: true,
-          items: _UpdateAssetValuePageState._currencies
-              .map(
-                (currency) => DropdownMenuItem(
-                  value: currency,
-                  child: Text(currency),
-                ),
-              )
-              .toList(),
-          onChanged: onChanged == null
-              ? null
-              : (currency) {
-                  if (currency != null && currency != value) {
-                    onChanged!(currency);
-                  }
-                },
-        ),
-      ),
-    );
-  }
-}
-
-class _PreviewRow extends StatelessWidget {
-  const _PreviewRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
-
-  final String label;
-  final String value;
-  final Color? valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(color: valueColor),
-        ),
-      ],
-    );
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
@@ -35,7 +35,7 @@ class CategoryDonutChart extends StatelessWidget {
     final semanticsSummary = segments
         .map(
           (item) => l10n.categoryDonutSemanticItem(
-            item.category.label,
+            item.category.localizedLabel(l10n),
             item.actualPercentage.toStringAsFixed(0),
           ),
         )

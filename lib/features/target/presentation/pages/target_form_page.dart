@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_management_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -42,10 +45,10 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final targetId = widget.targetId;
-    if (targetId != null) {
-      final targetsValue = ref.watch(allocationTargetProvider);
-      return targetsValue.when(
-        data: (targets) {
+    final targetsValue = ref.watch(allocationTargetProvider);
+    return targetsValue.when(
+      data: (targets) {
+        if (targetId != null) {
           final target = _findTarget(targets, targetId);
           if (target == null) {
             return Scaffold(
@@ -54,23 +57,44 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
           }
 
           _populateFromTarget(target);
+          // Kategori dikunci saat edit: id target diturunkan dari kategori,
+          // dan satu kategori hanya boleh punya satu target.
           return _TargetFormScaffold(
             title: l10n.editTargetTitle,
-            child: _buildForm(context, target),
+            child: _buildForm(context, target, [target.category]),
           );
-        },
-        loading: () => const Scaffold(body: AppLoading()),
-        error: (error, stackTrace) => const Scaffold(body: AppErrorView()),
-      );
-    }
+        }
 
-    return _TargetFormScaffold(
-      title: l10n.addTargetTitle,
-      child: _buildForm(context, null),
+        // Kategori yang sudah punya target tidak ditawarkan lagi; menyimpan
+        // kategori yang sama akan menimpa target lamanya.
+        final taken = {for (final target in targets) target.category};
+        final available = AssetCategory.values
+            .where((category) => !taken.contains(category))
+            .toList(growable: false);
+        if (available.isEmpty) {
+          return _TargetFormScaffold(
+            title: l10n.addTargetTitle,
+            child: AppErrorView(message: l10n.allCategoriesHaveTargetMessage),
+          );
+        }
+        if (!available.contains(_category)) {
+          _category = available.first;
+        }
+        return _TargetFormScaffold(
+          title: l10n.addTargetTitle,
+          child: _buildForm(context, null, available),
+        );
+      },
+      loading: () => const Scaffold(body: AppLoading()),
+      error: (error, stackTrace) => const Scaffold(body: AppErrorView()),
     );
   }
 
-  Widget _buildForm(BuildContext context, AllocationTarget? editingTarget) {
+  Widget _buildForm(
+    BuildContext context,
+    AllocationTarget? editingTarget,
+    List<AssetCategory> categories,
+  ) {
     final submitState = ref.watch(targetManagementControllerProvider);
     final l10n = context.l10n;
 
@@ -82,15 +106,15 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
           DropdownButtonFormField<AssetCategory>(
             initialValue: _category,
             decoration: InputDecoration(labelText: l10n.commonCategoryLabel),
-            items: AssetCategory.values
+            items: categories
                 .map(
                   (category) => DropdownMenuItem(
                     value: category,
-                    child: Text(category.label),
+                    child: Text(category.localizedLabel(l10n)),
                   ),
                 )
                 .toList(),
-            onChanged: submitState.isLoading
+            onChanged: submitState.isLoading || _isEditing
                 ? null
                 : (value) {
                     if (value == null) {
@@ -116,7 +140,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
           AppPrimaryButton(
             label: _isEditing ? l10n.commonSaveChanges : l10n.addTargetTitle,
             isLoading: submitState.isLoading,
-            onPressed: () => _submit(editingTarget),
+            onPressed: _submit,
           ),
           if (_isEditing && editingTarget != null) ...[
             const SizedBox(height: AppSpacing.md),
@@ -151,7 +175,8 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
     }
 
     _category = target.category;
-    _percentageController.text = target.targetPercentage.toStringAsFixed(0);
+    // Desimal dipertahankan (12,5 tetap 12,5, bukan dibulatkan jadi 13).
+    _percentageController.text = formatQuantity(target.targetPercentage);
     _didPopulate = true;
   }
 
@@ -173,7 +198,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
     return null;
   }
 
-  Future<void> _submit(AllocationTarget? editingTarget) async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -186,7 +211,6 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
       await ref
           .read(targetManagementControllerProvider.notifier)
           .saveTarget(
-            id: editingTarget?.id,
             category: _category,
             targetPercentage: percentage,
           );
@@ -194,7 +218,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
         return;
       }
       context.pop();
-    } catch (error) {
+    } on Object catch (error) {
       if (!mounted) {
         return;
       }
@@ -203,7 +227,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
         InvalidTargetPercentageException() => l10n.targetPercentageRange,
         TargetPercentageExceededException() =>
           l10n.targetPercentageExceededMessage,
-        ArgumentError() => error.message.toString(),
+        ValidationException(:final failure) => validationMessage(l10n, failure),
         _ => l10n.targetSaveFailedMessage,
       };
       ScaffoldMessenger.of(
@@ -217,7 +241,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
     final confirmed = await showConfirmDialog(
       context,
       title: l10n.deleteTargetTitle,
-      message: l10n.deleteTargetMessage(target.category.label),
+      message: l10n.deleteTargetMessage(target.category.localizedLabel(l10n)),
       confirmLabel: l10n.commonDelete,
       isDestructive: true,
     );
@@ -234,7 +258,7 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
         return;
       }
       context.go(RouteNames.target);
-    } catch (error) {
+    } on Object {
       if (!mounted) {
         return;
       }

@@ -3,7 +3,7 @@ import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -44,7 +44,7 @@ class TargetAllocationItem extends StatelessWidget {
                       TextSpan(
                         children: [
                           TextSpan(
-                            text: item.category.label,
+                            text: item.category.localizedLabel(l10n),
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
@@ -73,7 +73,7 @@ class TargetAllocationItem extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Semantics(
                 label: l10n.targetAllocationProgressSemanticLabel(
-                  item.category.label,
+                  item.category.localizedLabel(l10n),
                 ),
                 value: actualOfTarget,
                 child: LinearProgressIndicator(
@@ -81,8 +81,10 @@ class TargetAllocationItem extends StatelessWidget {
                   // (mis. 5%) pun terlihat penuh saat aset sudah tercapai.
                   value: item.targetPercentage <= 0
                       ? 0.0
-                      : (item.actualPercentage / item.targetPercentage)
-                            .clamp(0.0, 1.0),
+                      : (item.actualPercentage / item.targetPercentage).clamp(
+                          0.0,
+                          1.0,
+                        ),
                   minHeight: 6,
                   borderRadius: BorderRadius.circular(3),
                   color: categoryColor,

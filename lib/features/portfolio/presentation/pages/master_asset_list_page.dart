@@ -8,6 +8,7 @@ import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/presentation/widgets/market_sparkline.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -38,42 +39,73 @@ class MasterAssetListPage extends ConsumerWidget {
         value: assetsValue,
         onRetry: () => ref.invalidate(assetListProvider),
         data: (assets) {
-          return RefreshablePageBody(
-            onRefresh: () => ref.refresh(assetListProvider.future),
-            // Horizontal 0: baris full-bleed sampai tepi layar.
-            padding: const EdgeInsets.fromLTRB(
-              0,
-              AppSpacing.sm,
-              0,
-              AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
+          Future<void> refresh() {
+            // Harga tiap baris ikut diambil ulang, bukan hanya daftar aset.
+            ref.invalidate(marketQuoteProvider);
+            return ref.refresh(assetListProvider.future);
+          }
+
+          if (assets.isEmpty) {
+            return RefreshablePageBody(
+              onRefresh: refresh,
+              padding: _listPadding,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xl,
+                ),
+                child: AppEmptyState(
+                  title: l10n.commonEmptyAssetsTitle,
+                  message: l10n.emptyMasterAssetsMessage,
+                  actionLabel: l10n.commonAddAssetLabel,
+                  onAction: () => context.push(RouteNames.masterAssetCreate),
+                ),
+              ),
+            );
+          }
+
+          // List lazy: baris (dan quote pasarnya) hanya dibangun saat
+          // terlihat, jadi master aset yang banyak tidak memicu fetch
+          // serentak.
+          return RefreshIndicator(
+            onRefresh: refresh,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Sama dengan RefreshablePageBody: konten dibatasi lebar baca
+                // maksimum di window lebar.
+                final sideGutter =
+                    ((constraints.maxWidth - _maxContentWidth) / 2).clamp(
+                      0.0,
+                      double.infinity,
+                    );
+                return ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding:
+                      _listPadding +
+                      EdgeInsets.symmetric(horizontal: sideGutter),
+                  itemCount: assets.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) =>
+                      _MasterAssetTile(assets[index]),
+                );
+              },
             ),
-            child: assets.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl,
-                    ),
-                    child: AppEmptyState(
-                      title: l10n.commonEmptyAssetsTitle,
-                      message: l10n.emptyMasterAssetsMessage,
-                      actionLabel: l10n.commonAddAssetLabel,
-                      onAction: () =>
-                          context.push(RouteNames.masterAssetCreate),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      for (final (index, asset) in assets.indexed) ...[
-                        if (index > 0) const Divider(height: 1),
-                        _MasterAssetTile(asset),
-                      ],
-                    ],
-                  ),
           );
         },
       ),
     );
   }
 }
+
+/// Lebar baca maksimum, sama dengan `RefreshablePageBody`.
+const _maxContentWidth = 840.0;
+
+// Horizontal 0: baris full-bleed sampai tepi layar.
+const _listPadding = EdgeInsets.fromLTRB(
+  0,
+  AppSpacing.sm,
+  0,
+  AppSpacing.xxxl + (kFloatingActionButtonMargin * 3),
+);
 
 /// Baris gaya watchlist Stockbit: logo, kode + nama, sparkline intraday,
 /// lalu harga terkini dan perubahan harian. Aset tanpa simbol pasar (mis.
@@ -127,7 +159,7 @@ class _MasterAssetTile extends ConsumerWidget {
             ),
             if (symbol == null)
               Text(
-                asset.category.label,
+                asset.category.localizedLabel(context.l10n),
                 style: textTheme.bodySmall?.copyWith(color: mutedColor),
               )
             else

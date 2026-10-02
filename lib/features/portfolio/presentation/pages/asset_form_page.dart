@@ -5,6 +5,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/market/data/market_symbol_suggestion.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/asset_management_controller.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
@@ -119,7 +120,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
                 .map(
                   (category) => DropdownMenuItem(
                     value: category,
-                    child: Text(category.label),
+                    child: Text(category.localizedLabel(l10n)),
                   ),
                 )
                 .toList(),
@@ -215,7 +216,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
         return;
       }
       context.pop();
-    } catch (error) {
+    } on Object catch (error) {
       if (!mounted) {
         return;
       }
@@ -245,7 +246,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
         return;
       }
       context.pop();
-    } catch (error) {
+    } on Object catch (error) {
       if (!mounted) {
         return;
       }
@@ -257,7 +258,7 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     final l10n = context.l10n;
     final message = switch (error) {
       AssetHasHoldingException() => l10n.assetHasHoldingMessage,
-      ArgumentError() => error.message.toString(),
+      ValidationException(:final failure) => validationMessage(l10n, failure),
       _ => l10n.assetSaveFailedMessage,
     };
     ScaffoldMessenger.of(

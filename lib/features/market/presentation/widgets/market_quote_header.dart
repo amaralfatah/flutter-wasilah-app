@@ -8,6 +8,7 @@ import 'package:flutter_wasilah_app/features/market/data/models/chart_range.dart
 import 'package:flutter_wasilah_app/features/market/data/models/market_quote.dart';
 import 'package:flutter_wasilah_app/features/market/data/models/price_series.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 
@@ -151,7 +152,10 @@ class MarketQuoteHeader extends StatelessWidget {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.xs,
           children: [
-            _Tag(label: asset.category.label, color: colorScheme.primary),
+            _Tag(
+              label: asset.category.localizedLabel(l10n),
+              color: colorScheme.primary,
+            ),
             if (isStale)
               _Tag(
                 label: l10n.marketOfflineChip,

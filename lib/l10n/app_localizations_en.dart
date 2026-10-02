@@ -220,6 +220,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String recordMarketValuesStaleExcluded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count assets have no current price (offline or fetch failed) and are not recorded.',
+      one:
+          '1 asset has no current price (offline or fetch failed) and is not recorded.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get recordMarketValuesButton => 'Record';
 
   @override
@@ -253,6 +266,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get targetNotFoundMessage => 'Target not found.';
+
+  @override
+  String get allCategoriesHaveTargetMessage =>
+      'Every category already has a target.';
 
   @override
   String get editTargetTitle => 'Edit target';
@@ -907,4 +924,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get valueUnresolvedMessage =>
       'Asset value cannot be calculated yet. Enter the total value or quantity.';
+
+  @override
+  String get categoryCrypto => 'Crypto';
+
+  @override
+  String get categoryStock => 'Stocks';
+
+  @override
+  String get categoryMutualFund => 'Mutual funds';
+
+  @override
+  String get categoryIndexEtf => 'Index / ETF';
+
+  @override
+  String get categoryPreciousMetal => 'Precious metals';
+
+  @override
+  String get categoryCash => 'Cash';
+
+  @override
+  String get categoryOther => 'Other';
+
+  @override
+  String get valueRequiredMessage => 'Asset value is required.';
+
+  @override
+  String get valueInvalidMessage => 'Invalid asset value.';
+
+  @override
+  String get valueNegativeMessage => 'Asset value cannot be negative.';
+
+  @override
+  String get assetRequiredMessage => 'Please select an asset.';
+
+  @override
+  String get dateRequiredMessage => 'Please select a date.';
+
+  @override
+  String noteTooLongMessage(int max) {
+    return 'Note can be at most $max characters.';
+  }
+
+  @override
+  String get settingsAssetsLabel => 'Assets';
+
+  @override
+  String get restoreInProgressMessage =>
+      'A backup or restore is in progress. Please wait until it finishes.';
 }

@@ -5,7 +5,7 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_list_item.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
@@ -47,15 +47,21 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
 
   /// Catat nilai pasar semua holding yang dinilai pasar ke histori bulan
   /// ini, setelah konfirmasi.
-  Future<void> _recordMarketValues(List<AssetValueRecord> records) async {
+  /// Holding yang harganya hanya dari cache tidak ikut dicatat supaya harga
+  /// lama (mis. setelah lama offline) tidak tercatat sebagai nilai bulan ini.
+  Future<void> _recordMarketValues(MarketValueRecords marketRecords) async {
+    final (:records, :staleCount) = marketRecords;
     final l10n = context.l10n;
+    final message = l10n.recordMarketValuesMessage(
+      records.length,
+      formatMonthYear(DateTime.now(), Localizations.localeOf(context)),
+    );
     final confirmed = await showConfirmDialog(
       context,
       title: l10n.recordMarketValuesTitle,
-      message: l10n.recordMarketValuesMessage(
-        records.length,
-        formatMonthYear(DateTime.now(), Localizations.localeOf(context)),
-      ),
+      message: staleCount == 0
+          ? message
+          : '$message\n\n${l10n.recordMarketValuesStaleExcluded(staleCount)}',
       confirmLabel: l10n.recordMarketValuesButton,
     );
     if (!confirmed || !mounted) {
@@ -88,7 +94,9 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       appBar: AppBar(
         title: Text(l10n.portfolioTitle),
         actions: [
-          if (marketRecords.isNotEmpty)
+          // Disembunyikan bila tak ada harga baru (mis. offline): harga
+          // cache tidak boleh tercatat sebagai nilai bulan ini.
+          if (marketRecords.records.isNotEmpty)
             IconButton(
               onPressed: isSaving
                   ? null
@@ -122,6 +130,11 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
           // Chip kategori hanya untuk kategori yang benar-benar dipakai,
           // supaya tidak menampilkan filter yang pasti kosong.
           final categories = {for (final asset in assets) asset.category};
+          // Kategori terpilih bisa hilang (holding terakhirnya dihapus);
+          // tanpa reset, list terjebak kosong karena chip-nya ikut hilang.
+          if (!categories.contains(_selectedCategory)) {
+            _selectedCategory = null;
+          }
           final filteredAssets = _selectedCategory == null
               ? assets
               : assets
@@ -164,7 +177,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                         for (final category in categories) ...[
                           const SizedBox(width: AppSpacing.sm),
                           ChoiceChip(
-                            label: Text(category.label),
+                            label: Text(category.localizedLabel(l10n)),
                             selected: _selectedCategory == category,
                             onSelected: (_) =>
                                 setState(() => _selectedCategory = category),

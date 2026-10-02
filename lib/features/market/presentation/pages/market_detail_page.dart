@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
@@ -51,7 +53,9 @@ class _MarketDetailPageState extends ConsumerState<MarketDetailPage> {
             tooltip: l10n.editAssetTooltip,
             onSelected: (value) {
               if (value == 'edit') {
-                context.push('${RouteNames.masterAssets}/${widget.assetId}');
+                unawaited(
+                  context.push('${RouteNames.masterAssets}/${widget.assetId}'),
+                );
               }
             },
             itemBuilder: (context) => [

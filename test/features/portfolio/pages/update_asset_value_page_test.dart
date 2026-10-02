@@ -412,6 +412,72 @@ void main() {
     expect(position?.priceCurrency, 'USD');
   });
 
+  testWidgets('emptying a prefilled avg price clears it, quantity is kept', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(() async {
+      await repository.createAsset(_spy);
+      await repository.updateAssetValue(
+        assetId: 'spy',
+        totalValue: 1000000,
+        recordedAt: DateTime(2020),
+        totalCost: 800000,
+        quantity: 2,
+        avgBuyPrice: 400000,
+      );
+    });
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_field('Harga rata-rata beli'), '');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('spy'),
+    );
+    expect(position?.avgBuyPrice, isNull);
+    expect(position?.quantity, 2);
+  });
+
+  testWidgets('a field that was never filled does not clear anything', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    await tester.runAsync(() async {
+      await repository.createAsset(_spy);
+      await repository.updateAssetValue(
+        assetId: 'spy',
+        totalValue: 1000000,
+        recordedAt: DateTime(2020),
+        totalCost: 800000,
+        quantity: 2,
+      );
+    });
+
+    await _pumpPage(tester, repository, assetId: 'spy');
+    await tester.pumpAndSettle();
+
+    // Harga beli memang kosong sejak awal; mengetik lalu menghapus tidak
+    // mengosongkan jumlah unit.
+    await tester.enterText(_field('Harga rata-rata beli'), '1');
+    await tester.enterText(_field('Harga rata-rata beli'), '');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('spy'),
+    );
+    expect(position?.quantity, 2);
+    expect(position?.avgBuyPrice, isNull);
+  });
+
   testWidgets('autofill button shows dollar and rupiah for USD cost', (
     tester,
   ) async {
@@ -517,6 +583,97 @@ void main() {
       expect(position?.currentValue, 3000);
     },
   );
+
+  testWidgets('backdated cash increment adds to the value of that month', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    final now = DateTime.now();
+    // Saldo bulan ini berbeda dari saldo bulan lalu (6.600.000, histori
+    // mock), supaya ketahuan nilai mana yang dijadikan dasar.
+    await tester.runAsync(
+      () => repository.updateAssetValue(
+        assetId: 'cash',
+        totalValue: 9000000,
+        recordedAt: DateTime(now.year, now.month, now.day),
+      ),
+    );
+
+    await _pumpPage(tester, repository, assetId: 'cash');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tambah'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Bulan sebelumnya'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1').last);
+    await tester.tap(find.text('OKE'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(_field('Penambahan nilai'), '1.000.000');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final previousMonth = DateTime(now.year, now.month - 1);
+    final history = await tester.runAsync(
+      () => repository.getAssetHistory('cash'),
+    );
+    final snapshot = history!.firstWhere(
+      (item) =>
+          item.recordedAt.year == previousMonth.year &&
+          item.recordedAt.month == previousMonth.month,
+    );
+    expect(snapshot.totalValue, 7600000);
+  });
+
+  testWidgets('date picker does not allow future dates', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+
+    await _pumpPage(tester, repository, assetId: 'cash');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    final dialog = tester.widget<DatePickerDialog>(
+      find.byType(DatePickerDialog),
+    );
+    expect(dialog.lastDate, DateTime(now.year, now.month, now.day));
+  });
+
+  testWidgets('validation messages follow the app language', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+          fxRateToIdrProvider.overrideWith((ref, currency) => 16000),
+        ],
+        child: const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: UpdateAssetValuePage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Please select an asset.'), findsOneWidget);
+    expect(find.text('Aset wajib dipilih.'), findsNothing);
+  });
 }
 
 Future<MockPortfolioRepository> _marketHolding(WidgetTester tester) async {

@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'Nilai {count} aset dari harga pasar terkini dicatat ke histori {month}. Nilai bulan itu untuk aset tersebut diganti; modal, jumlah unit, dan catatan tetap.'**
   String recordMarketValuesMessage(int count, String month);
 
+  /// Catatan di dialog catat nilai pasar: jumlah holding yang dilewati karena harganya hanya dari cache
+  ///
+  /// In id, this message translates to:
+  /// **'{count} aset belum punya harga terkini (offline atau gagal dimuat) sehingga tidak dicatat.'**
+  String recordMarketValuesStaleExcluded(int count);
+
   /// Aksi mencatat nilai pasar semua holding ke histori bulan ini
   ///
   /// In id, this message translates to:
@@ -559,6 +565,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Target tidak ditemukan.'**
   String get targetNotFoundMessage;
+
+  /// Pesan saat semua kategori sudah punya target (form tambah)
+  ///
+  /// In id, this message translates to:
+  /// **'Semua kategori sudah punya target.'**
+  String get allCategoriesHaveTargetMessage;
 
   /// Judul halaman edit target
   ///
@@ -1655,6 +1667,96 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Nilai aset belum bisa dihitung. Isi nilai total atau jumlah unit.'**
   String get valueUnresolvedMessage;
+
+  /// Label kategori aset: kripto
+  ///
+  /// In id, this message translates to:
+  /// **'Kripto'**
+  String get categoryCrypto;
+
+  /// Label kategori aset: saham
+  ///
+  /// In id, this message translates to:
+  /// **'Saham'**
+  String get categoryStock;
+
+  /// Label kategori aset: reksa dana
+  ///
+  /// In id, this message translates to:
+  /// **'Reksa Dana'**
+  String get categoryMutualFund;
+
+  /// Label kategori aset: indeks/ETF
+  ///
+  /// In id, this message translates to:
+  /// **'Indeks / ETF'**
+  String get categoryIndexEtf;
+
+  /// Label kategori aset: logam mulia
+  ///
+  /// In id, this message translates to:
+  /// **'Logam Mulia'**
+  String get categoryPreciousMetal;
+
+  /// Label kategori aset: kas
+  ///
+  /// In id, this message translates to:
+  /// **'Kas'**
+  String get categoryCash;
+
+  /// Label kategori aset: lainnya
+  ///
+  /// In id, this message translates to:
+  /// **'Lainnya'**
+  String get categoryOther;
+
+  /// Validasi nilai aset kosong
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai aset wajib diisi.'**
+  String get valueRequiredMessage;
+
+  /// Validasi nilai aset tidak valid
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai aset tidak valid.'**
+  String get valueInvalidMessage;
+
+  /// Validasi nilai aset negatif
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai aset tidak boleh kurang dari nol.'**
+  String get valueNegativeMessage;
+
+  /// Validasi aset belum dipilih
+  ///
+  /// In id, this message translates to:
+  /// **'Aset wajib dipilih.'**
+  String get assetRequiredMessage;
+
+  /// Validasi tanggal belum dipilih
+  ///
+  /// In id, this message translates to:
+  /// **'Tanggal wajib dipilih.'**
+  String get dateRequiredMessage;
+
+  /// Validasi panjang catatan
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan maksimal {max} karakter.'**
+  String noteTooLongMessage(int max);
+
+  /// Baris setelan menuju daftar master aset
+  ///
+  /// In id, this message translates to:
+  /// **'Aset'**
+  String get settingsAssetsLabel;
+
+  /// Snackbar saat restore diminta ketika backup/restore lain masih berjalan
+  ///
+  /// In id, this message translates to:
+  /// **'Backup atau pemulihan sedang berjalan. Tunggu sampai selesai.'**
+  String get restoreInProgressMessage;
 }
 
 class _AppLocalizationsDelegate

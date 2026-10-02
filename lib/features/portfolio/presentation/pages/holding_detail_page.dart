@@ -5,19 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
-import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
-import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_delete.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/holding_history_section.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/holding_metrics_list.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_value_bar.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
@@ -25,11 +20,9 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
-import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
 
@@ -109,53 +102,7 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 const AppSectionBand(),
-                AppListCard(
-                  children: [
-                    _MetricTile(
-                      label: l10n.commonCurrentValueLabel,
-                      value: formatCurrency(position.currentValue),
-                      subtitle: switch (position.marketPriceAt) {
-                        final priceAt? => l10n.marketValueAsOf(
-                          formatFullDateTime(
-                            priceAt,
-                            Localizations.localeOf(context),
-                          ),
-                        ),
-                        null => null,
-                      },
-                    ),
-                    // Kas tak untung/rugi (modal = nilai), jadi modal &
-                    // untung/rugi hanya mengulang nilai.
-                    if (position.totalCost case final totalCost?
-                        when !isCash) ...[
-                      _MetricTile(
-                        label: l10n.totalCostLabel,
-                        value: formatCurrency(totalCost),
-                      ),
-                      _ProfitLossTile(position: position),
-                    ],
-                    if (position.avgBuyPrice case final avgBuyPrice?)
-                      _MetricTile(
-                        label: l10n.avgBuyPriceLabel,
-                        value: formatAvgPrice(
-                          avgBuyPrice,
-                          position.effectivePriceCurrency,
-                        ),
-                      ),
-                    if (position.quantity case final quantity?)
-                      _MetricTile(
-                        label: l10n.quantityLabel,
-                        value: formatQuantity(quantity),
-                      ),
-                    _MetricTile(
-                      label: l10n.lastUpdatedLabel,
-                      value: formatFullDate(
-                        position.lastUpdatedAt,
-                        Localizations.localeOf(context),
-                      ),
-                    ),
-                  ],
-                ),
+                HoldingMetricsList(position: position),
                 const SizedBox(height: AppSpacing.lg),
                 const AppSectionBand(),
                 const SizedBox(height: AppSpacing.lg),
@@ -177,81 +124,14 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
                 const SizedBox(height: AppSpacing.lg),
                 AppSectionBand(label: l10n.historySectionTitle),
                 const SizedBox(height: AppSpacing.lg),
-                historyValue.when(
-                  data: (fullHistory) {
-                    final history = fullHistory
-                        .where((item) => !_removedIds.contains(item.id))
-                        .toList();
-
-                    if (history.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                        ),
-                        child: AppEmptyState(
-                          title: l10n.commonEmptyHistoryTitle,
-                          message: l10n.emptyAssetHistoryMessage,
-                          icon: Icons.timeline_outlined,
-                        ),
-                      );
-                    }
-
-                    final changeMap = buildHistoryChangeMap(history);
-                    final firstSnapshotId = history.last.id;
-
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                          ),
-                          child: HistoryLineChart(
-                            history: history.reversed.toList(),
-                            showCost: !isCash,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        const AppSectionBand(),
-                        AppListCard(
-                          children: history
-                              .map(
-                                (snapshot) => Dismissible(
-                                  key: ValueKey(snapshot.id),
-                                  direction: DismissDirection.endToStart,
-                                  background: const DeleteSwipeBackground(),
-                                  confirmDismiss: (_) =>
-                                      confirmDeleteHistory(context),
-                                  onDismissed: (_) {
-                                    setState(
-                                      () => _removedIds.add(snapshot.id),
-                                    );
-                                    unawaited(_deleteSnapshot(snapshot.id));
-                                  },
-                                  child: HistoryRow(
-                                    snapshot: snapshot,
-                                    changeLabel: formatHistoryChange(
-                                      changeMap[snapshot.id],
-                                      isFirstSnapshot:
-                                          snapshot.id == firstSnapshotId,
-                                      initialDataLabel: l10n.initialDataLabel,
-                                    ),
-                                    changeColor: historyChangeColor(
-                                      context,
-                                      changeMap[snapshot.id],
-                                      isFirstSnapshot:
-                                          snapshot.id == firstSnapshotId,
-                                    ),
-                                    detail: _fxDetail(context, snapshot),
-                                  ),
-                                ),
-                              )
-                              .toList(growable: false),
-                        ),
-                      ],
-                    );
+                HoldingHistorySection(
+                  history: historyValue,
+                  removedIds: _removedIds,
+                  showCost: !isCash,
+                  onDismissed: (snapshotId) {
+                    setState(() => _removedIds.add(snapshotId));
+                    unawaited(_deleteSnapshot(snapshotId));
                   },
-                  loading: () => const AppLoading(),
-                  error: (error, stackTrace) => const AppErrorView(),
                 ),
               ],
             ),
@@ -294,15 +174,6 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
         SnackBar(content: Text(l10n.updateAssetValueFailedMessage)),
       );
     }
-  }
-
-  String? _fxDetail(BuildContext context, AssetSnapshot snapshot) {
-    final currency = snapshot.fxCurrency;
-    final rate = snapshot.fxRate;
-    if (currency == null || rate == null) {
-      return null;
-    }
-    return context.l10n.fxRateHistoryLabel(currency, formatCurrency(rate));
   }
 
   Future<void> _deleteSnapshot(String snapshotId) => deleteHistoryEntry(
@@ -424,7 +295,7 @@ class _CategoryBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        category.label,
+        category.localizedLabel(context.l10n),
         style: Theme.of(
           context,
         ).textTheme.labelSmall?.copyWith(color: color),
@@ -472,61 +343,6 @@ class _AllocationRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    this.subtitle,
-  });
-
-  final String label;
-  final String value;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.sm,
-      ),
-      title: Text(label),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      trailing: Text(
-        value,
-        style: Theme.of(context).textTheme.titleMedium,
-        textAlign: TextAlign.end,
-      ),
-    );
-  }
-}
-
-class _ProfitLossTile extends StatelessWidget {
-  const _ProfitLossTile({required this.position});
-
-  final PortfolioPosition position;
-
-  @override
-  Widget build(BuildContext context) {
-    final profitLoss = position.profitLoss ?? 0;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
-        vertical: AppSpacing.sm,
-      ),
-      title: Text(profitLossLabel(context, profitLoss)),
-      trailing: Text(
-        formatProfitLoss(profitLoss, cost: position.totalCost ?? 0),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: profitLossColorOf(context, profitLoss),
-        ),
-        textAlign: TextAlign.end,
-      ),
     );
   }
 }

@@ -115,11 +115,35 @@ void main() {
     expect(find.text('Simpan perubahan'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Hapus target'), findsOneWidget);
 
+    // Kategori dikunci saat edit: id target diturunkan dari kategori.
+    expect(find.text('Kripto'), findsOneWidget);
+    final lockedDropdown = tester.widget<DropdownButton<AssetCategory>>(
+      find.byType(DropdownButton<AssetCategory>),
+    );
+    expect(lockedDropdown.onChanged, isNull);
+  });
+
+  testWidgets('target form in add mode only offers categories without target', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        child: const TargetFormPage(),
+        repository: MockPortfolioRepository(simulatedDelay: Duration.zero),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppPrimaryButton), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Hapus target'), findsNothing);
+
     await tester.tap(find.byType(DropdownButtonFormField<AssetCategory>));
     await tester.pumpAndSettle();
 
     expect(find.text('Logam Mulia'), findsOneWidget);
-    expect(find.text('Indeks / ETF'), findsOneWidget);
+    expect(find.text('Indeks / ETF'), findsWidgets);
+    expect(find.text('Kripto'), findsNothing);
   });
 
   testWidgets('settings uses the standard Material about dialog flow', (
@@ -134,7 +158,7 @@ void main() {
 
     await tester.pumpAndSettle();
     // Master aset dikelola dari Setelan, terpisah dari tab Portofolio.
-    expect(find.text('Assets'), findsOneWidget);
+    expect(find.text('Aset'), findsOneWidget);
     expect(find.text('Tentang aplikasi'), findsOneWidget);
     await tester.ensureVisible(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
@@ -192,7 +216,7 @@ class _FakePreferencesService implements PreferencesService {
   bool readAutoBackupEnabled() => _autoBackupEnabled;
 
   @override
-  Future<void> writeAutoBackupEnabled(bool enabled) async {
+  Future<void> writeAutoBackupEnabled({required bool enabled}) async {
     _autoBackupEnabled = enabled;
   }
 
@@ -200,7 +224,7 @@ class _FakePreferencesService implements PreferencesService {
   bool readBackupConnected() => _backupConnected;
 
   @override
-  Future<void> writeBackupConnected(bool connected) async {
+  Future<void> writeBackupConnected({required bool connected}) async {
     _backupConnected = connected;
   }
 

@@ -79,6 +79,8 @@
   "recordMarketValuesTooltip": "Record market values",
   "recordMarketValuesTitle": "Record market values?",
   "recordMarketValuesMessage": "The values of {count} assets at current market prices will be recorded to the {month} history. That month's values for these assets are replaced; cost, quantity, and notes are kept.",
+  "recordMarketValuesStaleExcluded": "{count, plural, =1{1 asset has no current price (offline or fetch failed) and is not recorded.} other{{count} assets have no current price (offline or fetch failed) and are not recorded.}}",
+  "@recordMarketValuesStaleExcluded": {"placeholders": {"count": {"type": "int"}}},
   "recordMarketValuesButton": "Record",
   "recordMarketValuesSuccess": "Recorded market values for {count} assets",
   "marketValueAsOf": "Market price {time}",
@@ -90,6 +92,7 @@
   "editAssetTooltip": "Edit asset",
 
   "targetNotFoundMessage": "Target not found.",
+  "allCategoriesHaveTargetMessage": "Every category already has a target.",
   "editTargetTitle": "Edit target",
   "addTargetTitle": "Add target",
   "targetAllocationLabel": "Allocation target",
@@ -396,5 +399,21 @@
   "autofillButton": "Autofill: {value}",
   "atLeastOneValueMessage": "Fill in at least one: quantity, buy price, cost, or value.",
   "invalidNumberMessage": "Invalid number.",
-  "valueUnresolvedMessage": "Asset value cannot be calculated yet. Enter the total value or quantity."
+  "valueUnresolvedMessage": "Asset value cannot be calculated yet. Enter the total value or quantity.",
+
+  "categoryCrypto": "Crypto",
+  "categoryStock": "Stocks",
+  "categoryMutualFund": "Mutual funds",
+  "categoryIndexEtf": "Index / ETF",
+  "categoryPreciousMetal": "Precious metals",
+  "categoryCash": "Cash",
+  "categoryOther": "Other",
+  "valueRequiredMessage": "Asset value is required.",
+  "valueInvalidMessage": "Invalid asset value.",
+  "valueNegativeMessage": "Asset value cannot be negative.",
+  "assetRequiredMessage": "Please select an asset.",
+  "dateRequiredMessage": "Please select a date.",
+  "noteTooLongMessage": "Note can be at most {max} characters.",
+  "settingsAssetsLabel": "Assets",
+  "restoreInProgressMessage": "A backup or restore is in progress. Please wait until it finishes."
 }

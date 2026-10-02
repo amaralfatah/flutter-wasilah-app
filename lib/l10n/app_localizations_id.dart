@@ -220,6 +220,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String recordMarketValuesStaleExcluded(int count) {
+    return '$count aset belum punya harga terkini (offline atau gagal dimuat) sehingga tidak dicatat.';
+  }
+
+  @override
   String get recordMarketValuesButton => 'Catat';
 
   @override
@@ -253,6 +258,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get targetNotFoundMessage => 'Target tidak ditemukan.';
+
+  @override
+  String get allCategoriesHaveTargetMessage =>
+      'Semua kategori sudah punya target.';
 
   @override
   String get editTargetTitle => 'Edit target';
@@ -906,4 +915,52 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get valueUnresolvedMessage =>
       'Nilai aset belum bisa dihitung. Isi nilai total atau jumlah unit.';
+
+  @override
+  String get categoryCrypto => 'Kripto';
+
+  @override
+  String get categoryStock => 'Saham';
+
+  @override
+  String get categoryMutualFund => 'Reksa Dana';
+
+  @override
+  String get categoryIndexEtf => 'Indeks / ETF';
+
+  @override
+  String get categoryPreciousMetal => 'Logam Mulia';
+
+  @override
+  String get categoryCash => 'Kas';
+
+  @override
+  String get categoryOther => 'Lainnya';
+
+  @override
+  String get valueRequiredMessage => 'Nilai aset wajib diisi.';
+
+  @override
+  String get valueInvalidMessage => 'Nilai aset tidak valid.';
+
+  @override
+  String get valueNegativeMessage => 'Nilai aset tidak boleh kurang dari nol.';
+
+  @override
+  String get assetRequiredMessage => 'Aset wajib dipilih.';
+
+  @override
+  String get dateRequiredMessage => 'Tanggal wajib dipilih.';
+
+  @override
+  String noteTooLongMessage(int max) {
+    return 'Catatan maksimal $max karakter.';
+  }
+
+  @override
+  String get settingsAssetsLabel => 'Aset';
+
+  @override
+  String get restoreInProgressMessage =>
+      'Backup atau pemulihan sedang berjalan. Tunggu sampai selesai.';
 }
