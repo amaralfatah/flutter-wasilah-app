@@ -387,6 +387,11 @@
   "openMasterAssetsLabel": "Manage master assets",
   "addToPortfolioLabel": "Record asset value",
 
+  "totalValueOptionalFieldLabel": "Total asset value (optional)",
+  "autoMarketValueHelper": "Leave empty to use the market price: {value}",
+  "manualValueRequiredHelper": "Market price only applies to this month; enter the value for the chosen month.",
+  "manualValueRequiredMessage": "Enter the total value for the chosen month.",
+  "recordedValueLabel": "Recorded value",
   "autoValueHelper": "Automatic: {value}",
   "autofillButton": "Autofill: {value}",
   "atLeastOneValueMessage": "Fill in at least one: quantity, buy price, cost, or value.",

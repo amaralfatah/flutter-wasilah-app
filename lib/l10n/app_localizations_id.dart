@@ -868,6 +868,25 @@ class AppLocalizationsId extends AppLocalizations {
   String get addToPortfolioLabel => 'Catat nilai aset';
 
   @override
+  String get totalValueOptionalFieldLabel => 'Total nilai aset (opsional)';
+
+  @override
+  String autoMarketValueHelper(String value) {
+    return 'Kosongkan untuk pakai harga pasar: $value';
+  }
+
+  @override
+  String get manualValueRequiredHelper =>
+      'Harga pasar hanya untuk bulan ini; isi nilai bulan yang dipilih.';
+
+  @override
+  String get manualValueRequiredMessage =>
+      'Isi total nilai untuk bulan yang dipilih.';
+
+  @override
+  String get recordedValueLabel => 'Nilai tercatat';
+
+  @override
   String autoValueHelper(String value) {
     return 'Otomatis: $value';
   }

@@ -1596,6 +1596,36 @@ abstract class AppLocalizations {
   /// **'Catat nilai aset'**
   String get addToPortfolioLabel;
 
+  /// Label field nilai untuk aset yang nilainya mengikuti harga pasar
+  ///
+  /// In id, this message translates to:
+  /// **'Total nilai aset (opsional)'**
+  String get totalValueOptionalFieldLabel;
+
+  /// Helper field nilai kosong pada aset pasar
+  ///
+  /// In id, this message translates to:
+  /// **'Kosongkan untuk pakai harga pasar: {value}'**
+  String autoMarketValueHelper(String value);
+
+  /// Helper field nilai aset pasar saat tanggal di luar bulan berjalan
+  ///
+  /// In id, this message translates to:
+  /// **'Harga pasar hanya untuk bulan ini; isi nilai bulan yang dipilih.'**
+  String get manualValueRequiredHelper;
+
+  /// Error field nilai aset pasar kosong saat tanggal di luar bulan berjalan
+  ///
+  /// In id, this message translates to:
+  /// **'Isi total nilai untuk bulan yang dipilih.'**
+  String get manualValueRequiredMessage;
+
+  /// Label pratinjau: nilai tercatat terakhir sebelum update
+  ///
+  /// In id, this message translates to:
+  /// **'Nilai tercatat'**
+  String get recordedValueLabel;
+
   /// Helper field nominal kosong: nilai yang dipakai otomatis
   ///
   /// In id, this message translates to:

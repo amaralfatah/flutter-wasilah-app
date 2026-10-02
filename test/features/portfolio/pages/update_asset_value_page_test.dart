@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/features/market/data/models/market_quote.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
@@ -304,6 +305,69 @@ void main() {
     expect(position?.currentValue, 150000);
   });
 
+  testWidgets('market asset leaves value empty and saves the market value', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = await _marketHolding(tester);
+
+    await _pumpMarketPage(tester, repository);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Total nilai aset (opsional)'), findsOneWidget);
+    // 10 lot × 100 lembar × Rp9.000
+    expect(
+      find.text('Kosongkan untuk pakai harga pasar: Rp9.000.000'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('bbca'),
+    );
+    expect(position?.currentValue, 9000000);
+    expect(position?.totalCost, 800000);
+  });
+
+  testWidgets('market asset needs a manual value for another month', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = await _marketHolding(tester);
+
+    await _pumpMarketPage(tester, repository);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Bulan sebelumnya'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1').last);
+    await tester.tap(find.text('OKE'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Harga pasar hanya untuk bulan ini; isi nilai bulan yang dipilih.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byType(AppPrimaryButton));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Isi total nilai untuk bulan yang dipilih.'),
+      findsOneWidget,
+    );
+    final position = await tester.runAsync(
+      () => repository.getPositionByAssetId('bbca'),
+    );
+    expect(position?.currentValue, 1000000);
+  });
+
   testWidgets('quantity and avg price alone derive cost and value', (
     tester,
   ) async {
@@ -452,5 +516,64 @@ void main() {
       expect(position?.totalCost, 3100);
       expect(position?.currentValue, 3000);
     },
+  );
+}
+
+Future<MockPortfolioRepository> _marketHolding(WidgetTester tester) async {
+  final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+  await tester.runAsync(() async {
+    await repository.createAsset(
+      const Asset(
+        id: 'bbca',
+        name: 'Bank BCA',
+        code: 'BBCA',
+        category: AssetCategory.stock,
+        marketSymbol: 'BBCA.JK',
+      ),
+    );
+    await repository.updateAssetValue(
+      assetId: 'bbca',
+      totalValue: 1000000,
+      recordedAt: DateTime(2020),
+      totalCost: 800000,
+      quantity: 10,
+    );
+  });
+  return repository;
+}
+
+Future<void> _pumpMarketPage(
+  WidgetTester tester,
+  MockPortfolioRepository repository,
+) {
+  return tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        portfolioRepositoryProvider.overrideWithValue(repository),
+        assetRepositoryProvider.overrideWithValue(repository),
+        fxRateToIdrProvider.overrideWith(
+          (ref, currency) => currency == 'IDR' ? 1 : 16000,
+        ),
+        marketQuoteProvider.overrideWith(
+          (ref, symbol) => (
+            quote: MarketQuote(
+              symbol: symbol,
+              currency: 'IDR',
+              price: 9000,
+              marketTime: DateTime.now(),
+              fetchedAt: DateTime.now(),
+            ),
+            oneDaySeries: null,
+            isStale: false,
+          ),
+        ),
+      ],
+      child: const MaterialApp(
+        locale: Locale('id'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: UpdateAssetValuePage(assetId: 'bbca'),
+      ),
+    ),
   );
 }

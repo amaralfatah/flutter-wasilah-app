@@ -869,6 +869,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToPortfolioLabel => 'Record asset value';
 
   @override
+  String get totalValueOptionalFieldLabel => 'Total asset value (optional)';
+
+  @override
+  String autoMarketValueHelper(String value) {
+    return 'Leave empty to use the market price: $value';
+  }
+
+  @override
+  String get manualValueRequiredHelper =>
+      'Market price only applies to this month; enter the value for the chosen month.';
+
+  @override
+  String get manualValueRequiredMessage =>
+      'Enter the total value for the chosen month.';
+
+  @override
+  String get recordedValueLabel => 'Recorded value';
+
+  @override
   String autoValueHelper(String value) {
     return 'Automatic: $value';
   }

@@ -262,19 +262,23 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   _moneyField(
-                    label: isOverride
-                        ? l10n.totalValueFieldLabel
-                        : l10n.incrementValueFieldLabel,
+                    label: !isOverride
+                        ? l10n.incrementValueFieldLabel
+                        : _tracksMarket(selectedAsset)
+                        ? l10n.totalValueOptionalFieldLabel
+                        : l10n.totalValueFieldLabel,
                     controller: _valueController,
                     currency: _valueCurrency,
-                    helperText: _moneyHelper(
-                      _valueController,
-                      _valueCurrency,
-                      inputValue,
-                      isOverride ? latestValue : null,
-                    ),
+                    helperText:
+                        _marketValueHelper(selectedAsset) ??
+                        _moneyHelper(
+                          _valueController,
+                          _valueCurrency,
+                          inputValue,
+                          isOverride ? latestValue : null,
+                        ),
                     validator: showHoldingFields
-                        ? null
+                        ? (_) => _validateManualValue(selectedAsset)
                         : (_) => _validateAtLeastOne(selectedAsset),
                     onCurrencyChanged: isLoading
                         ? null
@@ -374,7 +378,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         _PreviewRow(
-                          label: l10n.commonCurrentValueLabel,
+                          label: l10n.recordedValueLabel,
                           value: formatCurrency(previousValue),
                         ),
                         if (!isOverride) ...[
@@ -563,7 +567,12 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _marketQuoteCurrency = null;
     final symbol = asset?.marketSymbol;
     final quantity = _parseDecimalInput(_quantityController.text);
-    if (symbol == null || quantity == null || quantity <= 0) {
+    // Harga Yahoo adalah harga hari ini: tidak berlaku untuk histori bulan
+    // lain.
+    if (symbol == null ||
+        quantity == null ||
+        quantity <= 0 ||
+        !_isCurrentMonth) {
       return null;
     }
     final quote = ref.watch(marketQuoteProvider(symbol)).valueOrNull?.quote;
@@ -584,6 +593,46 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       rateToIdr: rate,
     );
   }
+
+  /// Aset yang nilainya mengikuti harga pasar (lihat `tracksMarketPrice`):
+  /// field nilai opsional, kosong berarti memakai nilai pasar.
+  bool _tracksMarket(PortfolioPosition? asset) =>
+      asset != null &&
+      asset.marketSymbol != null &&
+      tracksMarketPrice(asset.category);
+
+  /// Tanggal catat ada di bulan berjalan, satu-satunya bulan yang nilainya
+  /// boleh diambil dari harga pasar.
+  bool get _isCurrentMonth {
+    final date = _selectedDate;
+    final now = DateTime.now();
+    return date == null || (date.year == now.year && date.month == now.month);
+  }
+
+  /// Aset pasar yang dicatat untuk bulan lain: nilai wajib diisi manual,
+  /// karena harga pasar maupun nilai tercatat terkini bukan nilai bulan itu.
+  bool _requiresManualValue(PortfolioPosition? asset) =>
+      _tracksMarket(asset) && !_isCurrentMonth;
+
+  /// Helper field nilai kosong untuk aset pasar; `null` berarti pakai helper
+  /// umum ([_moneyHelper]).
+  String? _marketValueHelper(PortfolioPosition? asset) {
+    if (!_tracksMarket(asset) || !_isBlank(_valueController)) {
+      return null;
+    }
+    if (_requiresManualValue(asset)) {
+      return context.l10n.manualValueRequiredHelper;
+    }
+    final marketValue = _marketValue;
+    return marketValue == null
+        ? null
+        : context.l10n.autoMarketValueHelper(formatCurrency(marketValue));
+  }
+
+  String? _validateManualValue(PortfolioPosition? asset) =>
+      _requiresManualValue(asset) && _isBlank(_valueController)
+      ? context.l10n.manualValueRequiredMessage
+      : null;
 
   double? _rateOf(String currency) =>
       currency == 'IDR' ? 1 : _manualUsdRate ?? _marketUsdRate;
@@ -725,7 +774,18 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       return;
     }
     _moneyPrefilledFor = key;
-    _setMoney(_valueController, _valueCurrency, asset.currentValue, valueRate);
+    // Aset pasar: field nilai dibiarkan kosong supaya nilai pasar terkini
+    // yang tersimpan, bukan nilai tercatat lama.
+    if (_tracksMarket(asset)) {
+      _valueController.clear();
+    } else {
+      _setMoney(
+        _valueController,
+        _valueCurrency,
+        asset.currentValue,
+        valueRate,
+      );
+    }
     final cost = asset.totalCost;
     if (cost == null) {
       _costController.clear();
@@ -774,15 +834,18 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   }
 
   /// Nilai total baru dalam IDR. Bila field nilai kosong, dipakai (urut):
-  /// nilai pasar, nilai tersimpan, lalu modal. `null` bila tak bisa
+  /// nilai pasar, nilai tersimpan, lalu modal -- kecuali aset pasar yang
+  /// dicatat untuk bulan lain, yang wajib diisi. `null` bila tak bisa
   /// dihitung.
   double? _resolveTotalValue(PortfolioPosition? asset) {
     final inputValue = _moneyIdr(_valueController, _valueCurrency);
     if (_resolveUpdateType(asset) == AssetValueUpdateType.increment) {
       return (asset?.currentValue ?? 0) + (inputValue ?? 0);
     }
-    return inputValue ??
-        _marketValue ??
+    if (inputValue != null || _requiresManualValue(asset)) {
+      return inputValue;
+    }
+    return _marketValue ??
         (asset != null && _isHeld(asset) ? asset.currentValue : null) ??
         _resolveTotalCost(asset);
   }
