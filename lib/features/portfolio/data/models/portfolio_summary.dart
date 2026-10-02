@@ -16,6 +16,30 @@ abstract class PortfolioSummary with _$PortfolioSummary {
   }) = _PortfolioSummary;
   const PortfolioSummary._();
 
+  /// Ringkasan dari [positions] dan [targets]: total, progres target, dan
+  /// waktu update terakhir dihitung di sini supaya repository dan provider
+  /// (yang memakai nilai pasar) tidak menghitungnya masing-masing.
+  factory PortfolioSummary.fromPositions(
+    List<PortfolioPosition> positions,
+    List<AllocationTarget> targets, {
+    double monthlyChangePercentage = 0,
+  }) {
+    return PortfolioSummary(
+      totalValue: positions.fold<double>(
+        0,
+        (sum, position) => sum + position.currentValue,
+      ),
+      monthlyChangePercentage: monthlyChangePercentage,
+      targetProgressPercentage: calculateTargetProgress(positions, targets),
+      positions: positions,
+      lastUpdatedAt: positions.isEmpty
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : positions
+                .map((position) => position.lastUpdatedAt)
+                .reduce((latest, next) => latest.isAfter(next) ? latest : next),
+    );
+  }
+
   factory PortfolioSummary.fromJson(Map<String, dynamic> json) {
     return PortfolioSummary(
       totalValue: (json['totalValue'] as num).toDouble(),

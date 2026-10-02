@@ -344,6 +344,8 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
     String? priceCurrency,
     String? fxCurrency,
     double? fxRate,
+    bool clearQuantity = false,
+    bool clearAvgBuyPrice = false,
   }) async {
     await _beginWrite();
 
@@ -358,16 +360,14 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
       currentValue: totalValue,
       lastUpdatedAt: recordedAt,
       totalCost: cost,
-      quantity: quantity ?? existing?.quantity,
-      avgBuyPrice: avgBuyPrice ?? existing?.avgBuyPrice,
+      quantity: clearQuantity ? null : quantity ?? existing?.quantity,
+      avgBuyPrice: clearAvgBuyPrice
+          ? null
+          : avgBuyPrice ?? existing?.avgBuyPrice,
       priceCurrency: priceCurrency ?? existing?.priceCurrency,
     );
 
-    final history = _assetHistories.putIfAbsent(
-      assetId,
-      () => <AssetSnapshot>[],
-    );
-    history
+    _assetHistories.putIfAbsent(assetId, () => <AssetSnapshot>[])
       ..removeWhere((item) => _sameMonth(item.recordedAt, recordedAt))
       ..add(
         AssetSnapshot(
@@ -383,6 +383,10 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
       )
       ..sort((left, right) => right.recordedAt.compareTo(left.recordedAt));
 
+    final portfolioNote = _portfolioHistory
+        .where((item) => _sameMonth(item.recordedAt, recordedAt))
+        .firstOrNull
+        ?.note;
     _portfolioHistory
       ..removeWhere((item) => _sameMonth(item.recordedAt, recordedAt))
       ..add(
@@ -390,7 +394,7 @@ class MockPortfolioRepository implements AssetRepository, PortfolioRepository {
           id: 'portfolio-${_monthKey(recordedAt)}',
           totalValue: _historicalPortfolioTotal(recordedAt),
           recordedAt: recordedAt,
-          note: note,
+          note: portfolioNote,
         ),
       )
       ..sort((left, right) => right.recordedAt.compareTo(left.recordedAt));

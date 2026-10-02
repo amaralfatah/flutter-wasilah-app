@@ -38,6 +38,12 @@ abstract interface class PortfolioRepository {
   /// Meng-upsert holding aset [assetId]: bila belum punya holding, baris
   /// baru dibuat (mendukung alur tambah aset dua langkah -- buat master
   /// dulu, lalu isi nilainya lewat sini).
+  ///
+  /// [note] adalah catatan snapshot aset; catatan snapshot portofolio bulan
+  /// itu tidak diubah. [quantity], [avgBuyPrice], dan [priceCurrency] hanya
+  /// diterapkan ke holding bila [recordedAt] jatuh di snapshot terbaru aset
+  /// itu (input backdate tidak menimpa posisi terkini); `null` berarti
+  /// pertahankan nilai lama.
   Future<void> updateAssetValue({
     required String assetId,
     required double totalValue,
@@ -51,6 +57,14 @@ abstract interface class PortfolioRepository {
     /// Kurs konversi ke IDR yang dipakai input ini; disimpan di histori.
     String? fxCurrency,
     double? fxRate,
+
+    /// `true` mengosongkan jumlah unit holding (mengalahkan `quantity`).
+    /// Seperti `quantity`, diabaikan untuk input backdate.
+    bool clearQuantity = false,
+
+    /// `true` mengosongkan harga beli rata-rata holding (mengalahkan
+    /// `avgBuyPrice`). Diabaikan untuk input backdate.
+    bool clearAvgBuyPrice = false,
   });
 
   /// Mencatat nilai banyak holding sekaligus ke histori bulan [recordedAt]

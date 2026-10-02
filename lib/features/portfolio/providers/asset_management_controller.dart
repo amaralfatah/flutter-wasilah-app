@@ -80,20 +80,12 @@ class AssetManagementController extends AsyncNotifier<void> {
   }
 
   void _validateAssetFields({required String name, required String code}) {
-    final nameError = validateRequiredText(
-      name,
-      message: 'Nama aset wajib diisi.',
-    );
-    if (nameError != null) {
-      throw ArgumentError(nameError);
+    if (isBlank(name)) {
+      throw const ValidationException(ValidationFailure.assetNameRequired);
     }
 
-    final codeError = validateRequiredText(
-      code,
-      message: 'Kode aset wajib diisi.',
-    );
-    if (codeError != null) {
-      throw ArgumentError(codeError);
+    if (isBlank(code)) {
+      throw const ValidationException(ValidationFailure.assetCodeRequired);
     }
   }
 }

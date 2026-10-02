@@ -18,7 +18,6 @@ class TargetManagementController extends AsyncNotifier<void> {
   Future<void> saveTarget({
     required AssetCategory category,
     required double targetPercentage,
-    String? id,
   }) async {
     if (targetPercentage < 0 || targetPercentage > 100) {
       throw const InvalidTargetPercentageException();
@@ -26,7 +25,7 @@ class TargetManagementController extends AsyncNotifier<void> {
 
     final existingTargets = await ref.read(allocationTargetProvider.future);
     final otherTotal = existingTargets
-        .where((target) => target.id != id && target.category != category)
+        .where((target) => target.category != category)
         .fold<double>(0, (sum, target) => sum + target.targetPercentage);
     if (otherTotal + targetPercentage > 100) {
       throw const TargetPercentageExceededException();
@@ -39,7 +38,7 @@ class TargetManagementController extends AsyncNotifier<void> {
           .read(portfolioRepositoryProvider)
           .saveAllocationTarget(
             AllocationTarget(
-              id: id ?? 'target-${category.name}',
+              id: allocationTargetIdOf(category),
               category: category,
               targetPercentage: targetPercentage,
             ),

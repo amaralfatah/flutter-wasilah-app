@@ -221,25 +221,12 @@ class DriftPortfolioRepository implements PortfolioRepository {
 
   @override
   Future<PortfolioSummary> getPortfolioSummary() async {
-    final positions = await getPositions();
-    final history = await getPortfolioHistory();
-    final targets = await getAllocationTargets();
-    final totalValue = positions.fold<double>(
-      0,
-      (sum, position) => sum + position.currentValue,
-    );
-    final lastUpdatedAt = positions.isEmpty
-        ? DateTime.fromMillisecondsSinceEpoch(0)
-        : positions
-              .map((position) => position.lastUpdatedAt)
-              .reduce((latest, next) => latest.isAfter(next) ? latest : next);
-
-    return PortfolioSummary(
-      totalValue: totalValue,
-      monthlyChangePercentage: _calculateMonthlyChange(history),
-      targetProgressPercentage: calculateTargetProgress(positions, targets),
-      positions: positions,
-      lastUpdatedAt: lastUpdatedAt,
+    return PortfolioSummary.fromPositions(
+      await getPositions(),
+      await getAllocationTargets(),
+      monthlyChangePercentage: _calculateMonthlyChange(
+        await getPortfolioHistory(),
+      ),
     );
   }
 
@@ -255,6 +242,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     String? priceCurrency,
     String? fxCurrency,
     double? fxRate,
+    bool clearQuantity = false,
+    bool clearAvgBuyPrice = false,
   }) async {
     await _database.writePortfolio(() async {
       await _writeHolding(
@@ -268,8 +257,12 @@ class DriftPortfolioRepository implements PortfolioRepository {
         priceCurrency: priceCurrency,
         fxCurrency: fxCurrency,
         fxRate: fxRate,
+        clearQuantity: clearQuantity,
+        clearAvgBuyPrice: clearAvgBuyPrice,
       );
-      await _savePortfolioSnapshot(recordedAt, note: note);
+      // [note] milik snapshot aset; catatan snapshot portofolio bulan itu
+      // tidak disentuh.
+      await _savePortfolioSnapshot(recordedAt);
       await _refreshPortfolioSnapshotsAfter(recordedAt);
     });
   }
@@ -289,29 +282,22 @@ class DriftPortfolioRepository implements PortfolioRepository {
           totalValue: record.totalValue,
           recordedAt: recordedAt,
           // Catatan manual bulan itu dipertahankan; yang diganti hanya nilai.
-          note: await _snapshotNote(
-            'asset_snapshots',
+          note: await _assetSnapshotNote(
             _buildSnapshotId(record.assetId, recordedAt),
           ),
           fxCurrency: record.fxCurrency,
           fxRate: record.fxRate,
         );
       }
-      await _savePortfolioSnapshot(
-        recordedAt,
-        note: await _snapshotNote(
-          'portfolio_snapshots',
-          _buildSnapshotId(_portfolioSnapshotPrefix, recordedAt),
-        ),
-      );
+      await _savePortfolioSnapshot(recordedAt);
       await _refreshPortfolioSnapshotsAfter(recordedAt);
     });
   }
 
-  Future<String?> _snapshotNote(String table, String snapshotId) async {
+  Future<String?> _assetSnapshotNote(String snapshotId) async {
     final row = await _database
         .customSelect(
-          'SELECT note FROM $table WHERE id = ? LIMIT 1',
+          'SELECT note FROM asset_snapshots WHERE id = ? LIMIT 1',
           variables: [Variable.withString(snapshotId)],
         )
         .getSingleOrNull();
@@ -332,6 +318,8 @@ class DriftPortfolioRepository implements PortfolioRepository {
     String? priceCurrency,
     String? fxCurrency,
     double? fxRate,
+    bool clearQuantity = false,
+    bool clearAvgBuyPrice = false,
   }) async {
     final assetRow = await _database
         .customSelect(
@@ -363,6 +351,13 @@ class DriftPortfolioRepository implements PortfolioRepository {
     // secara kronologis, bukan nilai yang baru saja diinput -- input bisa
     // saja backdate (tanggal mundur) dan tidak boleh menimpa nilai terkini.
     final latestSnapshot = (await _latestSnapshotOrNull(assetId))!;
+    // Jumlah unit/harga beli/mata uang di form menggambarkan posisi per
+    // tanggal input, jadi hanya input terbaru yang boleh mengubahnya. Input
+    // backdate (mis. isi Januari 10 lot padahal kini 50 lot) tidak menimpa
+    // posisi terkini.
+    final isLatest =
+        existing == null ||
+        latestSnapshot.id == _buildSnapshotId(assetId, recordedAt);
     await _database.customStatement(
       '''
       INSERT INTO holdings (
@@ -381,10 +376,24 @@ class DriftPortfolioRepository implements PortfolioRepository {
         assetId,
         latestSnapshot.totalValue,
         latestSnapshot.totalCost,
-        // null berarti field tak diubah di form ini: pertahankan nilai lama.
-        quantity ?? existing?.quantity,
-        avgBuyPrice ?? existing?.avgBuyPrice,
-        _normalizePriceCurrency(priceCurrency) ?? existing?.priceCurrency,
+        // null berarti field tak diubah di form ini: pertahankan nilai lama;
+        // mengosongkan harus eksplisit lewat clearQuantity/clearAvgBuyPrice.
+        if (!isLatest)
+          existing.quantity
+        else if (clearQuantity)
+          null
+        else
+          quantity ?? existing?.quantity,
+        if (!isLatest)
+          existing.avgBuyPrice
+        else if (clearAvgBuyPrice)
+          null
+        else
+          avgBuyPrice ?? existing?.avgBuyPrice,
+        if (!isLatest)
+          existing.priceCurrency
+        else
+          _normalizePriceCurrency(priceCurrency) ?? existing?.priceCurrency,
         _dateToSql(latestSnapshot.recordedAt),
       ],
     );
@@ -393,14 +402,23 @@ class DriftPortfolioRepository implements PortfolioRepository {
   @override
   Future<void> saveAllocationTarget(AllocationTarget target) async {
     await _database.writePortfolio(() async {
+      // Sisa bug lama (kategori target bisa diubah saat edit): baris kategori
+      // lain yang memakai id ini dipindah ke id kategorinya sendiri, bukan
+      // dihapus seperti `DELETE ... WHERE id = ?` dulu.
       await _database.customStatement(
-        'DELETE FROM allocation_targets WHERE id = ? OR category = ?',
+        "UPDATE allocation_targets SET id = 'target-' || category "
+        'WHERE id = ? AND category <> ?',
         [target.id, target.category.name],
       );
+      // Satu target per kategori (indeks UNIQUE): target kategori yang sudah
+      // ada diganti di tempat.
       await _database.customStatement(
         '''
         INSERT INTO allocation_targets (id, category, target_percentage)
         VALUES (?, ?, ?)
+        ON CONFLICT (category) DO UPDATE SET
+          id = excluded.id,
+          target_percentage = excluded.target_percentage
         ''',
         [target.id, target.category.name, target.targetPercentage],
       );
@@ -437,24 +455,59 @@ class DriftPortfolioRepository implements PortfolioRepository {
     return row == null ? null : _mapHolding(row, assetId: assetId);
   }
 
-  Future<void> _savePortfolioSnapshot(
-    DateTime recordedAt, {
-    String? note,
-  }) async {
-    final portfolioTotal = await _historicalPortfolioTotal(recordedAt);
+  /// Menghitung ulang snapshot portofolio bulan [month] (tanggal mana pun di
+  /// bulan itu), per snapshot aset terakhir di bulan itu -- bukan per tanggal
+  /// pemicu: menghapus/backdate snapshot tanggal 5 tidak boleh membuang nilai
+  /// aset lain yang tercatat tanggal 20. Bulan tanpa snapshot aset tersisa
+  /// dihapus, bukan ditulis Rp0. Catatan bulan itu dipertahankan.
+  Future<void> _savePortfolioSnapshot(DateTime month) async {
+    final snapshotId = _buildSnapshotId(_portfolioSnapshotPrefix, month);
+    final start = month.isUtc
+        ? DateTime.utc(month.year, month.month)
+        : DateTime(month.year, month.month);
+    final end = month.isUtc
+        ? DateTime.utc(month.year, month.month + 1)
+        : DateTime(month.year, month.month + 1);
+    final asOf =
+        (await _database
+                .customSelect(
+                  '''
+      SELECT MAX(s.recorded_at) AS as_of
+      FROM asset_snapshots s
+      JOIN holdings h ON h.asset_id = s.asset_id
+      WHERE s.recorded_at >= ? AND s.recorded_at < ?
+      ''',
+                  variables: [
+                    Variable.withInt(_dateToSql(start)),
+                    Variable.withInt(_dateToSql(end)),
+                  ],
+                )
+                .getSingle())
+            .readNullable<DateTime>('as_of');
 
+    if (asOf == null) {
+      await _database.customStatement(
+        'DELETE FROM portfolio_snapshots WHERE id = ?',
+        [snapshotId],
+      );
+      return;
+    }
+
+    final portfolioTotal = await _historicalPortfolioTotal(asOf);
     await _database.customStatement(
       '''
-      INSERT OR REPLACE INTO portfolio_snapshots (
-        id, total_value, total_cost, recorded_at, note
-      ) VALUES (?, ?, ?, ?, ?)
+      INSERT INTO portfolio_snapshots (id, total_value, total_cost, recorded_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT (id) DO UPDATE SET
+        total_value = excluded.total_value,
+        total_cost = excluded.total_cost,
+        recorded_at = excluded.recorded_at
       ''',
       [
-        _buildSnapshotId(_portfolioSnapshotPrefix, recordedAt),
+        snapshotId,
         portfolioTotal.value,
         portfolioTotal.cost,
-        _dateToSql(recordedAt),
-        note,
+        _dateToSql(asOf),
       ],
     );
   }

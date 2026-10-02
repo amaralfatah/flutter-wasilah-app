@@ -80,6 +80,51 @@ void main() {
     expect(await spyValue(), 9000000);
   });
 
+  Future<MarketValueRecords> recordsAfterFetch() async {
+    final subscription = container.listen(holdingQuotesProvider, (_, _) {});
+    addTearDown(subscription.close);
+    await pumpEventQueue();
+    await container.read(storedPositionListProvider.future);
+    return container.read(marketValueRecordsProvider);
+  }
+
+  test('records market values only from freshly fetched prices', () async {
+    market
+      ..cached['SPY'] = _quote('SPY', 500, 'USD')
+      ..cached['USDIDR=X'] = _quote('USDIDR=X', 15000, 'IDR')
+      ..fresh['SPY'] = _quote('SPY', 600, 'USD')
+      ..fresh['USDIDR=X'] = _quote('USDIDR=X', 16000, 'IDR');
+
+    final (:records, :staleCount) = await recordsAfterFetch();
+
+    expect(records.single.totalValue, 600 * 16000);
+    expect(staleCount, 0);
+  });
+
+  test('cached-only prices are not recorded', () async {
+    market
+      ..cached['SPY'] = _quote('SPY', 500, 'USD')
+      ..cached['USDIDR=X'] = _quote('USDIDR=X', 15000, 'IDR');
+
+    final (:records, :staleCount) = await recordsAfterFetch();
+
+    expect(records, isEmpty);
+    expect(staleCount, 1);
+  });
+
+  test('a stale fallback quote counts as stale', () async {
+    market
+      ..cached['USDIDR=X'] = _quote('USDIDR=X', 15000, 'IDR')
+      ..fresh['SPY'] = _quote('SPY', 600, 'USD')
+      ..fresh['USDIDR=X'] = _quote('USDIDR=X', 16000, 'IDR')
+      ..staleSymbols.add('SPY');
+
+    final (:records, :staleCount) = await recordsAfterFetch();
+
+    expect(records, isEmpty);
+    expect(staleCount, 1);
+  });
+
   test('update form keeps reading the recorded value', () async {
     market
       ..fresh['SPY'] = _quote('SPY', 600, 'USD')
@@ -108,6 +153,9 @@ class _FakeMarketRepository implements MarketRepository {
   final Map<String, MarketQuote> cached = {};
   final Map<String, MarketQuote> fresh = {};
 
+  /// Simbol yang [getQuote]-nya jatuh ke cache (`isStale: true`).
+  final Set<String> staleSymbols = {};
+
   @override
   Future<MarketQuote?> getCachedQuote(String symbol) async => cached[symbol];
 
@@ -117,7 +165,11 @@ class _FakeMarketRepository implements MarketRepository {
     if (quote == null) {
       throw const MarketDataUnavailableException();
     }
-    return (quote: quote, oneDaySeries: null, isStale: false);
+    return (
+      quote: quote,
+      oneDaySeries: null,
+      isStale: staleSymbols.contains(symbol),
+    );
   }
 
   @override

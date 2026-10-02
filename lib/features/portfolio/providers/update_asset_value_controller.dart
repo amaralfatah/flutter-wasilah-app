@@ -26,10 +26,11 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
     String? priceCurrency,
     String? fxCurrency,
     double? fxRate,
+    bool clearQuantity = false,
+    bool clearAvgBuyPrice = false,
   }) async {
-    final assetError = validateSelectedAsset(assetId);
-    if (assetError != null) {
-      throw ArgumentError(assetError);
+    if (checkSelectedAsset(assetId) case final failure?) {
+      throw ValidationException(failure);
     }
 
     if (totalValue < 0) {
@@ -40,9 +41,8 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
       throw const InvalidTotalCostException();
     }
 
-    final noteError = validateNote(note);
-    if (noteError != null) {
-      throw ArgumentError(noteError);
+    if (checkNote(note) case final failure?) {
+      throw ValidationException(failure);
     }
 
     state = const AsyncLoading();
@@ -61,6 +61,8 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             priceCurrency: priceCurrency,
             fxCurrency: fxCurrency,
             fxRate: fxRate,
+            clearQuantity: clearQuantity,
+            clearAvgBuyPrice: clearAvgBuyPrice,
           );
       state = const AsyncData(null);
     } catch (error, stackTrace) {

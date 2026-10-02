@@ -28,3 +28,8 @@ abstract class AllocationTarget with _$AllocationTarget {
     };
   }
 }
+
+/// Id target alokasi diturunkan dari kategorinya: satu target per kategori,
+/// dan kategori target tidak bisa diubah setelah dibuat.
+String allocationTargetIdOf(AssetCategory category) =>
+    'target-${category.name}';

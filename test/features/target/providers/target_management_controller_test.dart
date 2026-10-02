@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/target/providers/target_management_controller.dart';
@@ -22,7 +23,6 @@ void main() {
     await container
         .read(targetManagementControllerProvider.notifier)
         .saveTarget(
-          id: 'target-mutual-fund',
           category: AssetCategory.mutualFund,
           targetPercentage: 5,
         );
@@ -33,6 +33,30 @@ void main() {
     );
 
     expect(cashTarget.targetPercentage, 5);
+  });
+
+  test('saveTarget derives the target id from its category', () async {
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    final container = ProviderContainer(
+      overrides: [
+        portfolioRepositoryProvider.overrideWithValue(repository),
+        assetRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container
+        .read(targetManagementControllerProvider.notifier)
+        .saveTarget(category: AssetCategory.stock, targetPercentage: 30);
+
+    final targets = await repository.getAllocationTargets();
+    final stock = targets.singleWhere(
+      (target) => target.category == AssetCategory.stock,
+    );
+    expect(stock.id, allocationTargetIdOf(AssetCategory.stock));
+    expect(stock.targetPercentage, 30);
+    // Target kategori lain tidak tersentuh.
+    expect(targets, hasLength(4));
   });
 
   test('saveTarget rejects allocations above 100 percent total', () async {
@@ -49,7 +73,6 @@ void main() {
       () => container
           .read(targetManagementControllerProvider.notifier)
           .saveTarget(
-            id: 'target-cash',
             category: AssetCategory.cash,
             targetPercentage: 20,
           ),

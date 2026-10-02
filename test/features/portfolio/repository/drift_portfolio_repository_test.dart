@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/database/app_database.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/allocation_target.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_asset_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/drift_portfolio_repository.dart';
 
@@ -282,7 +283,10 @@ void main() {
           assetId: 'btc',
           totalValue: 15000000,
           recordedAt: DateTime(2026, 7),
-          note: 'Update Juli',
+        );
+        await database.customStatement(
+          "UPDATE portfolio_snapshots SET note = 'Update Juli' "
+          "WHERE id = 'portfolio-2026-07'",
         );
 
         // Cash for June is corrected afterwards; July has no cash snapshot
@@ -438,15 +442,14 @@ void main() {
         final position = await repository.getPositionByAssetId('btc');
         final summary = await repository.getPortfolioSummary();
         history = await repository.getPortfolioHistory();
-        final updatedJulyEntry = history.firstWhere(
-          (item) => item.recordedAt == DateTime(2026, 7),
-        );
 
         // With July's value deleted, btc (and thus the portfolio) should
-        // fall back to June's value everywhere, not stay stuck at 15M.
+        // fall back to June's value everywhere, not stay stuck at 15M. July
+        // has no asset snapshot left, so its portfolio row is dropped rather
+        // than kept as a stale or Rp0 entry.
         expect(position!.currentValue, 10000000);
         expect(summary.totalValue, 10000000);
-        expect(updatedJulyEntry.totalValue, 10000000);
+        expect(history.map((item) => item.id), ['portfolio-2026-06']);
       },
     );
 
@@ -530,7 +533,7 @@ void main() {
         await repository.updateAssetValue(
           assetId: 'btc',
           totalValue: 50000000,
-          recordedAt: DateTime(2026, 10, 1),
+          recordedAt: DateTime(2026, 10),
           note: 'Beli lagi',
           totalCost: 40000000,
           quantity: 0.05,
@@ -538,7 +541,7 @@ void main() {
         await repository.updateAssetValue(
           assetId: 'bmri',
           totalValue: 10000000,
-          recordedAt: DateTime(2026, 10, 1),
+          recordedAt: DateTime(2026, 10),
           totalCost: 9000000,
           quantity: 20,
         );
@@ -626,6 +629,263 @@ void main() {
       final summary = await repository.getPortfolioSummary();
       expect(summary.totalValue, 0);
     });
+
+    group('monthly portfolio snapshot', () {
+      Future<PortfolioSnapshot?> monthOf(
+        DriftPortfolioRepository repository,
+        String id,
+      ) async => (await repository.getPortfolioHistory())
+          .where((item) => item.id == id)
+          .firstOrNull;
+
+      test(
+        'deleting an earlier asset snapshot keeps assets recorded later in '
+        'the same month',
+        () async {
+          final database = openDatabase();
+          addTearDown(database.close);
+          final repository = DriftPortfolioRepository(database);
+          await _track(database, _btc, 8000000, DateTime(2026, 9));
+          await repository.updateAssetValue(
+            assetId: 'btc',
+            totalValue: 10000000,
+            recordedAt: DateTime(2026, 10, 5),
+          );
+          await _track(database, _cash, 5000000, DateTime(2026, 10, 20));
+
+          final btcOctober = (await repository.getAssetHistory(
+            'btc',
+          )).firstWhere((item) => item.recordedAt == DateTime(2026, 10, 5));
+          await repository.deleteAssetSnapshot(btcOctober.id);
+
+          final october = (await monthOf(repository, 'portfolio-2026-10'))!;
+          // btc carries September's 8M forward; cash's Oct 20 value stays.
+          expect(october.totalValue, 13000000);
+          expect(october.recordedAt, DateTime(2026, 10, 20));
+        },
+      );
+
+      test(
+        'a backdated entry within the month still counts assets recorded '
+        'later that month',
+        () async {
+          final database = openDatabase();
+          addTearDown(database.close);
+          final repository = DriftPortfolioRepository(database);
+          await _track(database, _btc, 10000000, DateTime(2026, 10, 20));
+          await _track(database, _cash, 5000000, DateTime(2026, 10, 25));
+
+          await repository.updateAssetValue(
+            assetId: 'btc',
+            totalValue: 12000000,
+            recordedAt: DateTime(2026, 10, 5),
+          );
+
+          final october = (await monthOf(repository, 'portfolio-2026-10'))!;
+          expect(october.totalValue, 17000000);
+          expect(october.recordedAt, DateTime(2026, 10, 25));
+        },
+      );
+
+      test(
+        'removeFromPortfolio recomputes the month as of its latest '
+        'remaining snapshot',
+        () async {
+          final database = openDatabase();
+          addTearDown(database.close);
+          final repository = DriftPortfolioRepository(database);
+          await _track(database, _btc, 10000000, DateTime(2026, 10, 5));
+          await _track(database, _cash, 5000000, DateTime(2026, 10, 20));
+
+          await repository.removeFromPortfolio('btc');
+
+          final october = (await monthOf(repository, 'portfolio-2026-10'))!;
+          expect(october.totalValue, 5000000);
+          expect(october.recordedAt, DateTime(2026, 10, 20));
+        },
+      );
+
+      test(
+        'a month left without asset snapshots is deleted, not Rp0',
+        () async {
+          final database = openDatabase();
+          addTearDown(database.close);
+          final repository = DriftPortfolioRepository(database);
+          await _track(database, _btc, 8000000, DateTime(2026, 9));
+          await repository.updateAssetValue(
+            assetId: 'btc',
+            totalValue: 10000000,
+            recordedAt: DateTime(2026, 10, 5),
+          );
+          await _track(database, _cash, 5000000, DateTime(2026, 11));
+
+          final btcOctober = (await repository.getAssetHistory(
+            'btc',
+          )).firstWhere((item) => item.recordedAt == DateTime(2026, 10, 5));
+          await repository.deleteAssetSnapshot(btcOctober.id);
+
+          expect(
+            (await repository.getPortfolioHistory()).map((item) => item.id),
+            ['portfolio-2026-11', 'portfolio-2026-09'],
+          );
+
+          await repository.removeFromPortfolio('cash');
+          expect(
+            (await repository.getPortfolioHistory()).map((item) => item.id),
+            ['portfolio-2026-09'],
+          );
+        },
+      );
+
+      test(
+        'keeps the portfolio note across asset updates, deletes and removals',
+        () async {
+          final database = openDatabase();
+          addTearDown(database.close);
+          final repository = DriftPortfolioRepository(database);
+          await _track(database, _btc, 10000000, DateTime(2026, 10, 5));
+          await _track(database, _cash, 5000000, DateTime(2026, 10, 20));
+          await _track(database, _gold, 2000000, DateTime(2026, 10, 25));
+          await database.customStatement(
+            "UPDATE portfolio_snapshots SET note = 'Catatan Oktober' "
+            "WHERE id = 'portfolio-2026-10'",
+          );
+
+          await repository.updateAssetValue(
+            assetId: 'btc',
+            totalValue: 11000000,
+            recordedAt: DateTime(2026, 10, 6),
+            note: 'Catatan BTC',
+          );
+          var october = (await monthOf(repository, 'portfolio-2026-10'))!;
+          expect(october.note, 'Catatan Oktober');
+          expect(
+            (await repository.getAssetHistory('btc')).single.note,
+            'Catatan BTC',
+          );
+
+          final goldOctober = (await repository.getAssetHistory(
+            'gold',
+          )).single;
+          await repository.deleteAssetSnapshot(goldOctober.id);
+          october = (await monthOf(repository, 'portfolio-2026-10'))!;
+          expect(october.note, 'Catatan Oktober');
+          expect(october.totalValue, 16000000);
+
+          await repository.removeFromPortfolio('cash');
+          october = (await monthOf(repository, 'portfolio-2026-10'))!;
+          expect(october.note, 'Catatan Oktober');
+          expect(october.totalValue, 11000000);
+        },
+      );
+    });
+
+    test(
+      'a backdated update does not overwrite quantity, buy price, or '
+      'currency',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        await DriftAssetRepository(database).createAsset(_btc);
+        final repository = DriftPortfolioRepository(database);
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 50000000,
+          recordedAt: DateTime(2026, 10),
+          quantity: 50,
+          avgBuyPrice: 100,
+          priceCurrency: 'USD',
+        );
+
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 8000000,
+          recordedAt: DateTime(2026, 1, 15),
+          quantity: 10,
+          avgBuyPrice: 80,
+          priceCurrency: 'IDR',
+          clearQuantity: true,
+          clearAvgBuyPrice: true,
+        );
+
+        final btc = (await repository.getPositionByAssetId('btc'))!;
+        expect(btc.quantity, 50);
+        expect(btc.avgBuyPrice, 100);
+        expect(btc.priceCurrency, 'USD');
+        expect(btc.currentValue, 50000000);
+      },
+    );
+
+    test(
+      'clearQuantity and clearAvgBuyPrice empty the holding fields',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        await DriftAssetRepository(database).createAsset(_btc);
+        final repository = DriftPortfolioRepository(database);
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 50000000,
+          recordedAt: DateTime(2026, 9),
+          quantity: 50,
+          avgBuyPrice: 100,
+        );
+
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 52000000,
+          recordedAt: DateTime(2026, 10),
+          clearQuantity: true,
+        );
+        var btc = (await repository.getPositionByAssetId('btc'))!;
+        expect(btc.quantity, isNull);
+        expect(btc.avgBuyPrice, 100);
+
+        await repository.updateAssetValue(
+          assetId: 'btc',
+          totalValue: 52000000,
+          recordedAt: DateTime(2026, 10),
+          clearAvgBuyPrice: true,
+        );
+        btc = (await repository.getPositionByAssetId('btc'))!;
+        expect(btc.avgBuyPrice, isNull);
+      },
+    );
+
+    test(
+      'saving a target never deletes another category target with the '
+      'same id',
+      () async {
+        final database = openDatabase();
+        addTearDown(database.close);
+        final repository = DriftPortfolioRepository(database);
+        // Sisa bug lama: target kripto yang dulu dibuat sebagai saham.
+        await database.customStatement(
+          'INSERT INTO allocation_targets (id, category, target_percentage) '
+          "VALUES ('target-stock', 'crypto', 30)",
+        );
+
+        await repository.saveAllocationTarget(
+          AllocationTarget(
+            id: allocationTargetIdOf(AssetCategory.stock),
+            category: AssetCategory.stock,
+            targetPercentage: 40,
+          ),
+        );
+
+        final targets = await repository.getAllocationTargets();
+        expect(
+          {
+            for (final target in targets)
+              target.category: (target.id, target.targetPercentage),
+          },
+          {
+            AssetCategory.stock: ('target-stock', 40.0),
+            AssetCategory.crypto: ('target-crypto', 30.0),
+          },
+        );
+      },
+    );
 
     test('saves and deletes allocation targets', () async {
       final database = openDatabase();

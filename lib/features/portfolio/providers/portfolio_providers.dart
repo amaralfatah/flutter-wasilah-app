@@ -52,24 +52,14 @@ final portfolioRepositoryProvider = Provider<PortfolioRepository>((ref) {
 });
 
 /// Ringkasan portofolio dengan nilai holding mengikuti harga pasar (lihat
-/// [positionListProvider]). Perubahan bulanan tetap dari histori tercatat.
+/// [positionListProvider]). Dirakit langsung dari posisi & target, tanpa
+/// `getPortfolioSummary` repository yang hanya akan ditimpa nilai pasar.
 final portfolioSummaryProvider = FutureProvider<PortfolioSummary>((ref) async {
-  ref.watch(portfolioChangesProvider);
-  final repository = ref.watch(portfolioRepositoryProvider);
   final positionsFuture = ref.watch(positionListProvider.future);
   final targetsFuture = ref.watch(allocationTargetProvider.future);
-  final summary = await repository.getPortfolioSummary();
-  final positions = await positionsFuture;
-  return summary.copyWith(
-    positions: positions,
-    totalValue: positions.fold<double>(
-      0,
-      (sum, position) => sum + position.currentValue,
-    ),
-    targetProgressPercentage: calculateTargetProgress(
-      positions,
-      await targetsFuture,
-    ),
+  return PortfolioSummary.fromPositions(
+    await positionsFuture,
+    await targetsFuture,
   );
 });
 
@@ -88,7 +78,7 @@ final storedPositionListProvider = FutureProvider<List<PortfolioPosition>>((
 /// langsung terisi (juga saat offline), lalu hasil fetch baru. Simbol yang
 /// gagal di-fetch memakai cache-nya, atau dilewati bila tak ada cache.
 /// `ref.invalidate` provider ini untuk mengambil ulang harga.
-final holdingQuotesProvider = StreamProvider<Map<String, MarketQuote>>((
+final holdingQuotesProvider = StreamProvider<HoldingQuotes>((
   ref,
 ) async* {
   // Kunci berupa string supaya provider hanya dibangun ulang saat daftar
@@ -102,7 +92,7 @@ final holdingQuotesProvider = StreamProvider<Map<String, MarketQuote>>((
     ),
   );
   if (symbolsKey.isEmpty) {
-    yield const {};
+    yield (quotes: const {}, freshSymbols: const {});
     return;
   }
   final symbols = symbolsKey.split(' ');
@@ -126,6 +116,8 @@ final holdingQuotesProvider = StreamProvider<Map<String, MarketQuote>>((
     }
   }
 
+  final freshSymbols = <String>{};
+
   Future<void> addFresh(
     Map<String, MarketQuote> quotes,
     Iterable<String> symbols,
@@ -134,7 +126,12 @@ final holdingQuotesProvider = StreamProvider<Map<String, MarketQuote>>((
       for (final symbol in symbols)
         repository
             .getQuote(symbol)
-            .then<void>((result) => quotes[symbol] = result.quote)
+            .then<void>((result) {
+              quotes[symbol] = result.quote;
+              if (!result.isStale) {
+                freshSymbols.add(symbol);
+              }
+            })
             .catchError((Object _) {}),
     ]);
   }
@@ -142,12 +139,24 @@ final holdingQuotesProvider = StreamProvider<Map<String, MarketQuote>>((
   final cached = <String, MarketQuote>{};
   await addCached(cached, symbols);
   await addCached(cached, fxSymbolsOf(cached));
-  yield Map.unmodifiable(cached);
+  yield (quotes: Map.unmodifiable(cached), freshSymbols: const {});
 
   final fresh = {...cached};
   await addFresh(fresh, symbols);
   await addFresh(fresh, fxSymbolsOf(fresh));
-  yield Map.unmodifiable(fresh);
+  yield (
+    quotes: Map.unmodifiable(fresh),
+    freshSymbols: Set.unmodifiable(freshSymbols),
+  );
+});
+
+/// Quote per simbol dari [holdingQuotesProvider]. `freshSymbols` berisi
+/// simbol yang harganya baru di-fetch; sisanya dari cache (bisa berminggu-
+/// minggu saat offline), cukup untuk tampilan tapi tidak untuk dicatat ke
+/// histori.
+typedef HoldingQuotes = ({
+  Map<String, MarketQuote> quotes,
+  Set<String> freshSymbols,
 });
 
 /// Posisi portofolio; nilai holding saham, kripto, dan ETF yang punya simbol
@@ -157,20 +166,33 @@ final holdingQuotesProvider = StreamProvider<Map<String, MarketQuote>>((
 final positionListProvider = FutureProvider<List<PortfolioPosition>>((
   ref,
 ) async {
-  final quotes = ref.watch(holdingQuotesProvider).valueOrNull;
+  final quotes = ref.watch(holdingQuotesProvider).valueOrNull?.quotes;
   final positions = await ref.watch(storedPositionListProvider.future);
   return applyMarketPrices(positions, quotes ?? const {});
 });
 
 /// Nilai pasar holding yang siap dicatat ke histori (lihat
-/// `marketValueRecordsOf`); kosong selama posisi atau harga belum dimuat.
-final marketValueRecordsProvider = Provider<List<AssetValueRecord>>((ref) {
+/// `marketValueRecordsOf`), hanya dari harga (dan kurs) yang baru di-fetch;
+/// kosong selama posisi atau harga belum dimuat. `staleCount` = holding yang
+/// hanya punya harga cache sehingga tidak ikut dicatat.
+final marketValueRecordsProvider = Provider<MarketValueRecords>((ref) {
   final positions = ref.watch(storedPositionListProvider).valueOrNull;
-  final quotes = ref.watch(holdingQuotesProvider).valueOrNull;
-  if (positions == null || quotes == null) {
-    return const [];
+  final holdingQuotes = ref.watch(holdingQuotesProvider).valueOrNull;
+  if (positions == null || holdingQuotes == null) {
+    return (records: const [], staleCount: 0);
   }
-  return marketValueRecordsOf(positions, quotes);
+  final (:quotes, :freshSymbols) = holdingQuotes;
+  final records = marketValueRecordsOf(positions, {
+    for (final entry in quotes.entries)
+      if (freshSymbols.contains(entry.key)) entry.key: entry.value,
+  });
+  final valuedCount = marketValueRecordsOf(positions, quotes).length;
+  return (records: records, staleCount: valuedCount - records.length);
+});
+
+typedef MarketValueRecords = ({
+  List<AssetValueRecord> records,
+  int staleCount,
 });
 
 final FutureProviderFamily<PortfolioPosition?, String> positionDetailProvider =

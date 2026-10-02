@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
+import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/asset_management_controller.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -122,7 +123,13 @@ void main() {
           code: 'X',
           category: AssetCategory.other,
         ),
-        throwsA(isA<ArgumentError>()),
+        throwsA(
+          isA<ValidationException>().having(
+            (error) => error.failure,
+            'failure',
+            ValidationFailure.assetNameRequired,
+          ),
+        ),
       );
       expect(
         () => controller().createAsset(
@@ -130,7 +137,13 @@ void main() {
           code: ' ',
           category: AssetCategory.other,
         ),
-        throwsA(isA<ArgumentError>()),
+        throwsA(
+          isA<ValidationException>().having(
+            (error) => error.failure,
+            'failure',
+            ValidationFailure.assetCodeRequired,
+          ),
+        ),
       );
     });
 
