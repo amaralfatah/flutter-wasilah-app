@@ -22,6 +22,11 @@ class AsyncValueView<T> extends StatelessWidget {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
       child: value.when(
+        // Provider yang dibangun ulang karena dependensinya berubah (mis.
+        // harga pasar baru masuk setelah pull-to-refresh) tetap menampilkan
+        // data lama. Tanpa ini konten diganti spinner sejenak, sehingga
+        // RefreshIndicator ikut dibuang di tengah animasinya.
+        skipLoadingOnReload: true,
         data: (data) => KeyedSubtree(
           key: const ValueKey('data'),
           child: this.data(data),
