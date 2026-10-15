@@ -1,4 +1,4 @@
-# Wasilah
+# Pakaya
 
 Aplikasi pelacak portofolio investasi pribadi, offline-first.
 

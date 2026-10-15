@@ -58,7 +58,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: 'Wasilah',
+      title: 'Pakaya',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

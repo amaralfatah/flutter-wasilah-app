@@ -1,13 +1,15 @@
-// Menyiapkan aset ikon dari logo sumber.
+// Menyiapkan aset splash dari logo sumber.
 //
 // Logo sumber datang dengan latar solid dan glyph yang tidak tepat di tengah.
 // Skrip ini mengekstrak glyph jadi mask transparan, lalu menyusunnya ulang
 // pada kanvas 1024x1024 dengan ukuran dan posisi yang terukur:
 //
-//   icon.png            latar biru, glyph putih  -> ikon iOS & legacy Android
-//   icon_foreground.png transparan, glyph putih  -> adaptive icon Android
 //   splash_light.png    transparan, glyph biru   -> splash tema terang
 //   splash_dark.png     transparan, glyph putih  -> splash tema gelap
+//
+// Ikon launcher (icon.png, icon_background.png, icon_foreground.png) tidak
+// dibuat di sini: ketiganya diturunkan dari ikon keluarga Caang Labs di
+// next-caanglabs (`npm run icons`) agar sama persis dengan ikon di hub.
 //
 // Jalankan: dart run tool/prepare_icons.dart
 import 'dart:io';
@@ -17,20 +19,6 @@ import 'package:image/image.dart';
 
 const canvas = 1024;
 final brandBlue = ColorRgb8(0x0B, 0x57, 0xD0);
-
-/// Sisi terpanjang glyph pada ikon berlatar, relatif terhadap kanvas.
-/// 62% mengisi bidang dengan mantap tanpa terasa sesak.
-const filledGlyphRatio = 0.62;
-
-/// Adaptive icon Android memotong dengan mask; zona amannya lingkaran
-/// berdiameter 66/108 = 61,1% kanvas. Yang dibatasi harus lingkaran
-/// pembatas glyph, bukan kotaknya — ujung kaki yang melebar ke bawah
-/// justru titik terjauh dari pusat.
-///
-/// flutter_launcher_icons membungkus foreground dengan `inset="16%"`,
-/// sehingga berkas ini hanya menempati 68% kanvas akhir. Karena itu
-/// nilainya dibesarkan: 0,84 x 0,68 = 57% kanvas, masih di dalam zona aman.
-const adaptiveSafeDiameter = 0.84;
 
 /// Splash Android 12+ memotong logo dengan lingkaran berdiameter
 /// 768/1152 = 66,7% kanvas. 58% aman untuk itu sekaligus enak dilihat
@@ -43,7 +31,7 @@ const opticalLift = 0.02;
 
 void main() {
   final source = decodePng(
-    File('assets/icon/logo-wasilah-light.png').readAsBytesSync(),
+    File('assets/icon/logo-pakaya-light.png').readAsBytesSync(),
   )!;
   stdout.writeln('Sumber: ${source.width}x${source.height}');
 
@@ -54,13 +42,6 @@ void main() {
     '${(mask.height / source.height * 100).toStringAsFixed(1)}% dari sumber)',
   );
 
-  _write('assets/icon/icon.png', _compose(mask, filledGlyphRatio,
-      glyph: ColorRgb8(255, 255, 255), background: brandBlue));
-  _write(
-    'assets/icon/icon_foreground.png',
-    _composeWithinCircle(mask, adaptiveSafeDiameter,
-        glyph: ColorRgb8(255, 255, 255)),
-  );
   _write(
     'assets/icon/splash_light.png',
     _composeWithinCircle(mask, splashSafeDiameter, glyph: brandBlue),

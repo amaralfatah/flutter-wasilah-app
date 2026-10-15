@@ -165,7 +165,7 @@ void main() {
     await tester.tap(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Wasilah'), findsOneWidget);
+    expect(find.text('Pakaya'), findsOneWidget);
     expect(find.text('1.0.0+1'), findsWidgets);
   });
 }

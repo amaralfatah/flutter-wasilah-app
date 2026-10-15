@@ -58,7 +58,7 @@ class SettingsPage extends ConsumerWidget {
             title: l10n.settingsAboutApp,
             onTap: () => showAboutDialog(
               context: context,
-              applicationName: 'Wasilah',
+              applicationName: 'Pakaya',
               applicationVersion: _appVersion,
             ),
           ),
