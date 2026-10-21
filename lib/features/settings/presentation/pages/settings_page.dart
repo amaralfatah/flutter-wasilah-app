@@ -15,7 +15,8 @@ import 'package:go_router/go_router.dart';
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
-  static const _appVersion = '1.1.0+2';
+  // Samakan dengan `version` di pubspec.yaml setiap rilis.
+  static const _appVersion = '1.1.0+4';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

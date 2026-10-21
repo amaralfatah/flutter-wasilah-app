@@ -317,7 +317,7 @@ abstract class AppLocalizations {
   /// Judul halaman update nilai aset
   ///
   /// In id, this message translates to:
-  /// **'Update nilai aset'**
+  /// **'Catat nilai aset'**
   String get updateAssetValueTitle;
 
   /// Label dropdown pemilihan aset
@@ -533,7 +533,7 @@ abstract class AppLocalizations {
   /// Tombol menuju halaman update nilai
   ///
   /// In id, this message translates to:
-  /// **'Update nilai'**
+  /// **'Catat nilai'**
   String get updateValueButton;
 
   /// Judul seksi histori nilai aset
@@ -1356,12 +1356,6 @@ abstract class AppLocalizations {
   /// **'Detail aset'**
   String get holdingDetailTitle;
 
-  /// Tombol singkat keluarkan aset dari portofolio di bar bawah detail
-  ///
-  /// In id, this message translates to:
-  /// **'Keluarkan'**
-  String get removeShortButton;
-
   /// Tab periode 6 bulan
   ///
   /// In id, this message translates to:
@@ -1731,20 +1725,8 @@ abstract class AppLocalizations {
   /// Pemisahan halaman master aset & portofolio
   ///
   /// In id, this message translates to:
-  /// **'Pilih aset dari daftar aset lalu catat nilainya.'**
+  /// **'Pilih aset atau tambahkan aset baru, lalu catat nilainya.'**
   String get emptyPortfolioMessage;
-
-  /// Pemisahan halaman master aset & portofolio
-  ///
-  /// In id, this message translates to:
-  /// **'Tambahkan aset ke daftar aset dulu, lalu catat nilainya di sini.'**
-  String get emptyPortfolioNoMasterMessage;
-
-  /// Pemisahan halaman master aset & portofolio
-  ///
-  /// In id, this message translates to:
-  /// **'Buka daftar aset'**
-  String get openMasterAssetsLabel;
 
   /// Pemisahan halaman master aset & portofolio
   ///
@@ -1901,6 +1883,102 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Backup atau pemulihan sedang berjalan. Tunggu sampai selesai.'**
   String get restoreInProgressMessage;
+
+  /// Tombol singkat di bar bawah detail untuk mencatat pembelian
+  ///
+  /// In id, this message translates to:
+  /// **'Catat beli'**
+  String get recordPurchaseButton;
+
+  /// Judul sheet catat pembelian
+  ///
+  /// In id, this message translates to:
+  /// **'Catat pembelian'**
+  String get recordPurchaseTitle;
+
+  /// Field total uang yang dibayar untuk satu pembelian, fee termasuk
+  ///
+  /// In id, this message translates to:
+  /// **'Total dibayar'**
+  String get purchasePaidLabel;
+
+  /// Helper field total dibayar
+  ///
+  /// In id, this message translates to:
+  /// **'Termasuk fee, salin dari riwayat transaksi'**
+  String get purchasePaidHelper;
+
+  /// Field jumlah unit/lot yang didapat dari satu pembelian
+  ///
+  /// In id, this message translates to:
+  /// **'Jumlah didapat'**
+  String get purchaseQuantityLabel;
+
+  /// Satuan lot saham IDX
+  ///
+  /// In id, this message translates to:
+  /// **'lot'**
+  String get lotUnit;
+
+  /// Pesan saat posisi lama belum cukup lengkap untuk menghitung rata-rata
+  ///
+  /// In id, this message translates to:
+  /// **'Isi jumlah unit dan harga rata-rata beli dulu lewat Update nilai.'**
+  String get purchaseIncompleteMessage;
+
+  /// Snackbar sukses catat pembelian
+  ///
+  /// In id, this message translates to:
+  /// **'Pembelian {assetName} dicatat.'**
+  String purchaseRecordedMessage(String assetName);
+
+  /// Snackbar gagal catat pembelian
+  ///
+  /// In id, this message translates to:
+  /// **'Pembelian belum tercatat. Coba lagi.'**
+  String get purchaseFailedMessage;
+
+  /// Tombol di form catat nilai untuk membuat aset baru lalu langsung memilihnya
+  ///
+  /// In id, this message translates to:
+  /// **'Aset baru'**
+  String get newAssetButton;
+
+  /// Keterangan pemilih aset di form catat nilai saat daftar aset kosong
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada aset. Tambahkan aset baru dulu.'**
+  String get noAssetsYetHelper;
+
+  /// Snackbar setelah aset baru dibuat dari daftar aset
+  ///
+  /// In id, this message translates to:
+  /// **'{assetName} ditambahkan'**
+  String assetCreatedMessage(String assetName);
+
+  /// Tooltip menu titik tiga di AppBar
+  ///
+  /// In id, this message translates to:
+  /// **'Aksi lain'**
+  String get moreActionsTooltip;
+
+  /// Baris di tab Portofolio: holding bernilai pasar yang belum dicatat ke histori bulan ini
+  ///
+  /// In id, this message translates to:
+  /// **'{count} aset belum dicatat bulan ini'**
+  String marketValuesPendingMessage(int count);
+
+  /// Penjelasan singkat di atas form catat nilai
+  ///
+  /// In id, this message translates to:
+  /// **'Isi kondisi aset per tanggal catat. Untuk pembelian baru, pakai Catat beli di detail aset.'**
+  String get updateValueIntro;
+
+  /// Tombol memunculkan field catatan di form catat nilai
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah catatan'**
+  String get addNoteButton;
 }
 
 class _AppLocalizationsDelegate

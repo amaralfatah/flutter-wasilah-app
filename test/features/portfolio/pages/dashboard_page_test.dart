@@ -73,7 +73,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Portofolio masih kosong'), findsOneWidget);
-    expect(find.text('Update nilai'), findsNothing);
+    expect(find.text('Catat nilai'), findsNothing);
   });
 
   testWidgets(

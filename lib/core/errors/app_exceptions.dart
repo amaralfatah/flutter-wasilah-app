@@ -6,6 +6,12 @@ class InvalidTotalCostException implements Exception {
   const InvalidTotalCostException();
 }
 
+/// Pembelian tidak bisa dirata-rata: input tidak positif, atau posisi lama
+/// belum punya jumlah unit + harga beli/modal.
+class InvalidPurchaseException implements Exception {
+  const InvalidPurchaseException();
+}
+
 class InvalidTargetPercentageException implements Exception {
   const InvalidTargetPercentageException();
 }

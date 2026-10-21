@@ -40,7 +40,7 @@
   "commonDeleteHistoryFailedMessage": "Failed to delete history.",
   "commonEmptyHistoryTitle": "No history yet",
 
-  "updateAssetValueTitle": "Update asset value",
+  "updateAssetValueTitle": "Record asset value",
   "assetDropdownLabel": "Asset",
   "updateTypeOverride": "Override",
   "updateTypeIncrement": "Add",
@@ -85,7 +85,7 @@
   "recordMarketValuesSuccess": "Recorded market values for {count} assets",
   "marketValueAsOf": "Market price {time}",
   "lastUpdatedLabel": "Last updated",
-  "updateValueButton": "Update value",
+  "updateValueButton": "Record value",
   "historySectionTitle": "Value history",
   "emptyAssetHistoryMessage": "History appears once the value is updated.",
   "defaultAssetDetailTitle": "Asset detail",
@@ -346,7 +346,6 @@
   "targetHeroFromTarget": "vs target",
 
   "holdingDetailTitle": "Asset Detail",
-  "removeShortButton": "Remove",
 
   "chartRange6M": "6M",
   "historyMonthlyLabel": "Monthly",
@@ -423,9 +422,7 @@
   "masterAssetsSettingsSubtitle": "Name, code, category, and market symbol",
   "emptyMasterAssetsMessage": "Add assets (e.g. stocks, crypto, cash) to this list. Their values are recorded in Portfolio.",
   "emptyPortfolioTitle": "Your portfolio is empty",
-  "emptyPortfolioMessage": "Pick an asset from your asset list and record its value.",
-  "emptyPortfolioNoMasterMessage": "Add an asset to your asset list first, then record its value here.",
-  "openMasterAssetsLabel": "Open asset list",
+  "emptyPortfolioMessage": "Pick an asset or add a new one, then record its value.",
   "addToPortfolioLabel": "Record asset value",
 
   "totalValueOptionalFieldLabel": "Total asset value (optional)",
@@ -453,5 +450,22 @@
   "dateRequiredMessage": "Please select a date.",
   "noteTooLongMessage": "Note can be at most {max} characters.",
   "settingsAssetsLabel": "Asset list",
-  "restoreInProgressMessage": "A backup or restore is in progress. Please wait until it finishes."
+  "restoreInProgressMessage": "A backup or restore is in progress. Please wait until it finishes.",
+
+  "recordPurchaseButton": "Log buy",
+  "recordPurchaseTitle": "Log purchase",
+  "purchasePaidLabel": "Total paid",
+  "purchasePaidHelper": "Fees included, copy it from your trade history",
+  "purchaseQuantityLabel": "Quantity received",
+  "lotUnit": "lot",
+  "purchaseIncompleteMessage": "Fill in the quantity and average buy price first via Update value.",
+  "purchaseRecordedMessage": "Purchase of {assetName} logged.",
+  "purchaseFailedMessage": "Purchase not logged yet. Please try again.",
+  "newAssetButton": "New asset",
+  "noAssetsYetHelper": "No assets yet. Add a new asset first.",
+  "assetCreatedMessage": "{assetName} added",
+  "moreActionsTooltip": "More actions",
+  "marketValuesPendingMessage": "{count, plural, =1{1 asset not recorded this month} other{{count} assets not recorded this month}}",
+  "updateValueIntro": "Enter the asset as of the record date. For a new purchase, use Log buy on the asset detail.",
+  "addNoteButton": "Add note"
 }

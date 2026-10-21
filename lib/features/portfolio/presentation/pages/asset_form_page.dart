@@ -185,8 +185,9 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
     }
 
     try {
+      String? createdId;
       if (editingAsset == null) {
-        await ref
+        createdId = await ref
             .read(assetManagementControllerProvider.notifier)
             .createAsset(
               name: _nameController.text,
@@ -210,7 +211,9 @@ class _AssetFormPageState extends ConsumerState<AssetFormPage> {
       if (!mounted) {
         return;
       }
-      context.pop();
+      // Id aset baru dikembalikan supaya pemanggil (mis. form catat nilai)
+      // bisa langsung memilihnya.
+      context.pop(createdId);
     } on Object catch (error) {
       if (!mounted) {
         return;

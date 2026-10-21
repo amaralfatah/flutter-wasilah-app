@@ -83,11 +83,38 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     }
   }
 
+  /// Jumlah holding bernilai pasar yang catatan terakhirnya sebelum bulan
+  /// ini: dasar pengingat catat nilai pasar bulanan.
+  int _pendingThisMonth(
+    MarketValueRecords marketRecords,
+    List<PortfolioPosition>? storedPositions,
+  ) {
+    if (storedPositions == null) {
+      return 0;
+    }
+    final now = DateTime.now();
+    final monthStart = DateTime(now.year, now.month);
+    final lastRecorded = {
+      for (final position in storedPositions)
+        position.id: position.lastUpdatedAt,
+    };
+    return marketRecords.records
+        .where(
+          (record) =>
+              lastRecorded[record.assetId]?.isBefore(monthStart) ?? false,
+        )
+        .length;
+  }
+
   @override
   Widget build(BuildContext context) {
     final assetsValue = ref.watch(positionListProvider);
     final marketRecords = ref.watch(marketValueRecordsProvider);
     final isSaving = ref.watch(updateAssetValueControllerProvider).isLoading;
+    final pendingMarketCount = _pendingThisMonth(
+      marketRecords,
+      ref.watch(storedPositionListProvider).valueOrNull,
+    );
     final l10n = context.l10n;
 
     return Scaffold(
@@ -106,11 +133,16 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      // Berlabel: ikon saja tidak menjelaskan bahwa ini pintu masuk catat
+      // nilai (termasuk menambah aset baru ke portofolio).
+      floatingActionButton: FloatingActionButton.extended(
         heroTag: 'portfolio_update_value_fab',
         onPressed: () => context.push(RouteNames.portfolioUpdate),
-        tooltip: l10n.addToPortfolioLabel,
-        child: const Icon(Icons.edit_note),
+        // Tema memakai CircleBorder untuk FAB bulat; versi berlabel butuh
+        // bentuk kapsul.
+        shape: const StadiumBorder(),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addToPortfolioLabel),
       ),
       body: AsyncValueView(
         value: assetsValue,
@@ -159,6 +191,15 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (pendingMarketCount > 0) ...[
+                  _PendingMarketValuesRow(
+                    count: pendingMarketCount,
+                    onRecord: isSaving
+                        ? null
+                        : () => _recordMarketValues(marketRecords),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
                 if (categories.length > 1) ...[
                   SizedBox(
                     height: 32,
@@ -285,27 +326,68 @@ class _ArchivedAssetsSection extends StatelessWidget {
   }
 }
 
-/// Portofolio kosong: arahkan ke catat nilai, atau ke master aset bila
-/// belum ada aset sama sekali.
-class _EmptyPortfolio extends ConsumerWidget {
+/// Portofolio kosong: arahkan ke form catat nilai, yang juga bisa membuat
+/// aset baru bila daftar aset masih kosong.
+class _EmptyPortfolio extends StatelessWidget {
   const _EmptyPortfolio();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final hasMasterAssets =
-        ref.watch(assetListProvider).asData?.value.isNotEmpty ?? false;
 
     return AppEmptyState(
       title: l10n.emptyPortfolioTitle,
-      message: hasMasterAssets
-          ? l10n.emptyPortfolioMessage
-          : l10n.emptyPortfolioNoMasterMessage,
-      actionLabel: hasMasterAssets
-          ? l10n.addToPortfolioLabel
-          : l10n.openMasterAssetsLabel,
-      onAction: () => context.push(
-        hasMasterAssets ? RouteNames.portfolioUpdate : RouteNames.masterAssets,
+      message: l10n.emptyPortfolioMessage,
+      actionLabel: l10n.addToPortfolioLabel,
+      onAction: () => context.push(RouteNames.portfolioUpdate),
+    );
+  }
+}
+
+/// Pengingat catat nilai pasar bulanan, gaya baris Stockbit: teks abu di
+/// kiri, aksi hijau di kanan, tanpa latar berwarna.
+class _PendingMarketValuesRow extends StatelessWidget {
+  const _PendingMarketValuesRow({required this.count, required this.onRecord});
+
+  final int count;
+  final VoidCallback? onRecord;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.symmetric(
+          horizontal: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: AppSpacing.xl,
+          right: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.price_check,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                l10n.marketValuesPendingMessage(count),
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            TextButton(
+              onPressed: onRecord,
+              child: Text(l10n.recordMarketValuesButton),
+            ),
+          ],
+        ),
       ),
     );
   }

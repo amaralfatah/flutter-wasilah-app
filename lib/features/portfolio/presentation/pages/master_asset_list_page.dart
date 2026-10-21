@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
@@ -31,7 +33,7 @@ class MasterAssetListPage extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.masterAssetsTitle)),
       floatingActionButton: FloatingActionButton(
         heroTag: 'master_asset_create_fab',
-        onPressed: () => context.push(RouteNames.masterAssetCreate),
+        onPressed: () => unawaited(_createAsset(context, ref)),
         tooltip: l10n.addAssetTooltip,
         child: const Icon(Icons.add),
       ),
@@ -57,7 +59,7 @@ class MasterAssetListPage extends ConsumerWidget {
                   title: l10n.commonEmptyAssetsTitle,
                   message: l10n.emptyMasterAssetsMessage,
                   actionLabel: l10n.commonAddAssetLabel,
-                  onAction: () => context.push(RouteNames.masterAssetCreate),
+                  onAction: () => unawaited(_createAsset(context, ref)),
                 ),
               ),
             );
@@ -94,6 +96,33 @@ class MasterAssetListPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Buat aset baru, lalu tawarkan langsung mencatat nilainya: aset tanpa
+/// nilai belum muncul di Portofolio, jadi tanpa tawaran ini pengguna harus
+/// mencari sendiri jalan ke form catat nilai.
+Future<void> _createAsset(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final router = GoRouter.of(context);
+  final l10n = context.l10n;
+  final createdId = await context.push<String>(RouteNames.masterAssetCreate);
+  if (createdId == null) {
+    return;
+  }
+  final assets = await ref.read(assetListProvider.future);
+  final name =
+      assets.where((asset) => asset.id == createdId).firstOrNull?.name ??
+      l10n.commonAsset;
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(l10n.assetCreatedMessage(name)),
+      action: SnackBarAction(
+        label: l10n.updateValueButton,
+        onPressed: () =>
+            unawaited(router.push('${RouteNames.portfolio}/$createdId/update')),
+      ),
+    ),
+  );
 }
 
 /// Lebar baca maksimum, sama dengan `RefreshablePageBody`.

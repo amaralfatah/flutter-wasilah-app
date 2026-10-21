@@ -99,4 +99,17 @@ void main() {
     expect(parseDecimalInput('1.000'), 1000);
     expect(parseDecimalInput(''), isNull);
   });
+
+  test('parseLooseDecimal reads broker amounts in either style', () {
+    // Total Tokocrypto/Gotrade: titik desimal.
+    expect(parseLooseDecimal('19.8782376'), 19.8782376);
+    expect(parseLooseDecimal('19.228'), 19.228);
+    expect(parseLooseDecimal('19,228'), 19.228);
+    expect(parseLooseDecimal('95'), 95);
+    expect(parseLooseDecimal('1,234.56'), 1234.56);
+    expect(parseLooseDecimal('1.234,56'), 1234.56);
+    expect(parseLooseDecimal('1.234.567'), 1234567);
+    expect(parseLooseDecimal(' '), isNull);
+    expect(parseLooseDecimal('abc'), isNull);
+  });
 }

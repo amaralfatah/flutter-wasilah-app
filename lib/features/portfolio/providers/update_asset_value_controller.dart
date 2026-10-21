@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/market_valuation.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/purchase_math.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 
@@ -64,6 +67,69 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
             clearQuantity: clearQuantity,
             clearAvgBuyPrice: clearAvgBuyPrice,
           );
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Mencatat satu pembelian [position] pada [recordedAt]: jumlah unit, avg,
+  /// dan modal dihitung ulang dengan [applyPurchase]. Nilai posisi yang
+  /// dinilai harga pasar diskalakan ke jumlah unit baru (harga per unit
+  /// sama); selain itu bertambah sebesar yang dibayar. [paid] dalam mata
+  /// uang harga beli aset, dan catatan bulan itu dipertahankan.
+  Future<void> recordPurchase({
+    required PortfolioPosition position,
+    required double boughtQuantity,
+    required double paid,
+    required double rateToIdr,
+    required DateTime recordedAt,
+  }) async {
+    final result = applyPurchase(
+      quantity: position.quantity,
+      avgBuyPrice: position.avgBuyPrice,
+      totalCost: position.totalCost,
+      boughtQuantity: boughtQuantity,
+      paid: paid,
+      rateToIdr: rateToIdr,
+      lotFactor: lotToShareFactor(position.marketSymbol),
+    );
+    if (result == null) {
+      throw const InvalidPurchaseException();
+    }
+
+    state = const AsyncLoading();
+
+    try {
+      final repository = ref.read(portfolioRepositoryProvider);
+      final history = await repository.getAssetHistory(position.id);
+      final monthNote = history
+          .where(
+            (snapshot) =>
+                snapshot.recordedAt.year == recordedAt.year &&
+                snapshot.recordedAt.month == recordedAt.month,
+          )
+          .firstOrNull
+          ?.note;
+      final currency = position.effectivePriceCurrency;
+      final oldQuantity = position.quantity;
+      final totalValue =
+          position.isMarketValued && oldQuantity != null && oldQuantity > 0
+          ? position.currentValue / oldQuantity * result.quantity
+          : position.currentValue + paid * rateToIdr;
+      await repository.updateAssetValue(
+        assetId: position.id,
+        totalValue: totalValue,
+        recordedAt: recordedAt,
+        note: monthNote,
+        totalCost: result.totalCost,
+        quantity: result.quantity,
+        avgBuyPrice: result.avgBuyPrice,
+        priceCurrency: currency,
+        fxCurrency: currency == 'IDR' ? null : currency,
+        fxRate: currency == 'IDR' ? null : rateToIdr,
+      );
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);

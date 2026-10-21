@@ -72,6 +72,31 @@ double? parseDecimalInput(String text) {
   return double.tryParse(fraction.isEmpty ? integer : '$integer.$fraction');
 }
 
+/// Parse nominal yang disalin dari aplikasi broker berformat bebas: titik
+/// maupun koma boleh jadi desimal (`19.228` dari Tokocrypto, `19,228`).
+/// Satu pemisah saja dibaca desimal; pemisah yang berulang dibaca ribuan;
+/// bila keduanya ada, yang terakhir desimal (`1,234.56`, `1.234,56`).
+/// `null` bila kosong atau tidak valid.
+double? parseLooseDecimal(String text) {
+  var value = text.trim().replaceAll(' ', '');
+  if (value.isEmpty) {
+    return null;
+  }
+  final lastDot = value.lastIndexOf('.');
+  final lastComma = value.lastIndexOf(',');
+  if (lastDot >= 0 && lastComma >= 0) {
+    final decimal = lastDot > lastComma ? '.' : ',';
+    final grouping = decimal == '.' ? ',' : '.';
+    value = value.replaceAll(grouping, '').replaceAll(decimal, '.');
+  } else {
+    final separator = lastDot >= 0 ? '.' : ',';
+    value = separator.allMatches(value).length > 1
+        ? value.replaceAll(separator, '')
+        : value.replaceAll(separator, '.');
+  }
+  return double.tryParse(value);
+}
+
 /// Digit bagian bulat & pecahan dari teks angka. [separator] `,` berarti
 /// desimal pasti; `.` berarti titik ketikan yang dibaca desimal tapi masih
 /// bisa berubah jadi pemisah ribuan bila diikuti digit lagi.

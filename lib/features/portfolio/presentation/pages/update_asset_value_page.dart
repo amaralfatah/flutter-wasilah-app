@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/errors/app_exceptions.dart';
+import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/decimal_input_formatter.dart';
@@ -23,6 +24,7 @@ import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_select_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
+import 'package:go_router/go_router.dart';
 
 export 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_asset_value/update_type_selector.dart'
     show AssetValueUpdateType;
@@ -84,6 +86,7 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
   /// dimuat atau bukan mode tambah.
   double? _incrementBase;
   AssetValueUpdateType _updateType = AssetValueUpdateType.override;
+  bool _showNote = false;
 
   @override
   void initState() {
@@ -141,6 +144,14 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     );
   }
 
+  Future<void> _createAsset() async {
+    final createdId = await context.push<String>(RouteNames.masterAssetCreate);
+    if (createdId == null || !mounted) {
+      return;
+    }
+    setState(() => _selectedAssetId = createdId);
+  }
+
   Widget _buildForm(
     BuildContext context, {
     required List<PortfolioPosition> assets,
@@ -185,7 +196,21 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             validator: (value) => validateSelectedAsset(value, l10n),
             onChanged: (value) => setState(() => _selectedAssetId = value),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          // Aset baru dibuat dari sini lalu langsung terpilih, supaya
+          // pengguna baru tak perlu memutar lewat Pengaturan dulu.
+          _NewAssetRow(
+            helperText: assets.isEmpty ? l10n.noAssetsYetHelper : null,
+            onPressed: isLoading ? null : _createAsset,
+          ),
+          if (showHoldingFields) ...[
+            Text(
+              l10n.updateValueIntro,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           if (allowIncrement) ...[
             UpdateTypeSelector(
               value: _updateType,
@@ -336,14 +361,26 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
             onChanged: (date) => setState(() => _selectedDate = date),
           ),
           const SizedBox(height: AppSpacing.lg),
-          AppTextField(
-            label: l10n.noteFieldLabel,
-            controller: _noteController,
-            maxLines: 2,
-            maxLength: noteMaxLength,
-            validator: (value) => validateNote(value, l10n),
-          ),
-          const SizedBox(height: AppSpacing.lg),
+          // Catatan jarang diisi; disembunyikan di balik tombol supaya form
+          // yang sudah panjang tidak bertambah satu field lagi.
+          if (_showNote || _noteController.text.isNotEmpty) ...[
+            AppTextField(
+              label: l10n.noteFieldLabel,
+              controller: _noteController,
+              maxLines: 2,
+              maxLength: noteMaxLength,
+              validator: (value) => validateNote(value, l10n),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ] else
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _showNote = true),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(l10n.addNoteButton),
+              ),
+            ),
           ValuePreviewCard(
             previousValue: previousValue,
             latestValue: latestValue,
@@ -919,5 +956,44 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     }
+  }
+}
+
+/// Tombol "+ Aset baru" di bawah pemilih aset, dengan keterangan opsional
+/// (mis. saat daftar aset masih kosong).
+class _NewAssetRow extends StatelessWidget {
+  const _NewAssetRow({required this.onPressed, this.helperText});
+
+  final VoidCallback? onPressed;
+  final String? helperText;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final helperText = this.helperText;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        children: [
+          if (helperText != null)
+            Expanded(
+              child: Text(
+                helperText,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            const Spacer(),
+          TextButton.icon(
+            onPressed: onPressed,
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(context.l10n.newAssetButton),
+          ),
+        ],
+      ),
+    );
   }
 }

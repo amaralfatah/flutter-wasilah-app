@@ -77,6 +77,77 @@ void main() {
       );
     });
 
+    test('records a purchase and keeps the month note', () async {
+      final position = (await repository.getPositionByAssetId('btc'))!;
+
+      await controller().recordPurchase(
+        position: position.copyWith(
+          holding: position.holding.copyWith(
+            quantity: 0.00038,
+            avgBuyPrice: 78144,
+            totalCost: 0.00038 * 78144 * 16000,
+            priceCurrency: 'USD',
+          ),
+        ),
+        boughtQuantity: 0.00023,
+        paid: 19.228,
+        rateToIdr: 16000,
+        recordedAt: DateTime(2026, 7, 20),
+      );
+
+      final saved = (await repository.getPositionByAssetId('btc'))!;
+      expect(saved.quantity, closeTo(0.00061, 1e-12));
+      expect(
+        saved.avgBuyPrice,
+        closeTo((0.00038 * 78144 + 19.228) / 0.00061, 1e-6),
+      );
+      expect(saved.priceCurrency, 'USD');
+      expect(saved.currentValue, closeTo(18200000 + 19.228 * 16000, 1e-6));
+      final history = await repository.getAssetHistory('btc');
+      expect(history.first.note, 'Rekap nilai Juli');
+      expect(history.first.fxRate, 16000);
+    });
+
+    test('scales a market-valued position to the new quantity', () async {
+      final position = (await repository.getPositionByAssetId('btc'))!;
+
+      await controller().recordPurchase(
+        position: position.copyWith(
+          marketPriceAt: DateTime(2026, 7, 20),
+          holding: position.holding.copyWith(
+            currentValue: 600000,
+            quantity: 0.0004,
+            avgBuyPrice: 78000,
+            priceCurrency: 'USD',
+          ),
+        ),
+        boughtQuantity: 0.0002,
+        paid: 16,
+        rateToIdr: 16000,
+        recordedAt: DateTime(2026, 7, 20),
+      );
+
+      final saved = (await repository.getPositionByAssetId('btc'))!;
+      expect(saved.currentValue, closeTo(900000, 1e-6));
+    });
+
+    test('rejects a purchase that cannot be averaged', () async {
+      final position = (await repository.getPositionByAssetId('btc'))!;
+
+      expect(
+        () => controller().recordPurchase(
+          position: position.copyWith(
+            holding: position.holding.copyWith(totalCost: 1000000),
+          ),
+          boughtQuantity: 1,
+          paid: 10,
+          rateToIdr: 1,
+          recordedAt: DateTime(2026, 7, 20),
+        ),
+        throwsA(isA<InvalidPurchaseException>()),
+      );
+    });
+
     test('exposes repository failures as AsyncError', () async {
       await expectLater(
         controller().submit(

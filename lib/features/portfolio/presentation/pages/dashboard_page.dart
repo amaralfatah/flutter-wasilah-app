@@ -40,7 +40,9 @@ class DashboardPage extends ConsumerWidget {
                 title: l10n.emptyPortfolioTitle,
                 message: l10n.emptyAssetsDashboardMessage,
                 actionLabel: l10n.addToPortfolioLabel,
-                onAction: () => context.go(RouteNames.portfolio),
+                // Langsung ke form: tombolnya berjanji "Catat nilai aset",
+                // bukan sekadar pindah tab.
+                onAction: () => context.push(RouteNames.portfolioUpdate),
               ),
             );
           }
@@ -78,23 +80,39 @@ class DashboardPage extends ConsumerWidget {
                       targetsValue.maybeWhen(
                         data: (targets) {
                           if (targets.isEmpty) {
+                            // Chevron menandai kartu bisa diketuk, sama
+                            // dengan kartu lain yang membuka halaman.
                             return AppCard(
                               onTap: () => context.go(RouteNames.target),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    l10n.commonEmptyTargetsTitle,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.commonEmptyTargetsTitle,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.titleMedium,
+                                        ),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        Text(
+                                          l10n.noTargetsCardMessage,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    l10n.noTargetsCardMessage,
-                                    style: Theme.of(
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: Theme.of(
                                       context,
-                                    ).textTheme.bodyMedium,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ],
                               ),
@@ -134,6 +152,12 @@ class DashboardPage extends ConsumerWidget {
                               ),
                             ),
                           ),
+                      // Beranda hanya memuat 4 teratas; tanpa tautan ini
+                      // pengguna tak tahu masih ada holding lain.
+                      if (activeAssets.length > 4)
+                        _ViewAllRow(
+                          onTap: () => context.go(RouteNames.portfolio),
+                        ),
                     ],
                   ),
                 ],
@@ -141,6 +165,42 @@ class DashboardPage extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Baris "Lihat semua ›" di ujung daftar, gaya tautan hijau Stockbit.
+class _ViewAllRow extends StatelessWidget {
+  const _ViewAllRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              context.l10n.viewAllShortLabel,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -118,7 +118,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get commonEmptyHistoryTitle => 'Belum ada histori';
 
   @override
-  String get updateAssetValueTitle => 'Update nilai aset';
+  String get updateAssetValueTitle => 'Catat nilai aset';
 
   @override
   String get assetDropdownLabel => 'Aset';
@@ -241,7 +241,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get lastUpdatedLabel => 'Terakhir diperbarui';
 
   @override
-  String get updateValueButton => 'Update nilai';
+  String get updateValueButton => 'Catat nilai';
 
   @override
   String get historySectionTitle => 'Histori nilai';
@@ -734,9 +734,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get holdingDetailTitle => 'Detail aset';
 
   @override
-  String get removeShortButton => 'Keluarkan';
-
-  @override
   String get chartRange6M => '6B';
 
   @override
@@ -940,14 +937,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get emptyPortfolioMessage =>
-      'Pilih aset dari daftar aset lalu catat nilainya.';
-
-  @override
-  String get emptyPortfolioNoMasterMessage =>
-      'Tambahkan aset ke daftar aset dulu, lalu catat nilainya di sini.';
-
-  @override
-  String get openMasterAssetsLabel => 'Buka daftar aset';
+      'Pilih aset atau tambahkan aset baru, lalu catat nilainya.';
 
   @override
   String get addToPortfolioLabel => 'Catat nilai aset';
@@ -1039,4 +1029,60 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get restoreInProgressMessage =>
       'Backup atau pemulihan sedang berjalan. Tunggu sampai selesai.';
+
+  @override
+  String get recordPurchaseButton => 'Catat beli';
+
+  @override
+  String get recordPurchaseTitle => 'Catat pembelian';
+
+  @override
+  String get purchasePaidLabel => 'Total dibayar';
+
+  @override
+  String get purchasePaidHelper => 'Termasuk fee, salin dari riwayat transaksi';
+
+  @override
+  String get purchaseQuantityLabel => 'Jumlah didapat';
+
+  @override
+  String get lotUnit => 'lot';
+
+  @override
+  String get purchaseIncompleteMessage =>
+      'Isi jumlah unit dan harga rata-rata beli dulu lewat Update nilai.';
+
+  @override
+  String purchaseRecordedMessage(String assetName) {
+    return 'Pembelian $assetName dicatat.';
+  }
+
+  @override
+  String get purchaseFailedMessage => 'Pembelian belum tercatat. Coba lagi.';
+
+  @override
+  String get newAssetButton => 'Aset baru';
+
+  @override
+  String get noAssetsYetHelper => 'Belum ada aset. Tambahkan aset baru dulu.';
+
+  @override
+  String assetCreatedMessage(String assetName) {
+    return '$assetName ditambahkan';
+  }
+
+  @override
+  String get moreActionsTooltip => 'Aksi lain';
+
+  @override
+  String marketValuesPendingMessage(int count) {
+    return '$count aset belum dicatat bulan ini';
+  }
+
+  @override
+  String get updateValueIntro =>
+      'Isi kondisi aset per tanggal catat. Untuk pembelian baru, pakai Catat beli di detail aset.';
+
+  @override
+  String get addNoteButton => 'Tambah catatan';
 }

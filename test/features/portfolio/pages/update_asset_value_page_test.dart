@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_wasilah_app/core/router/route_names.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/data/models/market_quote.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update_asset_value_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_select_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/labeled_field.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../helpers/mock_portfolio_repository.dart';
 
@@ -70,6 +74,59 @@ Future<void> _switchValueToUsd(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('new asset created from the form is selected right away', (
+    tester,
+  ) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const UpdateAssetValuePage(),
+        ),
+        GoRoute(
+          path: RouteNames.masterAssetCreate,
+          builder: (context, state) => const AssetFormPage(),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          portfolioRepositoryProvider.overrideWithValue(repository),
+          assetRepositoryProvider.overrideWithValue(repository),
+          fxRateToIdrProvider.overrideWith((ref, currency) => 16000),
+        ],
+        child: MaterialApp.router(
+          locale: const Locale('id'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Aset baru'));
+    await tester.pumpAndSettle();
+    await tester.enterText(_field('Nama aset'), 'Emas Antam');
+    await tester.enterText(_field('Kode aset'), 'EMAS');
+    await tester.tap(find.widgetWithText(AppPrimaryButton, 'Tambah aset'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Catat nilai aset'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppSelectField<String>),
+        matching: find.text('Emas Antam'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('update asset value form validates required fields', (
     tester,
   ) async {

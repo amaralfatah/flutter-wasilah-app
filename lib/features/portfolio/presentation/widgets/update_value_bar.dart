@@ -5,29 +5,28 @@ import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:go_router/go_router.dart';
 
-/// Tombol "Update nilai" yang menempel di bawah layar, untuk slot
-/// `Scaffold.bottomNavigationBar`.
 /// Bar tombol yang menempel di bawah layar, untuk slot
-/// `Scaffold.bottomNavigationBar`: "Update nilai" bergaris hijau dan, bila
-/// [onRemoveFromPortfolio] diisi, "Keluarkan" bergaris merah — pasangan
-/// tombol Buy/Sell di Stockbit.
+/// `Scaffold.bottomNavigationBar`: "Catat nilai" dan, bila diisi, "Catat
+/// beli" bergaris hijau. Selama ada "Catat beli", "Catat nilai" bergaris
+/// netral supaya hijau tetap milik aksi beli. "Keluarkan" sengaja tidak di
+/// sini (menu AppBar): bersebelahan dengan "Catat beli" ia terbaca sebagai
+/// tombol jual, padahal menghapus nilai dan histori.
 class UpdateValueBar extends StatelessWidget {
   const UpdateValueBar({
     required this.assetId,
     super.key,
-    this.onRemoveFromPortfolio,
+    this.onRecordPurchase,
   });
 
   final String assetId;
-  final VoidCallback? onRemoveFromPortfolio;
+  final VoidCallback? onRecordPurchase;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     final positive = AppColors.positiveOf(context);
-    final negative = AppColors.negativeOf(context);
-    final onRemove = onRemoveFromPortfolio;
+    final onRecordPurchase = this.onRecordPurchase;
 
     ButtonStyle outlined(Color color) => OutlinedButton.styleFrom(
       foregroundColor: color,
@@ -49,24 +48,28 @@ class UpdateValueBar extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
+              if (onRecordPurchase != null) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    style: outlined(positive),
+                    onPressed: onRecordPurchase,
+                    child: _OneLine(l10n.recordPurchaseButton),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+              ],
               Expanded(
                 child: OutlinedButton(
-                  style: outlined(positive),
+                  style: outlined(
+                    onRecordPurchase == null
+                        ? positive
+                        : colorScheme.onSurfaceVariant,
+                  ),
                   onPressed: () =>
                       context.push('${RouteNames.portfolio}/$assetId/update'),
                   child: _OneLine(l10n.updateValueButton),
                 ),
               ),
-              if (onRemove != null) ...[
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: OutlinedButton(
-                    style: outlined(negative),
-                    onPressed: onRemove,
-                    child: _OneLine(l10n.removeShortButton),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

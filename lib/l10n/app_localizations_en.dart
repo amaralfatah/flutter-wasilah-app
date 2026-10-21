@@ -118,7 +118,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonEmptyHistoryTitle => 'No history yet';
 
   @override
-  String get updateAssetValueTitle => 'Update asset value';
+  String get updateAssetValueTitle => 'Record asset value';
 
   @override
   String get assetDropdownLabel => 'Asset';
@@ -249,7 +249,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastUpdatedLabel => 'Last updated';
 
   @override
-  String get updateValueButton => 'Update value';
+  String get updateValueButton => 'Record value';
 
   @override
   String get historySectionTitle => 'Value history';
@@ -743,9 +743,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get holdingDetailTitle => 'Asset Detail';
 
   @override
-  String get removeShortButton => 'Remove';
-
-  @override
   String get chartRange6M => '6M';
 
   @override
@@ -949,14 +946,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyPortfolioMessage =>
-      'Pick an asset from your asset list and record its value.';
-
-  @override
-  String get emptyPortfolioNoMasterMessage =>
-      'Add an asset to your asset list first, then record its value here.';
-
-  @override
-  String get openMasterAssetsLabel => 'Open asset list';
+      'Pick an asset or add a new one, then record its value.';
 
   @override
   String get addToPortfolioLabel => 'Record asset value';
@@ -1048,4 +1038,68 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get restoreInProgressMessage =>
       'A backup or restore is in progress. Please wait until it finishes.';
+
+  @override
+  String get recordPurchaseButton => 'Log buy';
+
+  @override
+  String get recordPurchaseTitle => 'Log purchase';
+
+  @override
+  String get purchasePaidLabel => 'Total paid';
+
+  @override
+  String get purchasePaidHelper =>
+      'Fees included, copy it from your trade history';
+
+  @override
+  String get purchaseQuantityLabel => 'Quantity received';
+
+  @override
+  String get lotUnit => 'lot';
+
+  @override
+  String get purchaseIncompleteMessage =>
+      'Fill in the quantity and average buy price first via Update value.';
+
+  @override
+  String purchaseRecordedMessage(String assetName) {
+    return 'Purchase of $assetName logged.';
+  }
+
+  @override
+  String get purchaseFailedMessage =>
+      'Purchase not logged yet. Please try again.';
+
+  @override
+  String get newAssetButton => 'New asset';
+
+  @override
+  String get noAssetsYetHelper => 'No assets yet. Add a new asset first.';
+
+  @override
+  String assetCreatedMessage(String assetName) {
+    return '$assetName added';
+  }
+
+  @override
+  String get moreActionsTooltip => 'More actions';
+
+  @override
+  String marketValuesPendingMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count assets not recorded this month',
+      one: '1 asset not recorded this month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get updateValueIntro =>
+      'Enter the asset as of the record date. For a new purchase, use Log buy on the asset detail.';
+
+  @override
+  String get addNoteButton => 'Add note';
 }

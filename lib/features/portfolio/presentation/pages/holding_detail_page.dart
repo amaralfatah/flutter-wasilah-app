@@ -12,6 +12,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/holding_metrics_list.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/record_purchase_sheet.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_value_bar.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
@@ -59,10 +60,17 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
         final asset = position.asset;
 
         return Scaffold(
-          appBar: const _HoldingDetailAppBar(),
+          // Keluarkan menghapus nilai & histori, jadi tidak disejajarkan
+          // dengan aksi harian di bar bawah (mudah dikira tombol jual).
+          appBar: _HoldingDetailAppBar(
+            onRemoveFromPortfolio: () => unawaited(_removeFromPortfolio(asset)),
+          ),
           bottomNavigationBar: UpdateValueBar(
             assetId: asset.id,
-            onRemoveFromPortfolio: () => _removeFromPortfolio(asset),
+            // Kas tak punya harga beli; nilainya ditambah lewat Catat nilai.
+            onRecordPurchase: asset.category == AssetCategory.cash
+                ? null
+                : () => unawaited(showRecordPurchaseSheet(context, position)),
           ),
           body: RefreshablePageBody(
             onRefresh: () {
@@ -156,14 +164,38 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
 
 class _HoldingDetailAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const _HoldingDetailAppBar();
+  const _HoldingDetailAppBar({this.onRemoveFromPortfolio});
+
+  final VoidCallback? onRemoveFromPortfolio;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(title: Text(context.l10n.holdingDetailTitle));
+    final l10n = context.l10n;
+    final onRemove = onRemoveFromPortfolio;
+
+    return AppBar(
+      title: Text(l10n.holdingDetailTitle),
+      actions: [
+        if (onRemove != null)
+          PopupMenuButton<VoidCallback>(
+            tooltip: l10n.moreActionsTooltip,
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) => action(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: onRemove,
+                child: Text(
+                  l10n.removeFromPortfolioButton,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
   }
 }
 
