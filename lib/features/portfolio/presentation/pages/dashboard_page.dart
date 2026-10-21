@@ -25,7 +25,7 @@ class DashboardPage extends ConsumerWidget {
     final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pakaya')),
+      appBar: AppBar(title: const Text('Sararia Portfolio')),
       body: AsyncValueView(
         value: summaryValue,
         onRetry: () => ref.invalidate(portfolioSummaryProvider),

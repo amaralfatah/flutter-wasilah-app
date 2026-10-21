@@ -169,8 +169,8 @@ void main() {
     await tester.tap(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pakaya'), findsOneWidget);
-    expect(find.text('1.1.0+4'), findsWidgets);
+    expect(find.text('Sararia Portfolio'), findsOneWidget);
+    expect(find.text('1.2.0+5'), findsWidgets);
   });
 }
 

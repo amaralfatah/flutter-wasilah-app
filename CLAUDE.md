@@ -1,4 +1,4 @@
-# Pakaya App
+# Sararia Portfolio (codename Pakaya, paket `flutter_wasilah_app`)
 
 App portofolio pribadi, offline-first. Drift (SQLite) adalah satu-satunya penyimpanan; backup via Google Drive (appdata).
 

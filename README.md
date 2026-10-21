@@ -1,4 +1,4 @@
-# Pakaya
+# Sararia Portfolio
 
 Aplikasi pelacak portofolio investasi pribadi, offline-first.
 

@@ -16,7 +16,7 @@ class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   // Samakan dengan `version` di pubspec.yaml setiap rilis.
-  static const _appVersion = '1.1.0+4';
+  static const _appVersion = '1.2.0+5';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -59,7 +59,7 @@ class SettingsPage extends ConsumerWidget {
             title: l10n.settingsAboutApp,
             onTap: () => showAboutDialog(
               context: context,
-              applicationName: 'Pakaya',
+              applicationName: 'Sararia Portfolio',
               applicationVersion: _appVersion,
             ),
           ),

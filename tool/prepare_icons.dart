@@ -18,16 +18,16 @@ import 'dart:math' as math;
 import 'package:image/image.dart';
 
 const canvas = 1024;
-/// Tint Pakaya di hub next-sararia (`content/apps/pakaya/app.ts`).
-final brandGreen = ColorRgb8(0x0C, 0x8A, 0x57);
+/// Aksen hijau aplikasi (`AppColors.accent`), warna irisan di ikon launcher.
+final brandGreen = ColorRgb8(0x00, 0xAB, 0x6B);
 
 /// Splash Android 12+ memotong logo dengan lingkaran berdiameter
 /// 768/1152 = 66,7% kanvas. 58% aman untuk itu sekaligus enak dilihat
 /// pada splash gaya lama.
 const splashSafeDiameter = 0.58;
 
-/// Bentuknya melebar di kaki dan meruncing di kepala, jadi titik berat
-/// optiknya di bawah pusat geometris. Geser naik 2% agar terbaca seimbang.
+/// Pusat optis sedikit di atas pusat geometris, sama dengan grid ikon
+/// keluarga Sararia. Geser naik 2% agar terbaca seimbang.
 const opticalLift = 0.02;
 
 void main() {
