@@ -127,6 +127,17 @@ void main() {
     );
   });
 
+  testWidgets('a held asset opens as Edit portofolio', (tester) async {
+    _useTallView(tester);
+    final repository = MockPortfolioRepository(simulatedDelay: Duration.zero);
+
+    await _pumpPage(tester, repository, assetId: 'btc');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit portofolio'), findsOneWidget);
+    expect(find.text('Catat nilai aset'), findsNothing);
+  });
+
   testWidgets('update asset value form validates required fields', (
     tester,
   ) async {

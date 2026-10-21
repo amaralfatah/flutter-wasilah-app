@@ -12,6 +12,12 @@ class InvalidPurchaseException implements Exception {
   const InvalidPurchaseException();
 }
 
+/// Penjualan tidak bisa dicatat: jumlah unit kosong atau yang dijual
+/// melebihi yang dimiliki.
+class InvalidSaleException implements Exception {
+  const InvalidSaleException();
+}
+
 class InvalidTargetPercentageException implements Exception {
   const InvalidTargetPercentageException();
 }

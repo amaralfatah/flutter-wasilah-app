@@ -1040,7 +1040,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'A backup or restore is in progress. Please wait until it finishes.';
 
   @override
-  String get recordPurchaseButton => 'Log buy';
+  String get recordPurchaseButton => 'Buy';
 
   @override
   String get recordPurchaseTitle => 'Log purchase';
@@ -1060,7 +1060,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get purchaseIncompleteMessage =>
-      'Fill in the quantity and average buy price first via Update value.';
+      'Enter the quantity and average buy price first via Edit portfolio in the ⋮ menu.';
 
   @override
   String purchaseRecordedMessage(String assetName) {
@@ -1102,4 +1102,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addNoteButton => 'Add note';
+
+  @override
+  String get sellButton => 'Sell';
+
+  @override
+  String get recordSaleTitle => 'Log sale';
+
+  @override
+  String get saleReceivedLabel => 'Total received';
+
+  @override
+  String get saleReceivedHelper =>
+      'After fees, copy from your transaction history';
+
+  @override
+  String get saleQuantityLabel => 'Quantity sold';
+
+  @override
+  String get sellAllButton => 'Sell all';
+
+  @override
+  String saleExceedsMessage(String quantity) {
+    return 'More than you hold ($quantity)';
+  }
+
+  @override
+  String get saleIncompleteMessage =>
+      'Enter the quantity first via Edit portfolio in the ⋮ menu.';
+
+  @override
+  String get realizedProfitLabel => 'Realized gain/loss';
+
+  @override
+  String saleRecordedMessage(String assetName) {
+    return 'Sale of $assetName logged.';
+  }
+
+  @override
+  String get saleFailedMessage => 'The sale was not logged. Try again.';
+
+  @override
+  String get editPortfolioMenu => 'Edit portfolio';
 }

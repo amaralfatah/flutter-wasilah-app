@@ -131,7 +131,7 @@ class _RecordPurchaseSheetState extends ConsumerState<RecordPurchaseSheet> {
                       : [FilteringTextInputFormatter.allow(RegExp('[0-9.,]'))],
                   validator: (value) => _validatePositive(value, _parsePaid),
                   onChanged: (_) => setState(() {}),
-                  suffixIcon: _Suffix(_currency),
+                  suffixIcon: TradeUnitSuffix(_currency),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 AppTextField(
@@ -144,7 +144,7 @@ class _RecordPurchaseSheetState extends ConsumerState<RecordPurchaseSheet> {
                   validator: (value) =>
                       _validatePositive(value, parseDecimalInput),
                   onChanged: (_) => setState(() {}),
-                  suffixIcon: _isLot ? _Suffix(l10n.lotUnit) : null,
+                  suffixIcon: _isLot ? TradeUnitSuffix(l10n.lotUnit) : null,
                 ),
                 if (needsManualRate) ...[
                   const SizedBox(height: AppSpacing.lg),
@@ -164,7 +164,7 @@ class _RecordPurchaseSheetState extends ConsumerState<RecordPurchaseSheet> {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
-                _ChangeRow(
+                TradeChangeRow(
                   label: l10n.avgBuyPriceLabel,
                   before: _position.avgBuyPrice == null
                       ? '-'
@@ -174,7 +174,7 @@ class _RecordPurchaseSheetState extends ConsumerState<RecordPurchaseSheet> {
                       : formatPrice(result.avgBuyPrice, _currency),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                _ChangeRow(
+                TradeChangeRow(
                   label: l10n.quantityLabel,
                   before: _position.quantity == null
                       ? '-'
@@ -280,9 +280,9 @@ class _RecordPurchaseSheetState extends ConsumerState<RecordPurchaseSheet> {
   }
 }
 
-/// Satuan di ujung field (`USD`, `lot`).
-class _Suffix extends StatelessWidget {
-  const _Suffix(this.text);
+/// Satuan di ujung field (`USD`, `lot`); dipakai juga sheet catat jual.
+class TradeUnitSuffix extends StatelessWidget {
+  const TradeUnitSuffix(this.text, {super.key});
 
   final String text;
 
@@ -305,12 +305,13 @@ class _Suffix extends StatelessWidget {
 }
 
 /// Baris "label   lama → baru"; panah dan nilai baru muncul setelah input
-/// lengkap.
-class _ChangeRow extends StatelessWidget {
-  const _ChangeRow({
+/// lengkap. Dipakai juga sheet catat jual.
+class TradeChangeRow extends StatelessWidget {
+  const TradeChangeRow({
     required this.label,
     required this.before,
     required this.after,
+    super.key,
   });
 
   final String label;

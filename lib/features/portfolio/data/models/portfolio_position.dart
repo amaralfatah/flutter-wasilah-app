@@ -62,6 +62,10 @@ abstract class PortfolioPosition with _$PortfolioPosition {
   AssetCategory get category => asset.category;
   String? get marketSymbol => asset.marketSymbol;
 
+  /// `true` bila aset sudah punya holding tersimpan, bukan
+  /// [PortfolioPosition.empty] (yang bertanggal epoch).
+  bool get isHeld => holding.lastUpdatedAt.millisecondsSinceEpoch != 0;
+
   /// `true` bila nilai holding dihitung dari harga pasar terkini.
   bool get isMarketValued => marketPriceAt != null;
 

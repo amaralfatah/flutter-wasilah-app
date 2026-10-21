@@ -128,7 +128,15 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
     _incrementBase = _watchIncrementBase(selectedAsset);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.updateAssetValueTitle)),
+      // Dibuka untuk holding yang sudah ada (menu ⋮ di detail aset): ini
+      // koreksi posisi, bukan pencatatan baru.
+      appBar: AppBar(
+        title: Text(
+          widget.assetId != null && (selectedAsset?.isHeld ?? false)
+              ? l10n.editPortfolioMenu
+              : l10n.updateAssetValueTitle,
+        ),
+      ),
       body: SafeArea(
         child: AsyncValueView(
           value: assetsValue,

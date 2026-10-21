@@ -1887,7 +1887,7 @@ abstract class AppLocalizations {
   /// Tombol singkat di bar bawah detail untuk mencatat pembelian
   ///
   /// In id, this message translates to:
-  /// **'Catat beli'**
+  /// **'Beli'**
   String get recordPurchaseButton;
 
   /// Judul sheet catat pembelian
@@ -1923,7 +1923,7 @@ abstract class AppLocalizations {
   /// Pesan saat posisi lama belum cukup lengkap untuk menghitung rata-rata
   ///
   /// In id, this message translates to:
-  /// **'Isi jumlah unit dan harga rata-rata beli dulu lewat Update nilai.'**
+  /// **'Isi jumlah unit dan harga rata-rata beli dulu lewat Edit portofolio di menu ⋮.'**
   String get purchaseIncompleteMessage;
 
   /// Snackbar sukses catat pembelian
@@ -1979,6 +1979,78 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Tambah catatan'**
   String get addNoteButton;
+
+  /// Tombol singkat di bar bawah detail untuk mencatat penjualan
+  ///
+  /// In id, this message translates to:
+  /// **'Jual'**
+  String get sellButton;
+
+  /// Judul sheet catat penjualan
+  ///
+  /// In id, this message translates to:
+  /// **'Catat penjualan'**
+  String get recordSaleTitle;
+
+  /// Field total uang yang diterima dari satu penjualan, setelah fee
+  ///
+  /// In id, this message translates to:
+  /// **'Total diterima'**
+  String get saleReceivedLabel;
+
+  /// Helper field total diterima
+  ///
+  /// In id, this message translates to:
+  /// **'Setelah dipotong fee, salin dari riwayat transaksi'**
+  String get saleReceivedHelper;
+
+  /// Field jumlah unit/lot yang dijual
+  ///
+  /// In id, this message translates to:
+  /// **'Jumlah dijual'**
+  String get saleQuantityLabel;
+
+  /// Tombol mengisi jumlah dijual dengan seluruh jumlah yang dimiliki
+  ///
+  /// In id, this message translates to:
+  /// **'Jual semua'**
+  String get sellAllButton;
+
+  /// Validasi jumlah dijual lebih besar dari jumlah dimiliki
+  ///
+  /// In id, this message translates to:
+  /// **'Melebihi jumlah yang dimiliki ({quantity})'**
+  String saleExceedsMessage(String quantity);
+
+  /// Pesan saat holding belum punya jumlah unit sehingga penjualan tak bisa dihitung
+  ///
+  /// In id, this message translates to:
+  /// **'Isi jumlah unit dulu lewat Edit portofolio di menu ⋮.'**
+  String get saleIncompleteMessage;
+
+  /// Baris pratinjau untung/rugi dari penjualan
+  ///
+  /// In id, this message translates to:
+  /// **'Untung/rugi terealisasi'**
+  String get realizedProfitLabel;
+
+  /// Snackbar setelah penjualan dicatat
+  ///
+  /// In id, this message translates to:
+  /// **'Penjualan {assetName} dicatat.'**
+  String saleRecordedMessage(String assetName);
+
+  /// Snackbar gagal catat penjualan
+  ///
+  /// In id, this message translates to:
+  /// **'Penjualan belum tercatat. Coba lagi.'**
+  String get saleFailedMessage;
+
+  /// Item menu ⋮ di detail aset untuk mengoreksi jumlah unit, harga beli, modal, dan nilai
+  ///
+  /// In id, this message translates to:
+  /// **'Edit portofolio'**
+  String get editPortfolioMenu;
 }
 
 class _AppLocalizationsDelegate

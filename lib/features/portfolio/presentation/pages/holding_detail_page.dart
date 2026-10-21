@@ -13,6 +13,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asse
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/holding_metrics_list.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/record_purchase_sheet.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/record_sale_sheet.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_value_bar.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
@@ -58,19 +59,29 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
         }
 
         final asset = position.asset;
+        final isCash = asset.category == AssetCategory.cash;
 
         return Scaffold(
-          // Keluarkan menghapus nilai & histori, jadi tidak disejajarkan
-          // dengan aksi harian di bar bawah (mudah dikira tombol jual).
+          // Bar bawah untuk aksi harian beli/jual; Edit portofolio (koreksi
+          // posisi) dan Keluarkan (hapus nilai & histori) di menu ⋮.
           appBar: _HoldingDetailAppBar(
+            onUpdateValue: isCash
+                ? null
+                : () => unawaited(
+                    context.push('${RouteNames.portfolio}/${asset.id}/update'),
+                  ),
             onRemoveFromPortfolio: () => unawaited(_removeFromPortfolio(asset)),
           ),
           bottomNavigationBar: UpdateValueBar(
             assetId: asset.id,
-            // Kas tak punya harga beli; nilainya ditambah lewat Catat nilai.
-            onRecordPurchase: asset.category == AssetCategory.cash
+            // Kas tak punya harga beli/jual; nilainya diubah lewat Catat
+            // nilai di bar bawah.
+            onRecordPurchase: isCash
                 ? null
                 : () => unawaited(showRecordPurchaseSheet(context, position)),
+            onRecordSale: isCash
+                ? null
+                : () => unawaited(showRecordSaleSheet(context, position)),
           ),
           body: RefreshablePageBody(
             onRefresh: () {
@@ -164,8 +175,9 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
 
 class _HoldingDetailAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const _HoldingDetailAppBar({this.onRemoveFromPortfolio});
+  const _HoldingDetailAppBar({this.onUpdateValue, this.onRemoveFromPortfolio});
 
+  final VoidCallback? onUpdateValue;
   final VoidCallback? onRemoveFromPortfolio;
 
   @override
@@ -175,6 +187,7 @@ class _HoldingDetailAppBar extends StatelessWidget
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final onRemove = onRemoveFromPortfolio;
+    final onUpdateValue = this.onUpdateValue;
 
     return AppBar(
       title: Text(l10n.holdingDetailTitle),
@@ -185,6 +198,11 @@ class _HoldingDetailAppBar extends StatelessWidget
             icon: const Icon(Icons.more_vert),
             onSelected: (action) => action(),
             itemBuilder: (context) => [
+              if (onUpdateValue != null)
+                PopupMenuItem(
+                  value: onUpdateValue,
+                  child: Text(l10n.editPortfolioMenu),
+                ),
               PopupMenuItem(
                 value: onRemove,
                 child: Text(

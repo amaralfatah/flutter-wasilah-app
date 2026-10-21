@@ -1031,7 +1031,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Backup atau pemulihan sedang berjalan. Tunggu sampai selesai.';
 
   @override
-  String get recordPurchaseButton => 'Catat beli';
+  String get recordPurchaseButton => 'Beli';
 
   @override
   String get recordPurchaseTitle => 'Catat pembelian';
@@ -1050,7 +1050,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get purchaseIncompleteMessage =>
-      'Isi jumlah unit dan harga rata-rata beli dulu lewat Update nilai.';
+      'Isi jumlah unit dan harga rata-rata beli dulu lewat Edit portofolio di menu ⋮.';
 
   @override
   String purchaseRecordedMessage(String assetName) {
@@ -1085,4 +1085,46 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get addNoteButton => 'Tambah catatan';
+
+  @override
+  String get sellButton => 'Jual';
+
+  @override
+  String get recordSaleTitle => 'Catat penjualan';
+
+  @override
+  String get saleReceivedLabel => 'Total diterima';
+
+  @override
+  String get saleReceivedHelper =>
+      'Setelah dipotong fee, salin dari riwayat transaksi';
+
+  @override
+  String get saleQuantityLabel => 'Jumlah dijual';
+
+  @override
+  String get sellAllButton => 'Jual semua';
+
+  @override
+  String saleExceedsMessage(String quantity) {
+    return 'Melebihi jumlah yang dimiliki ($quantity)';
+  }
+
+  @override
+  String get saleIncompleteMessage =>
+      'Isi jumlah unit dulu lewat Edit portofolio di menu ⋮.';
+
+  @override
+  String get realizedProfitLabel => 'Untung/rugi terealisasi';
+
+  @override
+  String saleRecordedMessage(String assetName) {
+    return 'Penjualan $assetName dicatat.';
+  }
+
+  @override
+  String get saleFailedMessage => 'Penjualan belum tercatat. Coba lagi.';
+
+  @override
+  String get editPortfolioMenu => 'Edit portofolio';
 }

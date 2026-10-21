@@ -7,6 +7,7 @@ import 'package:flutter_wasilah_app/features/portfolio/data/market_valuation.dar
 import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_position.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/purchase_math.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/repository/portfolio_repository.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/sale_math.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 
 final updateAssetValueControllerProvider =
@@ -103,15 +104,7 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
 
     try {
       final repository = ref.read(portfolioRepositoryProvider);
-      final history = await repository.getAssetHistory(position.id);
-      final monthNote = history
-          .where(
-            (snapshot) =>
-                snapshot.recordedAt.year == recordedAt.year &&
-                snapshot.recordedAt.month == recordedAt.month,
-          )
-          .firstOrNull
-          ?.note;
+      final monthNote = await _monthNote(position.id, recordedAt);
       final currency = position.effectivePriceCurrency;
       final oldQuantity = position.quantity;
       final totalValue =
@@ -135,6 +128,73 @@ class UpdateAssetValueController extends AsyncNotifier<void> {
       state = AsyncError(error, stackTrace);
       rethrow;
     }
+  }
+
+  /// Mencatat satu penjualan: jumlah unit dan modal berkurang proporsional
+  /// (lihat [applySale]), nilai ikut porsi unit yang tersisa. Jual semua
+  /// membuat nilainya 0 sehingga holding pindah ke "Aset nonaktif".
+  Future<void> recordSale({
+    required PortfolioPosition position,
+    required double soldQuantity,
+    required double received,
+    required double rateToIdr,
+    required DateTime recordedAt,
+  }) async {
+    final oldQuantity = position.quantity;
+    final result = applySale(
+      quantity: oldQuantity,
+      avgBuyPrice: position.avgBuyPrice,
+      totalCost: position.totalCost,
+      soldQuantity: soldQuantity,
+      received: received,
+      rateToIdr: rateToIdr,
+      lotFactor: lotToShareFactor(position.marketSymbol),
+    );
+    if (result == null || oldQuantity == null) {
+      throw const InvalidSaleException();
+    }
+
+    state = const AsyncLoading();
+
+    try {
+      final repository = ref.read(portfolioRepositoryProvider);
+      final monthNote = await _monthNote(position.id, recordedAt);
+      final currency = position.effectivePriceCurrency;
+      await repository.updateAssetValue(
+        assetId: position.id,
+        totalValue: position.currentValue / oldQuantity * result.quantity,
+        recordedAt: recordedAt,
+        note: monthNote,
+        totalCost: result.totalCost,
+        quantity: result.quantity,
+        // Harga rata-rata tidak berubah oleh penjualan; ditulis ulang supaya
+        // posisi tersimpan tetap lengkap.
+        avgBuyPrice: position.avgBuyPrice,
+        priceCurrency: currency,
+        fxCurrency: currency == 'IDR' ? null : currency,
+        fxRate: currency == 'IDR' ? null : rateToIdr,
+      );
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Catatan snapshot bulan [recordedAt], supaya pencatatan beli/jual tidak
+  /// menghapus catatan yang sudah ditulis untuk bulan itu.
+  Future<String?> _monthNote(String assetId, DateTime recordedAt) async {
+    final history = await ref
+        .read(portfolioRepositoryProvider)
+        .getAssetHistory(assetId);
+    return history
+        .where(
+          (snapshot) =>
+              snapshot.recordedAt.year == recordedAt.year &&
+              snapshot.recordedAt.month == recordedAt.month,
+        )
+        .firstOrNull
+        ?.note;
   }
 
   /// Mencatat nilai pasar [records] ke histori bulan ini.

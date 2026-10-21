@@ -6,27 +6,30 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:go_router/go_router.dart';
 
 /// Bar tombol yang menempel di bawah layar, untuk slot
-/// `Scaffold.bottomNavigationBar`: "Catat nilai" dan, bila diisi, "Catat
-/// beli" bergaris hijau. Selama ada "Catat beli", "Catat nilai" bergaris
-/// netral supaya hijau tetap milik aksi beli. "Keluarkan" sengaja tidak di
-/// sini (menu AppBar): bersebelahan dengan "Catat beli" ia terbaca sebagai
-/// tombol jual, padahal menghapus nilai dan histori.
+/// `Scaffold.bottomNavigationBar`: "Beli" bergaris hijau dan "Jual"
+/// bergaris merah, pasangan tombol Buy/Sell di Stockbit. "Edit portofolio"
+/// dan "Keluarkan" ada di menu AppBar. Aset tanpa beli/jual (kas) hanya
+/// mendapat satu tombol "Catat nilai".
 class UpdateValueBar extends StatelessWidget {
   const UpdateValueBar({
     required this.assetId,
     super.key,
     this.onRecordPurchase,
+    this.onRecordSale,
   });
 
   final String assetId;
   final VoidCallback? onRecordPurchase;
+  final VoidCallback? onRecordSale;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     final positive = AppColors.positiveOf(context);
+    final negative = AppColors.negativeOf(context);
     final onRecordPurchase = this.onRecordPurchase;
+    final onRecordSale = this.onRecordSale;
 
     ButtonStyle outlined(Color color) => OutlinedButton.styleFrom(
       foregroundColor: color,
@@ -35,6 +38,27 @@ class UpdateValueBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
     );
+
+    Widget button(String label, Color color, VoidCallback onPressed) =>
+        Expanded(
+          child: OutlinedButton(
+            style: outlined(color),
+            onPressed: onPressed,
+            child: _OneLine(label),
+          ),
+        );
+
+    final buttons = <Widget>[
+      if (onRecordPurchase != null)
+        button(l10n.recordPurchaseButton, positive, onRecordPurchase),
+      if (onRecordSale != null) button(l10n.sellButton, negative, onRecordSale),
+      if (onRecordPurchase == null && onRecordSale == null)
+        button(
+          l10n.updateValueButton,
+          positive,
+          () => context.push('${RouteNames.portfolio}/$assetId/update'),
+        ),
+    ];
 
     // Padding di dalam SafeArea supaya jaraknya ditambahkan ke inset nav bar;
     // `SafeArea.minimum` hanya mengambil nilai terbesar.
@@ -48,28 +72,10 @@ class UpdateValueBar extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
-              if (onRecordPurchase != null) ...[
-                Expanded(
-                  child: OutlinedButton(
-                    style: outlined(positive),
-                    onPressed: onRecordPurchase,
-                    child: _OneLine(l10n.recordPurchaseButton),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
+              for (var i = 0; i < buttons.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.md),
+                buttons[i],
               ],
-              Expanded(
-                child: OutlinedButton(
-                  style: outlined(
-                    onRecordPurchase == null
-                        ? positive
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                  onPressed: () =>
-                      context.push('${RouteNames.portfolio}/$assetId/update'),
-                  child: _OneLine(l10n.updateValueButton),
-                ),
-              ),
             ],
           ),
         ),
