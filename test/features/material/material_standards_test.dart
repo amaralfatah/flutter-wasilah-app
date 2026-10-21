@@ -169,7 +169,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Pakaya'), findsOneWidget);
-    expect(find.text('1.0.0+1'), findsWidgets);
+    expect(find.text('1.1.0+2'), findsWidgets);
   });
 }
 
