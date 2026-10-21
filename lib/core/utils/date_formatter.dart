@@ -53,6 +53,13 @@ String formatDayMonth(DateTime date, Locale locale) {
   return '${date.day} ${monthNames[date.month - 1].substring(0, 3)}';
 }
 
+/// Bulan dan tahun ringkas ala tabel Stockbit, misalnya `Okt 26`.
+String formatShortMonthYear(DateTime date, Locale locale) {
+  final monthNames = _monthNamesFor(locale);
+  final year = (date.year % 100).toString().padLeft(2, '0');
+  return '${monthNames[date.month - 1].substring(0, 3)} $year';
+}
+
 String formatMonthYear(DateTime date, Locale locale) {
   final monthNames = _monthNamesFor(locale);
   return '${monthNames[date.month - 1]} ${date.year}';

@@ -3,23 +3,27 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/time_weighted_return.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_delete.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
+import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
+import 'package:flutter_wasilah_app/shared/widgets/period_tabs.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
+import 'package:flutter_wasilah_app/shared/widgets/summary_metric.dart';
 
 class PortfolioHistoryPage extends ConsumerStatefulWidget {
   const PortfolioHistoryPage({super.key});
@@ -29,8 +33,32 @@ class PortfolioHistoryPage extends ConsumerStatefulWidget {
       _PortfolioHistoryPageState();
 }
 
+/// Periode chart ala Stockbit (1W 1M 3M YTD 1Y All), disesuaikan dengan
+/// histori bulanan: periode di bawah 3 bulan tidak bermakna.
+enum _HistoryPeriod {
+  threeMonths(3),
+  sixMonths(6),
+  yearToDate(null),
+  oneYear(12),
+  threeYears(36),
+  all(null);
+
+  const _HistoryPeriod(this.months);
+
+  final int? months;
+
+  /// Batas awal periode; `null` untuk semua histori.
+  DateTime? startFrom(DateTime now) => switch (this) {
+    _HistoryPeriod.all => null,
+    _HistoryPeriod.yearToDate => DateTime(now.year),
+    _ => DateTime(now.year, now.month - months!, now.day),
+  };
+}
+
 class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
-  int? _selectedYear;
+  _HistoryPeriod _period = _HistoryPeriod.all;
+  bool _yearly = false;
+  ValueSnapshot? _scrubbed;
   final Set<String> _removedIds = {};
 
   @override
@@ -53,128 +81,133 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
             );
           }
 
-          final years =
-              history.map((item) => item.recordedAt.year).toSet().toList()
-                ..sort((a, b) => b.compareTo(a));
+          // Terbaru dulu, seperti dari provider.
           final visibleHistory = history
               .where((item) => !_removedIds.contains(item.id))
               .toList();
-          final filteredHistory = _selectedYear == null
+          if (visibleHistory.isEmpty) {
+            return AppEmptyState(
+              title: l10n.commonEmptyHistoryTitle,
+              message: l10n.emptyHistoryMessage,
+              icon: Icons.history_toggle_off_outlined,
+            );
+          }
+          final from = _period.startFrom(DateTime.now());
+          final filteredHistory = from == null
               ? visibleHistory
               : visibleHistory
-                    .where((item) => item.recordedAt.year == _selectedYear)
+                    .where((item) => !item.recordedAt.isBefore(from))
                     .toList();
-          final changeMap = buildHistoryChangeMap(history);
-          final twr = timeWeightedReturn(visibleHistory, year: _selectedYear);
-          final firstSnapshotId = history.last.id;
+          final twr = timeWeightedReturn(visibleHistory, from: from);
+          // Terlama ke terbaru, untuk chart.
+          final chronological = filteredHistory.reversed.toList();
 
           return RefreshablePageBody(
             onRefresh: () => ref.refresh(portfolioHistoryProvider.future),
-            // Horizontal 0: daftar riwayat full-bleed sampai tepi layar.
-            // Filter/chart mengatur padding horizontalnya sendiri.
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            // Horizontal 0: chart dan tabel full-bleed sampai tepi layar.
+            padding: const EdgeInsets.only(
+              top: AppSpacing.lg,
+              bottom: AppSpacing.xl,
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Filter diletakkan di atas grafik: kalau di bawah, hasil
-                // penekanan chip berubah di luar pandangan user. Full-bleed
-                // (bukan Wrap) supaya tahun yang banyak bisa digeser
-                // horizontal tanpa memenuhi tinggi layar.
-                if (years.length > 1) ...[
-                  SizedBox(
-                    height: 32,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xl,
-                      ),
-                      children: [
-                        ChoiceChip(
-                          label: Text(l10n.allFilterLabel),
-                          selected: _selectedYear == null,
-                          onSelected: (_) =>
-                              setState(() => _selectedYear = null),
-                        ),
-                        for (final year in years) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          ChoiceChip(
-                            label: Text('$year'),
-                            selected: _selectedYear == year,
-                            onSelected: (_) =>
-                                setState(() => _selectedYear = year),
-                          ),
-                        ],
-                      ],
+                _EquityHero(
+                  current: _scrubbed ?? visibleHistory.first,
+                  isScrubbing: _scrubbed != null,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                if (chronological.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
                     ),
+                    child: AppEmptyState(
+                      title: l10n.noFilteredDataTitle,
+                      message: l10n.noFilteredDataMessage,
+                    ),
+                  )
+                else
+                  HistoryLineChart(
+                    history: chronological,
+                    valueLabel: l10n.historyPortfolioLegend,
+                    valueReturn: twr?.cumulative,
+                    costReturn: _costReturn(chronological),
+                    onScrub: (snapshot) => setState(() => _scrubbed = snapshot),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
+                const SizedBox(height: AppSpacing.md),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: PeriodTabs<_HistoryPeriod>(
+                    options: _HistoryPeriod.values,
+                    selected: _period,
+                    labelOf: (period) => _periodLabel(l10n, period),
+                    onSelected: (period) => setState(() {
+                      _period = period;
+                      _scrubbed = null;
+                    }),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                const AppSectionBand(),
+                const SizedBox(height: AppSpacing.lg),
+                // "Total Equity Return ⓘ" Stockbit: judul + info, chip
+                // Daily/Monthly (di sini Bulanan/Tahunan), lalu tabel.
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xl),
+                  child: Row(
+                    children: [
+                      Text(
+                        l10n.historyReturnSectionTitle,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _showReturnInfo(context, twr),
+                        tooltip: l10n.sectionHeaderInfoTooltip,
+                        icon: const Icon(Icons.info_outline, size: 18),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.xl,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      if (twr != null) ...[
-                        _TwrCard(
-                          label: _selectedYear == null
-                              ? l10n.historyTwrSinceStartLabel
-                              : l10n.historyTwrYearLabel('$_selectedYear'),
-                          cumulative: twr.cumulative,
-                          annualized: _selectedYear == null
-                              ? twr.annualized
-                              : null,
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                      ],
-                      if (filteredHistory.isNotEmpty) ...[
-                        HistoryLineChart(
-                          history: filteredHistory.reversed.toList(),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                      ],
-                      if (filteredHistory.isEmpty)
-                        AppEmptyState(
-                          title: l10n.noFilteredDataTitle,
-                          message: l10n.noFilteredDataMessage,
-                        ),
+                      ChoiceChip(
+                        label: Text(l10n.historyMonthlyLabel),
+                        selected: !_yearly,
+                        onSelected: (_) => setState(() => _yearly = false),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      ChoiceChip(
+                        label: Text(l10n.historyYearlyLabel),
+                        selected: _yearly,
+                        onSelected: (_) => setState(() => _yearly = true),
+                      ),
                     ],
                   ),
                 ),
-                if (filteredHistory.isNotEmpty) ...[
-                  const AppSectionBand(),
-                  AppListCard(
-                    children: filteredHistory
-                        .map(
-                          (item) => Dismissible(
-                            key: ValueKey(item.id),
-                            direction: DismissDirection.endToStart,
-                            background: const DeleteSwipeBackground(),
-                            confirmDismiss: (_) =>
-                                confirmDeleteHistory(context),
-                            onDismissed: (_) {
-                              setState(() => _removedIds.add(item.id));
-                              unawaited(_deleteSnapshot(item.id));
-                            },
-                            child: HistoryRow(
-                              snapshot: item,
-                              changeLabel: formatHistoryChange(
-                                changeMap[item.id],
-                                isFirstSnapshot: item.id == firstSnapshotId,
-                                initialDataLabel: l10n.initialDataLabel,
-                              ),
-                              changeColor: historyChangeColor(
-                                context,
-                                changeMap[item.id],
-                                isFirstSnapshot: item.id == firstSnapshotId,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
-                ],
+                const SizedBox(height: AppSpacing.sm),
+                AppListCard(
+                  children: [
+                    const HistoryTableHeader(),
+                    if (_yearly)
+                      ..._yearlyRows(visibleHistory)
+                    else
+                      for (final item in filteredHistory)
+                        _dismissibleRow(
+                          item,
+                          _previousOf(visibleHistory, item),
+                        ),
+                  ],
+                ),
               ],
             ),
           );
@@ -184,6 +217,125 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
           onRetry: () => ref.invalidate(portfolioHistoryProvider),
         ),
       ),
+    );
+  }
+
+  String _periodLabel(AppLocalizations l10n, _HistoryPeriod period) =>
+      switch (period) {
+        _HistoryPeriod.threeMonths => l10n.chartRange3M,
+        _HistoryPeriod.sixMonths => l10n.chartRange6M,
+        _HistoryPeriod.yearToDate => l10n.chartRangeYTD,
+        _HistoryPeriod.oneYear => l10n.chartRange1Y,
+        _HistoryPeriod.threeYears => l10n.chartRange3Y,
+        _HistoryPeriod.all => l10n.allFilterLabel,
+      };
+
+  /// Pertumbuhan modal sepanjang periode, untuk kotak legenda "Modal".
+  double? _costReturn(List<ValueSnapshot> chronological) {
+    final costs = chronological.map((item) => item.totalCost).nonNulls;
+    if (costs.length < 2 || costs.first == 0) {
+      return null;
+    }
+    return (costs.last - costs.first) / costs.first * 100;
+  }
+
+  /// Satu baris per tahun: snapshot terakhir tahun itu dibanding snapshot
+  /// terakhir tahun sebelumnya.
+  List<Widget> _yearlyRows(List<ValueSnapshot> newestFirst) {
+    final lastOfYear = <int, ValueSnapshot>{};
+    for (final item in newestFirst) {
+      lastOfYear.putIfAbsent(item.recordedAt.year, () => item);
+    }
+    final years = lastOfYear.keys.toList()..sort((a, b) => b.compareTo(a));
+    return [
+      for (var i = 0; i < years.length; i++)
+        HistoryRow(
+          snapshot: lastOfYear[years[i]]!,
+          previous: i + 1 < years.length ? lastOfYear[years[i + 1]] : null,
+          dateLabel: '${years[i]}',
+        ),
+    ];
+  }
+
+  Future<void> _showReturnInfo(
+    BuildContext context,
+    ({double cumulative, double? annualized})? twr,
+  ) {
+    final l10n = context.l10n;
+    return showDialog<void>(
+      context: context,
+      builder: (context) {
+        final annualized = twr?.annualized;
+        return AlertDialog(
+          title: Text(l10n.historyReturnSectionTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (twr != null) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: SummaryMetric(
+                        label: l10n.historyTwrSinceStartLabel,
+                        value: formatSignedPercentage(twr.cumulative),
+                        valueColor: profitLossColorOf(context, twr.cumulative),
+                      ),
+                    ),
+                    if (annualized != null)
+                      Expanded(
+                        child: SummaryMetric(
+                          label: l10n.historyTwrAnnualizedLabel,
+                          value: formatSignedPercentage(annualized),
+                          valueColor: profitLossColorOf(context, annualized),
+                          alignment: MetricAlignment.end,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              Text(
+                l10n.historyTwrCaption,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.commonClose),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Snapshot satu langkah lebih lama dari [item] di histori lengkap
+  /// (bukan yang terfilter), supaya awal periode tetap dibandingkan dengan
+  /// bulan sebelumnya.
+  ValueSnapshot? _previousOf(
+    List<ValueSnapshot> newestFirst,
+    ValueSnapshot item,
+  ) {
+    final index = newestFirst.indexOf(item);
+    return index < 0 || index + 1 >= newestFirst.length
+        ? null
+        : newestFirst[index + 1];
+  }
+
+  Widget _dismissibleRow(ValueSnapshot item, ValueSnapshot? previous) {
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      background: const DeleteSwipeBackground(),
+      confirmDismiss: (_) => confirmDeleteHistory(context),
+      onDismissed: (_) {
+        setState(() => _removedIds.add(item.id));
+        unawaited(_deleteSnapshot(item.id));
+      },
+      child: HistoryRow(snapshot: item, previous: previous),
     );
   }
 
@@ -198,92 +350,51 @@ class _PortfolioHistoryPageState extends ConsumerState<PortfolioHistoryPage> {
   }
 }
 
-/// Kemampuan investasi dalam satu angka: time-weighted return, supaya
-/// setoran bulanan tidak ikut terbaca sebagai hasil.
-class _TwrCard extends StatelessWidget {
-  const _TwrCard({
-    required this.label,
-    required this.cumulative,
-    this.annualized,
-  });
+/// Hero "Total Equity" Stockbit: label kecil tebal dan nominal besar. Saat
+/// chart di-scrub, menampilkan titik yang disentuh beserta bulannya.
+class _EquityHero extends StatelessWidget {
+  const _EquityHero({required this.current, required this.isScrubbing});
 
-  final String label;
-  final double cumulative;
-  final double? annualized;
+  final ValueSnapshot current;
+  final bool isScrubbing;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final annualized = this.annualized;
+    final theme = Theme.of(context);
 
-    return AppCard(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _TwrMetric(label: label, value: cumulative),
-              ),
-              if (annualized != null) ...[
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: _TwrMetric(
-                    label: l10n.historyTwrAnnualizedLabel,
-                    value: annualized,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
           Text(
-            l10n.historyTwrCaption,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            l10n.dashboardPortfolioValueLabel,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: AppSpacing.xs),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              formatCurrency(current.totalValue),
+              style: theme.textTheme.headlineSmall,
+            ),
+          ),
+          if (isScrubbing)
+            Text(
+              formatMonthYear(
+                current.recordedAt,
+                Localizations.localeOf(context),
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
         ],
       ),
-    );
-  }
-}
-
-class _TwrMetric extends StatelessWidget {
-  const _TwrMetric({
-    required this.label,
-    required this.value,
-    this.crossAxisAlignment = CrossAxisAlignment.start,
-  });
-
-  final String label;
-  final double value;
-  final CrossAxisAlignment crossAxisAlignment;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: crossAxisAlignment,
-      children: [
-        Text(
-          formatSignedPercentage(value),
-          style: textTheme.titleSmall?.copyWith(
-            color: profitLossColorOf(context, value) ?? colorScheme.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -22,6 +22,12 @@ class PriceLineChart extends StatefulWidget {
     required this.currency,
     super.key,
     this.onScrub,
+    this.formatValue,
+    this.formatAxis,
+    this.secondaryValues,
+    this.secondaryColor,
+    this.tickTarget = 8,
+    this.showExtremeLabels = true,
   });
 
   /// Titik chart, terurut lama ke baru.
@@ -34,6 +40,24 @@ class PriceLineChart extends StatefulWidget {
   /// Dipanggil dengan titik yang sedang di-scrub, atau `null` saat jari
   /// dilepas.
   final ValueChanged<PricePoint?>? onScrub;
+
+  /// Format label titik ekstrem; default harga dalam [currency].
+  final String Function(double value)? formatValue;
+
+  /// Format label sumbu Y; default harga bulat dalam [currency].
+  final String Function(double value)? formatAxis;
+
+  /// Garis pembanding tanpa isian (mis. modal, seperti garis IHSG di chart
+  /// performa Stockbit), sejajar indeks dengan [points]; `null` = putus.
+  final List<double?>? secondaryValues;
+  final Color? secondaryColor;
+
+  /// Perkiraan jumlah tick sumbu Y.
+  final int tickTarget;
+
+  /// Label nilai tertinggi/terendah di garis; chart performa portofolio
+  /// Stockbit tidak menampilkannya.
+  final bool showExtremeLabels;
 
   @override
   State<PriceLineChart> createState() => _PriceLineChartState();
@@ -70,11 +94,16 @@ class _PriceLineChartState extends State<PriceLineChart> {
     final maxIndex = closes.indexOf(closesMax);
     final minIndex = closes.indexOf(closesMin);
 
-    final scaleValues = [...closes, ?reference];
+    final secondary = widget.secondaryValues;
+    final scaleValues = [
+      ...closes,
+      ?reference,
+      ...?secondary?.whereType<double>(),
+    ];
     final rawMin = scaleValues.reduce((a, b) => a < b ? a : b);
     final rawMax = scaleValues.reduce((a, b) => a > b ? a : b);
     // Stockbit memakai ±8 tick (mis. 4.060-4.200 step 20).
-    final ticks = niceTicks(rawMin, rawMax, target: 8);
+    final ticks = niceTicks(rawMin, rawMax, target: widget.tickTarget);
     final scaleMin = ticks.first;
     final scaleMax = ticks.last;
 
@@ -120,8 +149,14 @@ class _PriceLineChartState extends State<PriceLineChart> {
                       referenceColor: colorScheme.outlineVariant,
                       maxIndex: maxIndex,
                       minIndex: minIndex,
-                      currency: widget.currency,
+                      formatValue:
+                          widget.formatValue ??
+                          (value) => formatPrice(value, widget.currency),
+                      secondaryValues: secondary,
+                      secondaryColor:
+                          widget.secondaryColor ?? colorScheme.tertiary,
                       scrubIndex: _scrubIndex,
+                      showExtremeLabels: widget.showExtremeLabels,
                       onSurfaceColor: colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -142,8 +177,10 @@ class _PriceLineChartState extends State<PriceLineChart> {
                         8,
                     right: 0,
                     child: Text(
-                      formatAxisPrice(tick, widget.currency),
+                      widget.formatAxis?.call(tick) ??
+                          formatAxisPrice(tick, widget.currency),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -191,9 +228,12 @@ class _ChartPainter extends CustomPainter {
     required this.referenceColor,
     required this.maxIndex,
     required this.minIndex,
-    required this.currency,
+    required this.formatValue,
+    required this.secondaryValues,
+    required this.secondaryColor,
     required this.scrubIndex,
     required this.onSurfaceColor,
+    required this.showExtremeLabels,
   });
 
   final List<PricePoint> points;
@@ -204,9 +244,12 @@ class _ChartPainter extends CustomPainter {
   final Color referenceColor;
   final int maxIndex;
   final int minIndex;
-  final String currency;
+  final String Function(double value) formatValue;
+  final List<double?>? secondaryValues;
+  final Color secondaryColor;
   final int? scrubIndex;
   final Color onSurfaceColor;
+  final bool showExtremeLabels;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -239,6 +282,33 @@ class _ChartPainter extends CustomPainter {
       while (x < size.width) {
         canvas.drawLine(Offset(x, y), Offset(x + dashWidth, y), dashPaint);
         x += dashWidth + dashSpace;
+      }
+    }
+
+    if (secondaryValues case final secondary?) {
+      final paint = Paint()
+        ..color = secondaryColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+      Path? path;
+      for (var i = 0; i < secondary.length && i < points.length; i++) {
+        final value = secondary[i];
+        if (value == null) {
+          if (path != null) {
+            canvas.drawPath(path, paint);
+          }
+          path = null;
+          continue;
+        }
+        final offset = Offset(stepX * i, yOf(value));
+        path == null
+            ? path = (Path()..moveTo(offset.dx, offset.dy))
+            : path.lineTo(offset.dx, offset.dy);
+      }
+      if (path != null) {
+        canvas.drawPath(path, paint);
       }
     }
 
@@ -275,20 +345,22 @@ class _ChartPainter extends CustomPainter {
           ..strokeJoin = StrokeJoin.round,
       );
 
-    _drawExtremeLabel(
-      canvas,
-      size,
-      offsets[maxIndex],
-      points[maxIndex].close,
-      isMax: true,
-    );
-    _drawExtremeLabel(
-      canvas,
-      size,
-      offsets[minIndex],
-      points[minIndex].close,
-      isMax: false,
-    );
+    if (showExtremeLabels) {
+      _drawExtremeLabel(
+        canvas,
+        size,
+        offsets[maxIndex],
+        points[maxIndex].close,
+        isMax: true,
+      );
+      _drawExtremeLabel(
+        canvas,
+        size,
+        offsets[minIndex],
+        points[minIndex].close,
+        isMax: false,
+      );
+    }
 
     if (scrubIndex case final index?) {
       final offset = offsets[index];
@@ -321,7 +393,7 @@ class _ChartPainter extends CustomPainter {
   }) {
     final painter = TextPainter(
       text: TextSpan(
-        text: formatPrice(value, currency),
+        text: formatValue(value),
         style: TextStyle(color: lineColor, fontSize: 11),
       ),
       textDirection: TextDirection.ltr,
@@ -344,6 +416,8 @@ class _ChartPainter extends CustomPainter {
         oldDelegate.maxValue != maxValue ||
         oldDelegate.referenceValue != referenceValue ||
         oldDelegate.lineColor != lineColor ||
+        oldDelegate.secondaryValues != secondaryValues ||
+        oldDelegate.secondaryColor != secondaryColor ||
         oldDelegate.scrubIndex != scrubIndex;
   }
 }

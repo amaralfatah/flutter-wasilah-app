@@ -26,16 +26,18 @@ class AssetCategoryIcon extends StatelessWidget {
   /// logo di [_logoAssetBySymbol] sebelum jatuh ke icon kategori.
   final String? marketSymbol;
 
-  /// Warna latar; default `secondaryContainer`.
+  /// Warna latar; default abu netral.
   final Color? color;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
+    // Tanpa logo: lingkaran abu netral dengan ikon kategori, supaya warna
+    // tetap tenang seperti Stockbit (warna hanya untuk naik/turun).
     final colorScheme = Theme.of(context).colorScheme;
-    final background = color ?? colorScheme.secondaryContainer;
+    final background = color ?? colorScheme.surfaceContainerHighest;
     final foreground = color == null
-        ? colorScheme.onSecondaryContainer
+        ? colorScheme.onSurface
         : ThemeData.estimateBrightnessForColor(background) == Brightness.dark
         ? Colors.white
         : Colors.black87;

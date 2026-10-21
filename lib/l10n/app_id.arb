@@ -503,6 +503,68 @@
     "placeholders": {"category": {"type": "String"}}
   },
 
+  "targetStatusOnTrack": "Sesuai",
+  "@targetStatusOnTrack": {"description": "Status alokasi dalam batas wajar"},
+  "targetStatusBelow": "Kurang",
+  "@targetStatusBelow": {"description": "Status alokasi di bawah batas wajar"},
+  "targetStatusAbove": "Lebih",
+  "@targetStatusAbove": {"description": "Status alokasi di atas batas wajar"},
+  "targetDifferenceLabel": "Selisih",
+  "@targetDifferenceLabel": {"description": "Label selisih nilai aktual terhadap target"},
+  "targetSummaryToAdd": "Perlu ditambah",
+  "@targetSummaryToAdd": {"description": "Label total nilai yang perlu ditambah ke kategori yang kurang"},
+  "targetSummaryToTrim": "Perlu dikurangi",
+  "@targetSummaryToTrim": {"description": "Label total nilai yang perlu dikurangi dari kategori yang lebih"},
+  "targetAllocationListTitle": "Alokasi per kategori",
+  "@targetAllocationListTitle": {"description": "Judul daftar alokasi target per kategori"},
+
+  "targetSummaryOffTrackLabel": "Di luar batas",
+  "@targetSummaryOffTrackLabel": {"description": "Label jumlah kategori di luar batas wajar"},
+  "targetActualAllocationLabel": "Alokasi aktual",
+  "@targetActualAllocationLabel": {"description": "Label persen alokasi aktual di detail target"},
+  "targetDifferencePercentLabel": "Selisih alokasi",
+  "@targetDifferencePercentLabel": {"description": "Label selisih persen alokasi di detail target"},
+  "targetStatusLabel": "Status",
+  "@targetStatusLabel": {"description": "Label status alokasi di detail target"},
+
+  "historyTableDateHeader": "Tanggal",
+  "@historyTableDateHeader": {"description": "Judul kolom tanggal tabel histori"},
+  "historyTableChangeHeader": "Perubahan",
+  "@historyTableChangeHeader": {"description": "Judul kolom perubahan tabel histori"},
+  "historyReturnSectionTitle": "Return Portofolio",
+  "@historyReturnSectionTitle": {"description": "Judul seksi return (TWR) dan tabel histori portofolio"},
+
+  "historySinceLabel": "sejak {date}",
+  "@historySinceLabel": {
+    "description": "Keterangan periode perubahan nilai di hero histori",
+    "placeholders": {"date": {"type": "String"}}
+  },
+
+  "targetAllocationTargetValue": "Target {target}",
+  "@targetAllocationTargetValue": {
+    "description": "Persen target di bawah bar alokasi",
+    "placeholders": {"target": {"type": "String"}}
+  },
+
+  "targetHeroFromTarget": "dari target",
+  "@targetHeroFromTarget": {"description": "Keterangan selisih di kepala detail target"},
+
+  "holdingDetailTitle": "Detail Portofolio",
+  "@holdingDetailTitle": {"description": "Judul halaman detail holding"},
+  "removeShortButton": "Keluarkan",
+  "@removeShortButton": {"description": "Tombol singkat keluarkan aset dari portofolio di bar bawah detail"},
+
+  "chartRange6M": "6B",
+  "@chartRange6M": {"description": "Tab periode 6 bulan"},
+  "historyMonthlyLabel": "Bulanan",
+  "@historyMonthlyLabel": {"description": "Chip tabel histori per bulan"},
+  "historyYearlyLabel": "Tahunan",
+  "@historyYearlyLabel": {"description": "Chip tabel histori per tahun"},
+  "historyPortfolioLegend": "Portofolio",
+  "@historyPortfolioLegend": {"description": "Legenda garis nilai portofolio di chart histori"},
+  "viewAllShortLabel": "Lihat semua",
+  "@viewAllShortLabel": {"description": "Tautan lihat semua di kepala kartu"},
+
   "sectionHeaderInfoTooltip": "Info",
   "@sectionHeaderInfoTooltip": {"description": "Tooltip tombol info pada header seksi"},
 

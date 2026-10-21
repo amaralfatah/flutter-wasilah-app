@@ -35,7 +35,7 @@ class AppSectionBand extends StatelessWidget {
                     child: Text(
                       label!,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

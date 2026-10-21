@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_change_calculator.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_delete.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
@@ -12,7 +11,6 @@ import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_list_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/delete_swipe_background.dart';
 
 /// Grafik dan daftar histori snapshot satu holding; baris bisa digeser
@@ -24,7 +22,11 @@ class HoldingHistorySection extends StatelessWidget {
     required this.showCost,
     required this.onDismissed,
     super.key,
+    this.horizontalPadding = AppSpacing.lg,
   });
+
+  /// Jarak kiri-kanan chart dan tabel.
+  final double horizontalPadding;
 
   final AsyncValue<List<AssetSnapshot>> history;
 
@@ -50,7 +52,7 @@ class HoldingHistorySection extends StatelessWidget {
 
         if (history.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
             child: AppEmptyState(
               title: l10n.commonEmptyHistoryTitle,
               message: l10n.emptyAssetHistoryMessage,
@@ -59,46 +61,35 @@ class HoldingHistorySection extends StatelessWidget {
           );
         }
 
-        final changeMap = buildHistoryChangeMap(history);
-        final firstSnapshotId = history.last.id;
-
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: HistoryLineChart(
-                history: history.reversed.toList(),
-                showCost: showCost,
-              ),
+            HistoryLineChart(
+              history: history.reversed.toList(),
+              showCost: showCost,
+              horizontalPadding: horizontalPadding,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            const AppSectionBand(),
+            const SizedBox(height: AppSpacing.xl),
             AppListCard(
-              children: history
-                  .map(
-                    (snapshot) => Dismissible(
-                      key: ValueKey(snapshot.id),
-                      direction: DismissDirection.endToStart,
-                      background: const DeleteSwipeBackground(),
-                      confirmDismiss: (_) => confirmDeleteHistory(context),
-                      onDismissed: (_) => onDismissed(snapshot.id),
-                      child: HistoryRow(
-                        snapshot: snapshot,
-                        changeLabel: formatHistoryChange(
-                          changeMap[snapshot.id],
-                          isFirstSnapshot: snapshot.id == firstSnapshotId,
-                          initialDataLabel: l10n.initialDataLabel,
-                        ),
-                        changeColor: historyChangeColor(
-                          context,
-                          changeMap[snapshot.id],
-                          isFirstSnapshot: snapshot.id == firstSnapshotId,
-                        ),
-                        detail: _fxDetail(context, snapshot),
-                      ),
+              children: [
+                HistoryTableHeader(horizontalPadding: horizontalPadding),
+                for (var index = 0; index < history.length; index++)
+                  Dismissible(
+                    key: ValueKey(history[index].id),
+                    direction: DismissDirection.endToStart,
+                    background: const DeleteSwipeBackground(),
+                    confirmDismiss: (_) => confirmDeleteHistory(context),
+                    onDismissed: (_) => onDismissed(history[index].id),
+                    child: HistoryRow(
+                      snapshot: history[index],
+                      previous: index + 1 < history.length
+                          ? history[index + 1]
+                          : null,
+                      detail: _fxDetail(context, history[index]),
+                      horizontalPadding: horizontalPadding,
                     ),
-                  )
-                  .toList(growable: false),
+                  ),
+              ],
             ),
           ],
         );

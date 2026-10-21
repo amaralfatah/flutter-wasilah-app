@@ -10,22 +10,127 @@ abstract final class AppTheme {
 
   static ThemeData dark() => _theme(Brightness.dark);
 
-  static ThemeData _theme(Brightness brightness) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.seed,
+  /// Skema warna eksplisit ala Stockbit, bukan turunan seed M3: seed
+  /// memberi semburat hijau ke semua surface, sedangkan Stockbit memakai
+  /// hitam/putih netral dengan aksen hijau saja.
+  static ColorScheme _colorScheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final accent = isDark ? AppColors.accent : AppColors.accentLight;
+    final base = ColorScheme.fromSeed(
+      seedColor: accent,
       brightness: brightness,
     );
 
+    return isDark
+        ? base.copyWith(
+            primary: accent,
+            onPrimary: Colors.white,
+            primaryContainer: const Color(0xFF0E2A1F),
+            onPrimaryContainer: const Color(0xFF2FD08F),
+            secondary: accent,
+            onSecondary: Colors.white,
+            secondaryContainer: const Color(0xFF0E2A1F),
+            onSecondaryContainer: const Color(0xFF2FD08F),
+            surface: const Color(0xFF121212),
+            onSurface: const Color(0xFFEDEDED),
+            onSurfaceVariant: const Color(0xFF8F8F8F),
+            surfaceContainerLowest: const Color(0xFF0D0D0D),
+            surfaceContainerLow: const Color(0xFF1A1A1A),
+            surfaceContainer: const Color(0xFF1E1E1E),
+            surfaceContainerHigh: const Color(0xFF242424),
+            surfaceContainerHighest: const Color(0xFF2C2C2C),
+            outline: const Color(0xFF3D3D3D),
+            outlineVariant: const Color(0xFF2A2A2A),
+            error: const Color(0xFFF0524A),
+            inverseSurface: const Color(0xFFEDEDED),
+            onInverseSurface: const Color(0xFF121212),
+            surfaceTint: Colors.transparent,
+          )
+        : base.copyWith(
+            primary: accent,
+            onPrimary: Colors.white,
+            primaryContainer: const Color(0xFFE3F6EC),
+            onPrimaryContainer: const Color(0xFF007A4A),
+            secondary: accent,
+            onSecondary: Colors.white,
+            secondaryContainer: const Color(0xFFE3F6EC),
+            onSecondaryContainer: const Color(0xFF007A4A),
+            surface: Colors.white,
+            onSurface: const Color(0xFF1A1A1A),
+            onSurfaceVariant: const Color(0xFF7A7A7A),
+            surfaceContainerLowest: Colors.white,
+            surfaceContainerLow: const Color(0xFFF5F5F5),
+            surfaceContainer: const Color(0xFFF2F2F2),
+            surfaceContainerHigh: const Color(0xFFEDEDED),
+            surfaceContainerHighest: const Color(0xFFE6E6E6),
+            outline: const Color(0xFFCFCFCF),
+            outlineVariant: const Color(0xFFE6E6E6),
+            error: const Color(0xFFD92D20),
+            inverseSurface: const Color(0xFF1A1A1A),
+            onInverseSurface: Colors.white,
+            surfaceTint: Colors.transparent,
+          );
+  }
+
+  static ThemeData _theme(Brightness brightness) {
+    final colorScheme = _colorScheme(brightness);
+    final labelStyle = _compactTextTheme(base: null).labelSmall;
+
     final base = ThemeData(
       colorScheme: colorScheme,
+      scaffoldBackgroundColor: colorScheme.surface,
       fontFamily: 'Inter',
       visualDensity: VisualDensity.compact,
+      splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
+        elevation: 0,
         toolbarHeight: 52,
+        // Judul Stockbit kecil dan tebal ("Performance"), bukan title
+        // large M3.
+        titleTextStyle: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 16,
+          height: 22 / 16,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+      ),
+      // Tab teks kapital rata penuh dengan garis bawah hijau (STOCKS /
+      // ORDER / HISTORY, PORTFOLIO / TRADE).
+      tabBarTheme: TabBarThemeData(
+        labelColor: colorScheme.primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: colorScheme.primary,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: colorScheme.primary, width: 3),
+        ),
+        dividerColor: colorScheme.outlineVariant,
+        dividerHeight: 1,
+        labelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.2,
+        ),
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        elevation: 2,
+        shape: const CircleBorder(),
       ),
       // Tab aktif ditandai warna ikon/label saja, tanpa pil indikator M3 —
       // seperti bar bawah Stockbit.
@@ -42,7 +147,10 @@ abstract final class AppTheme {
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => _compactTextTheme(base: null).labelSmall?.copyWith(
+          (states) => labelStyle?.copyWith(
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
             color: states.contains(WidgetState.selected)
                 ? colorScheme.primary
                 : colorScheme.onSurfaceVariant,
@@ -57,38 +165,113 @@ abstract final class AppTheme {
           base: null,
         ).labelSmall?.copyWith(color: colorScheme.primary),
       ),
+      // Kartu Stockbit: bergaris tipis abu, latar sama dengan halaman.
       cardTheme: CardThemeData(
         elevation: 0,
         color: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: _compactShape.copyWith(
-          side: BorderSide(color: colorScheme.outlineVariant, width: 0.3),
+          side: BorderSide(color: colorScheme.outline, width: 0.6),
         ),
       ),
-      // Chip filter Stockbit berbentuk pil bergaris tanpa centang; status
-      // terpilih cukup dibedakan warna.
-      chipTheme: const ChipThemeData(
-        padding: EdgeInsets.symmetric(horizontal: 12),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: colorScheme.primary,
+        linearTrackColor: colorScheme.surfaceContainerHighest,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.white
+              : colorScheme.onSurfaceVariant,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest,
+        ),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colorScheme.inverseSurface,
+        contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
+        shape: _compactShape,
+      ),
+      // Chip filter Stockbit: pil bergaris tanpa centang; terpilih =
+      // garis + teks hijau di atas semburat hijau gelap.
+      chipTheme: ChipThemeData(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         labelPadding: EdgeInsets.zero,
-        shape: StadiumBorder(),
+        shape: StadiumBorder(side: BorderSide(color: colorScheme.outline)),
+        side: WidgetStateBorderSide.resolveWith(
+          (states) => BorderSide(
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : colorScheme.outline,
+          ),
+        ),
+        color: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? colorScheme.primaryContainer
+              : Colors.transparent,
+        ),
+        labelStyle: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.primary,
+        ),
         showCheckmark: false,
       ),
+      // Field Stockbit berlatar abu gelap tanpa garis (kolom pencarian,
+      // form order); fokus ditandai garis hijau.
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
-        border: const OutlineInputBorder(
+        filled: true,
+        fillColor: colorScheme.surfaceContainer,
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        floatingLabelStyle: WidgetStateTextStyle.resolveWith(
+          (states) => TextStyle(
+            color: states.contains(WidgetState.error)
+                ? colorScheme.error
+                : states.contains(WidgetState.focused)
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          ),
+        ),
+        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        // UnderlineInputBorder (bukan Outline) supaya label mengambang tetap
+        // di dalam isian, tidak menumpang di tepi atas seperti field outline.
+        border: const UnderlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide.none,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        enabledBorder: const UnderlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide.none,
         ),
-        focusedBorder: OutlineInputBorder(
+        disabledBorder: const UnderlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: UnderlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
-        errorBorder: OutlineInputBorder(
+        errorBorder: UnderlineInputBorder(
           borderRadius: const BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide(color: colorScheme.error),
+        ),
+        focusedErrorBorder: UnderlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -97,7 +280,9 @@ abstract final class AppTheme {
         shape: _compactShape,
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.surfaceContainer,
+        showDragHandle: true,
+        dragHandleColor: colorScheme.outline,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
@@ -112,11 +297,26 @@ abstract final class AppTheme {
         dense: true,
         minVerticalPadding: 8,
       ),
-      filledButtonTheme: const FilledButtonThemeData(
-        style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: _compactShape,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          minimumSize: const Size(0, 44),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-      outlinedButtonTheme: const OutlinedButtonThemeData(
-        style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: _compactShape,
+          side: BorderSide(color: colorScheme.outline),
+          foregroundColor: colorScheme.onSurface,
+          minimumSize: const Size(0, 44),
+        ),
       ),
       textButtonTheme: const TextButtonThemeData(
         style: ButtonStyle(shape: WidgetStatePropertyAll(_compactShape)),
@@ -136,34 +336,32 @@ abstract final class AppTheme {
   /// bila perlu menambah level baru.
   static TextTheme _compactTextTheme({required TextTheme? base}) {
     final theme = base ?? Typography.material2021().black;
+    // Stockbit: huruf rapat (tanpa letter spacing M3 0,25–0,5), ukuran
+    // kecil, dan tebal secukupnya — angka tebal hanya di hero.
+    TextStyle? tight(
+      TextStyle? style,
+      double size,
+      double height, [
+      FontWeight? weight,
+    ]) => style?.copyWith(
+      fontSize: size,
+      height: height / size,
+      fontWeight: weight,
+      letterSpacing: 0,
+    );
+
     return theme.copyWith(
-      headlineSmall: theme.headlineSmall?.copyWith(
-        fontSize: 24,
-        height: 32 / 24,
-        fontWeight: FontWeight.w600,
-      ),
-      titleSmall: theme.titleSmall?.copyWith(
-        fontSize: 14,
-        height: 20 / 14,
-        fontWeight: FontWeight.w500,
-      ),
-      bodyMedium: theme.bodyMedium?.copyWith(
-        fontSize: 14,
-        height: 20 / 14,
-      ),
-      labelMedium: theme.labelMedium?.copyWith(
-        fontSize: 12,
-        height: 16 / 12,
-      ),
-      bodySmall: theme.bodySmall?.copyWith(
-        fontSize: 12,
-        height: 16 / 12,
-      ),
-      labelSmall: theme.labelSmall?.copyWith(
-        fontSize: 11,
-        height: 14 / 11,
-        fontWeight: FontWeight.w500,
-      ),
+      headlineMedium: tight(theme.headlineMedium, 28, 34, FontWeight.w700),
+      headlineSmall: tight(theme.headlineSmall, 22, 28, FontWeight.w700),
+      titleLarge: tight(theme.titleLarge, 18, 24, FontWeight.w600),
+      titleMedium: tight(theme.titleMedium, 15, 20, FontWeight.w600),
+      titleSmall: tight(theme.titleSmall, 14, 20, FontWeight.w500),
+      bodyLarge: tight(theme.bodyLarge, 15, 20, FontWeight.w400),
+      bodyMedium: tight(theme.bodyMedium, 14, 20, FontWeight.w400),
+      bodySmall: tight(theme.bodySmall, 12, 16, FontWeight.w400),
+      labelLarge: tight(theme.labelLarge, 14, 20, FontWeight.w500),
+      labelMedium: tight(theme.labelMedium, 12, 16, FontWeight.w500),
+      labelSmall: tight(theme.labelSmall, 11, 14, FontWeight.w500),
     );
   }
 

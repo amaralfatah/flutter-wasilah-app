@@ -26,7 +26,9 @@ class AssetListItem extends ConsumerWidget {
     final l10n = context.l10n;
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final primaryStyle = textTheme.bodyMedium;
+    // Ukuran tabel portofolio Stockbit: kode tebal, angka 13, keterangan
+    // abu 12.
+    final primaryStyle = textTheme.bodyMedium?.copyWith(fontSize: 13);
     final captionStyle = textTheme.bodySmall?.copyWith(
       color: colorScheme.onSurfaceVariant,
     );
@@ -51,7 +53,10 @@ class AssetListItem extends ConsumerWidget {
           code: _Cell(
             primary: Text(
               asset.code,
-              style: textTheme.titleSmall,
+              style: textTheme.titleSmall?.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -72,7 +77,13 @@ class AssetListItem extends ConsumerWidget {
             primary: formatNumber(asset.currentValue),
             secondary: _currentPriceText(ref),
             primaryStyle: primaryStyle,
-            secondaryStyle: captionStyle,
+            // Harga kini berwarna sesuai perubahan harian, seperti Stockbit.
+            secondaryStyle: switch (_dayChange(ref)) {
+              final change? when change != 0 => captionStyle?.copyWith(
+                color: profitLossColorOf(context, change),
+              ),
+              _ => captionStyle,
+            },
           ),
           profitLoss: _Cell.number(
             primary: profitLoss == null ? '-' : formatSignedNumber(profitLoss),
@@ -107,6 +118,18 @@ class AssetListItem extends ConsumerWidget {
     }
 
     return formatPrice(quoteResult.quote.price, quoteResult.quote.currency);
+  }
+
+  double? _dayChange(WidgetRef ref) {
+    final marketSymbol = asset.marketSymbol;
+    if (marketSymbol == null) {
+      return null;
+    }
+    return ref
+        .watch(marketQuoteProvider(marketSymbol))
+        .valueOrNull
+        ?.quote
+        .change;
   }
 
   String _semanticLabel(BuildContext context, AppLocalizations l10n) {
@@ -144,7 +167,7 @@ class AssetTableHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final primaryStyle = textTheme.labelMedium?.copyWith(
       color: colorScheme.onSurface,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w500,
     );
     final secondaryStyle = textTheme.labelSmall?.copyWith(
       color: colorScheme.onSurfaceVariant,

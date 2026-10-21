@@ -143,7 +143,6 @@ class _MarketDetailBody extends ConsumerWidget {
             _buildChartSection(context, ref, quoteResult),
             const SizedBox(height: AppSpacing.lg),
             if (quoteResult.quote.hasTradingStats) ...[
-              const Divider(height: 1),
               const SizedBox(height: AppSpacing.lg),
               MarketStatsGrid(quote: quoteResult.quote),
             ],

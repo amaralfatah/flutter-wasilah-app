@@ -82,7 +82,12 @@ class MarketQuoteHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(asset.code, style: textTheme.titleMedium),
+                  Text(
+                    asset.code,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   Text(
                     asset.name,
                     maxLines: 1,
@@ -94,7 +99,7 @@ class MarketQuoteHeader extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     formatPrice(displayPrice, quote.currency),
-                    style: textTheme.headlineSmall,
+                    style: textTheme.headlineMedium,
                   ),
                   // Tinggi baris dijaga tetap walau perubahan belum ada,
                   // supaya chart di bawahnya tidak melompat saat data masuk.

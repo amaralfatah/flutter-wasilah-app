@@ -6,6 +6,7 @@ import 'package:flutter_wasilah_app/features/market/presentation/pages/market_de
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/dashboard_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/holding_detail_page.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/holding_history_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/master_asset_list_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_history_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/portfolio_page.dart';
@@ -89,6 +90,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            path: RouteNames.portfolioHistorySegment,
+            builder: (context, state) {
+              final assetId = state.pathParameters['id']!;
+              return HoldingHistoryPage(assetId: assetId);
+            },
+          ),
+          GoRoute(
             path: RouteNames.portfolioMarketSegment,
             builder: (context, state) {
               final assetId = state.pathParameters['id']!;
@@ -151,32 +159,17 @@ class _AppShellScaffold extends StatelessWidget {
 
   static List<NavigationDestination> _destinations(BuildContext context) {
     final l10n = context.l10n;
+    // Ikon garis tetap garis saat terpilih, hanya warnanya yang hijau —
+    // seperti bar bawah Stockbit.
+    NavigationDestination destination(IconData icon, String label) =>
+        NavigationDestination(icon: Icon(icon), label: label);
+
     return [
-      NavigationDestination(
-        icon: const Icon(Icons.home_outlined),
-        selectedIcon: const Icon(Icons.home),
-        label: l10n.navDashboardLabel,
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.history_outlined),
-        selectedIcon: const Icon(Icons.history),
-        label: l10n.historyTitle,
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.account_balance_wallet_outlined),
-        selectedIcon: const Icon(Icons.account_balance_wallet),
-        label: l10n.portfolioTitle,
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.flag_outlined),
-        selectedIcon: const Icon(Icons.flag),
-        label: l10n.targetTitle,
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.settings_outlined),
-        selectedIcon: const Icon(Icons.settings),
-        label: l10n.settingsTitle,
-      ),
+      destination(Icons.home_outlined, l10n.navDashboardLabel),
+      destination(Icons.show_chart, l10n.historyTitle),
+      destination(Icons.pie_chart_outline, l10n.portfolioTitle),
+      destination(Icons.track_changes, l10n.targetTitle),
+      destination(Icons.settings_outlined, l10n.settingsTitle),
     ];
   }
 

@@ -88,6 +88,8 @@ class SettingsPage extends ConsumerWidget {
 
     await showModalBottomSheet<void>(
       context: context,
+      // Di atas bar navigasi bawah, bukan di dalam navigator tab.
+      useRootNavigator: true,
       builder: (sheetContext) {
         return SafeArea(
           child: RadioGroup<ThemeMode>(
@@ -141,6 +143,8 @@ class SettingsPage extends ConsumerWidget {
 
     await showModalBottomSheet<void>(
       context: context,
+      // Di atas bar navigasi bawah, bukan di dalam navigator tab.
+      useRootNavigator: true,
       builder: (sheetContext) {
         return SafeArea(
           child: RadioGroup<Locale?>(

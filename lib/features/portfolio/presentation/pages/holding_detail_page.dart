@@ -3,15 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_wasilah_app/core/router/route_names.dart';
-import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
 import 'package:flutter_wasilah_app/features/market/providers/market_providers.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/asset.dart';
+import 'package:flutter_wasilah_app/features/portfolio/data/models/asset_snapshot.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/asset_category_l10n.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/utils/history_delete.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/asset_category_icon.dart';
-import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/holding_history_section.dart';
+import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/history_row.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/holding_metrics_list.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/widgets/update_value_bar.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
@@ -21,7 +20,6 @@ import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_empty_state.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:flutter_wasilah_app/shared/widgets/refreshable_page_body.dart';
 import 'package:go_router/go_router.dart';
@@ -38,8 +36,6 @@ class HoldingDetailPage extends ConsumerStatefulWidget {
 }
 
 class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
-  final Set<String> _removedIds = {};
-
   String get assetId => widget.assetId;
 
   @override
@@ -61,14 +57,13 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
         }
 
         final asset = position.asset;
-        final isCash = asset.category == AssetCategory.cash;
 
         return Scaffold(
-          appBar: _HoldingDetailAppBar(
-            asset: asset,
+          appBar: const _HoldingDetailAppBar(),
+          bottomNavigationBar: UpdateValueBar(
+            assetId: asset.id,
             onRemoveFromPortfolio: () => _removeFromPortfolio(asset),
           ),
-          bottomNavigationBar: UpdateValueBar(assetId: asset.id),
           body: RefreshablePageBody(
             onRefresh: () {
               ref.invalidate(assetHistoryProvider(assetId));
@@ -81,57 +76,39 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
             },
             // Horizontal 0: AppListCard (metrik & riwayat) full-bleed sampai
             // tepi layar. Konten lain mengatur padding horizontalnya sendiri.
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            // Susunan "Portfolio Detail" Stockbit: kartu identitas, kartu
+            // metrik, kartu alokasi, lalu kartu histori.
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: AppCard(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    onTap: asset.marketSymbol == null
-                        ? null
-                        : () => context.push(
-                            '${RouteNames.portfolio}/${asset.id}/'
-                            '${RouteNames.portfolioMarketSegment}',
-                          ),
-                    child: _AssetHeader(asset: asset),
-                  ),
+                AppCard(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  onTap: asset.marketSymbol == null
+                      ? null
+                      : () => context.push(
+                          '${RouteNames.portfolio}/${asset.id}/'
+                          '${RouteNames.portfolioMarketSegment}',
+                        ),
+                  child: _AssetHeader(asset: asset),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                const AppSectionBand(),
+                const SizedBox(height: AppSpacing.md),
                 HoldingMetricsList(position: position),
-                const SizedBox(height: AppSpacing.lg),
-                const AppSectionBand(),
-                const SizedBox(height: AppSpacing.lg),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: AppCard(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    child: _AllocationRow(
-                      label: l10n.allocationLabel,
-                      percentage: position.allocationPercentage,
-                    ),
+                const SizedBox(height: AppSpacing.md),
+                AppCard(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: _AllocationRow(
+                    label: l10n.allocationLabel,
+                    percentage: position.allocationPercentage,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                AppSectionBand(label: l10n.historySectionTitle),
-                const SizedBox(height: AppSpacing.lg),
-                HoldingHistorySection(
+                const SizedBox(height: AppSpacing.md),
+                _HistoryCard(
                   history: historyValue,
-                  removedIds: _removedIds,
-                  showCost: !isCash,
-                  onDismissed: (snapshotId) {
-                    setState(() => _removedIds.add(snapshotId));
-                    unawaited(_deleteSnapshot(snapshotId));
-                  },
+                  onViewAll: () => context.push(
+                    '${RouteNames.portfolio}/${asset.id}/'
+                    '${RouteNames.portfolioHistorySegment}',
+                  ),
                 ),
               ],
             ),
@@ -175,53 +152,23 @@ class _HoldingDetailPageState extends ConsumerState<HoldingDetailPage> {
       );
     }
   }
-
-  Future<void> _deleteSnapshot(String snapshotId) => deleteHistoryEntry(
-    context,
-    delete: () =>
-        ref.read(portfolioRepositoryProvider).deleteAssetSnapshot(snapshotId),
-    onFailed: () => setState(() => _removedIds.remove(snapshotId)),
-  );
 }
 
 class _HoldingDetailAppBar extends StatelessWidget
     implements PreferredSizeWidget {
-  const _HoldingDetailAppBar({this.asset, this.onRemoveFromPortfolio});
-
-  final Asset? asset;
-  final VoidCallback? onRemoveFromPortfolio;
+  const _HoldingDetailAppBar();
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
-    final asset = this.asset;
-    final l10n = context.l10n;
-
-    return AppBar(
-      // Pakai nama aset supaya konteks tidak hilang saat halaman di-scroll
-      // dan header di body sudah keluar dari layar.
-      title: Text(
-        asset?.name ?? l10n.defaultAssetDetailTitle,
-        overflow: TextOverflow.ellipsis,
-      ),
-      actions: [
-        if (onRemoveFromPortfolio case final onRemove?)
-          PopupMenuButton<String>(
-            onSelected: (_) => onRemove(),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'remove',
-                child: Text(l10n.removeFromPortfolioButton),
-              ),
-            ],
-          ),
-      ],
-    );
+    return AppBar(title: Text(context.l10n.holdingDetailTitle));
   }
 }
 
+/// Kartu identitas Stockbit: logo, kode tebal + badge, nama abu, dan
+/// chevron ke halaman harga pasar bila aset punya simbol pasar.
 class _AssetHeader extends StatelessWidget {
   const _AssetHeader({required this.asset});
 
@@ -237,6 +184,7 @@ class _AssetHeader extends StatelessWidget {
         AssetCategoryIcon(
           category: asset.category,
           marketSymbol: asset.marketSymbol,
+          radius: 24,
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
@@ -250,7 +198,9 @@ class _AssetHeader extends StatelessWidget {
                       asset.code,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -262,7 +212,7 @@ class _AssetHeader extends StatelessWidget {
                 asset.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: textTheme.bodyMedium?.copyWith(
+                style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -283,7 +233,7 @@ class _CategoryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.categoryColorOf(context, category.index);
+    final color = Theme.of(context).colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -304,9 +254,8 @@ class _CategoryBadge extends StatelessWidget {
   }
 }
 
-/// Baris alokasi porsi aset ala Stockbit: label di kiri, cincin persentase
-/// di kanan — beda dari _MetricTile teks biasa supaya alokasi lebih mudah
-/// dipindai saat portofolio berisi banyak aset.
+/// Baris "Portfolio Allocation" Stockbit: label di kiri, cincin kecil dan
+/// persentase tebal di kanan.
 class _AllocationRow extends StatelessWidget {
   const _AllocationRow({required this.label, required this.percentage});
 
@@ -321,28 +270,92 @@ class _AllocationRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(label, style: textTheme.bodyMedium)),
-        SizedBox(
-          width: 36,
-          height: 36,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CircularProgressIndicator(
-                value: (percentage / 100).clamp(0, 1),
-                strokeWidth: 3,
-                backgroundColor: colorScheme.outlineVariant,
-                color: colorScheme.primary,
-              ),
-              FittedBox(
-                child: Text(
-                  formatPercentage(percentage),
-                  style: textTheme.labelSmall?.copyWith(fontSize: 9),
-                ),
-              ),
-            ],
+        SizedBox.square(
+          dimension: 18,
+          child: CircularProgressIndicator(
+            value: (percentage / 100).clamp(0, 1),
+            strokeWidth: 2.5,
+            backgroundColor: colorScheme.surfaceContainerHighest,
+            color: colorScheme.primary,
           ),
         ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          formatPercentage(percentage),
+          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
       ],
+    );
+  }
+}
+
+/// Kartu "History  See All ›" Stockbit: judul, tautan hijau ke histori
+/// lengkap, dan tiga pencatatan terakhir.
+class _HistoryCard extends StatelessWidget {
+  const _HistoryCard({required this.history, required this.onViewAll});
+
+  final AsyncValue<List<AssetSnapshot>> history;
+  final VoidCallback onViewAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final items = history.asData?.value ?? const <AssetSnapshot>[];
+    final latest = items.take(3).toList();
+
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: onViewAll,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.historySectionTitle,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    l10n.viewAllShortLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (latest.isNotEmpty) ...[
+            const Divider(),
+            const HistoryTableHeader(horizontalPadding: AppSpacing.lg),
+            const Divider(),
+            for (var i = 0; i < latest.length; i++)
+              HistoryRow(
+                snapshot: latest[i],
+                previous: i + 1 < items.length ? items[i + 1] : null,
+                horizontalPadding: AppSpacing.lg,
+              ),
+          ],
+        ],
+      ),
     );
   }
 }

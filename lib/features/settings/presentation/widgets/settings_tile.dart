@@ -1,29 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_section_band.dart';
 
 class SettingsSectionHeader extends StatelessWidget {
   const SettingsSectionHeader(this.label, {super.key});
 
   final String label;
 
+  // Pita judul grup ala Stockbit ("Trending"): latar sedikit lebih terang,
+  // label tebal, selebar layar.
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.xl,
-        AppSpacing.xl,
-        AppSpacing.sm,
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppSectionBand(label: label);
 }
 
 class SettingsTile extends StatelessWidget {
@@ -71,7 +58,7 @@ class SettingsTile extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(icon, size: 22, color: color),
+                Icon(icon, size: 22, color: color ?? mutedColor),
                 const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Column(
@@ -81,7 +68,7 @@ class SettingsTile extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyLarge?.copyWith(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: color,
                         ),
                       ),

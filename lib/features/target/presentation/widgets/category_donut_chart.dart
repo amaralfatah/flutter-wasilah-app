@@ -66,8 +66,8 @@ class CategoryDonutChart extends StatelessWidget {
                     child: Text(
                       formatCurrency(totalValue),
                       maxLines: 1,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -101,7 +101,7 @@ class _DonutPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.shortestSide * 0.06;
+    final strokeWidth = size.shortestSide * 0.09;
     final rect = Rect.fromLTWH(
       strokeWidth / 2,
       strokeWidth / 2,

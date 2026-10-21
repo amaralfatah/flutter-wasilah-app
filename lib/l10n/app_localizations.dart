@@ -1248,6 +1248,150 @@ abstract class AppLocalizations {
   /// **'Progres alokasi {category}'**
   String targetAllocationProgressSemanticLabel(String category);
 
+  /// Status alokasi dalam batas wajar
+  ///
+  /// In id, this message translates to:
+  /// **'Sesuai'**
+  String get targetStatusOnTrack;
+
+  /// Status alokasi di bawah batas wajar
+  ///
+  /// In id, this message translates to:
+  /// **'Kurang'**
+  String get targetStatusBelow;
+
+  /// Status alokasi di atas batas wajar
+  ///
+  /// In id, this message translates to:
+  /// **'Lebih'**
+  String get targetStatusAbove;
+
+  /// Label selisih nilai aktual terhadap target
+  ///
+  /// In id, this message translates to:
+  /// **'Selisih'**
+  String get targetDifferenceLabel;
+
+  /// Label total nilai yang perlu ditambah ke kategori yang kurang
+  ///
+  /// In id, this message translates to:
+  /// **'Perlu ditambah'**
+  String get targetSummaryToAdd;
+
+  /// Label total nilai yang perlu dikurangi dari kategori yang lebih
+  ///
+  /// In id, this message translates to:
+  /// **'Perlu dikurangi'**
+  String get targetSummaryToTrim;
+
+  /// Judul daftar alokasi target per kategori
+  ///
+  /// In id, this message translates to:
+  /// **'Alokasi per kategori'**
+  String get targetAllocationListTitle;
+
+  /// Label jumlah kategori di luar batas wajar
+  ///
+  /// In id, this message translates to:
+  /// **'Di luar batas'**
+  String get targetSummaryOffTrackLabel;
+
+  /// Label persen alokasi aktual di detail target
+  ///
+  /// In id, this message translates to:
+  /// **'Alokasi aktual'**
+  String get targetActualAllocationLabel;
+
+  /// Label selisih persen alokasi di detail target
+  ///
+  /// In id, this message translates to:
+  /// **'Selisih alokasi'**
+  String get targetDifferencePercentLabel;
+
+  /// Label status alokasi di detail target
+  ///
+  /// In id, this message translates to:
+  /// **'Status'**
+  String get targetStatusLabel;
+
+  /// Judul kolom tanggal tabel histori
+  ///
+  /// In id, this message translates to:
+  /// **'Tanggal'**
+  String get historyTableDateHeader;
+
+  /// Judul kolom perubahan tabel histori
+  ///
+  /// In id, this message translates to:
+  /// **'Perubahan'**
+  String get historyTableChangeHeader;
+
+  /// Judul seksi return (TWR) dan tabel histori portofolio
+  ///
+  /// In id, this message translates to:
+  /// **'Return Portofolio'**
+  String get historyReturnSectionTitle;
+
+  /// Keterangan periode perubahan nilai di hero histori
+  ///
+  /// In id, this message translates to:
+  /// **'sejak {date}'**
+  String historySinceLabel(String date);
+
+  /// Persen target di bawah bar alokasi
+  ///
+  /// In id, this message translates to:
+  /// **'Target {target}'**
+  String targetAllocationTargetValue(String target);
+
+  /// Keterangan selisih di kepala detail target
+  ///
+  /// In id, this message translates to:
+  /// **'dari target'**
+  String get targetHeroFromTarget;
+
+  /// Judul halaman detail holding
+  ///
+  /// In id, this message translates to:
+  /// **'Detail Portofolio'**
+  String get holdingDetailTitle;
+
+  /// Tombol singkat keluarkan aset dari portofolio di bar bawah detail
+  ///
+  /// In id, this message translates to:
+  /// **'Keluarkan'**
+  String get removeShortButton;
+
+  /// Tab periode 6 bulan
+  ///
+  /// In id, this message translates to:
+  /// **'6B'**
+  String get chartRange6M;
+
+  /// Chip tabel histori per bulan
+  ///
+  /// In id, this message translates to:
+  /// **'Bulanan'**
+  String get historyMonthlyLabel;
+
+  /// Chip tabel histori per tahun
+  ///
+  /// In id, this message translates to:
+  /// **'Tahunan'**
+  String get historyYearlyLabel;
+
+  /// Legenda garis nilai portofolio di chart histori
+  ///
+  /// In id, this message translates to:
+  /// **'Portofolio'**
+  String get historyPortfolioLegend;
+
+  /// Tautan lihat semua di kepala kartu
+  ///
+  /// In id, this message translates to:
+  /// **'Lihat semua'**
+  String get viewAllShortLabel;
+
   /// Tooltip tombol info pada header seksi
   ///
   /// In id, this message translates to:

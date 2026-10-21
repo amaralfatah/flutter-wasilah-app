@@ -13,11 +13,14 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapsho
 ///
 /// [history] boleh urutan apa saja. Bila [year] diisi, hanya bulan yang
 /// berakhir di tahun itu yang dirantai — Januari tetap memakai Desember
-/// tahun sebelumnya sebagai nilai awal. Mengembalikan `null` bila belum ada
+/// tahun sebelumnya sebagai nilai awal. Begitu juga [from]: hanya bulan
+/// yang berakhir pada/sesudah tanggal itu yang dirantai (periode 3B, 1T, …).
+/// Mengembalikan `null` bila belum ada
 /// satu bulan pun yang bisa dihitung (butuh dua snapshot bermodal).
 ({double cumulative, double? annualized})? timeWeightedReturn(
   List<ValueSnapshot> history, {
   int? year,
+  DateTime? from,
 }) {
   final sorted = [...history]
     ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
@@ -29,6 +32,9 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapsho
     final previous = sorted[index - 1];
     final current = sorted[index];
     if (year != null && current.recordedAt.year != year) {
+      continue;
+    }
+    if (from != null && current.recordedAt.isBefore(from)) {
       continue;
     }
 

@@ -9,6 +9,7 @@ import 'package:flutter_wasilah_app/features/portfolio/data/models/portfolio_sum
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
+import 'package:flutter_wasilah_app/shared/widgets/summary_metric.dart';
 
 /// Ringkasan portofolio ala kartu akun Stockbit: grid 3x2 dengan kas di kiri
 /// atas (padanan Trading Balance) dan total nilai di kanan bawah (padanan
@@ -69,24 +70,24 @@ class PortfolioSummaryCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: _SummaryMetric(
+                        child: SummaryMetric(
                           label: l10n.dashboardCashLabel,
                           value: formatNumber(cash),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: _SummaryMetric(
+                        child: SummaryMetric(
                           label: l10n.dashboardCapitalLabel,
-                          alignment: _MetricAlignment.center,
+                          alignment: MetricAlignment.center,
                           value: capital == null ? '-' : formatNumber(capital),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: _SummaryMetric(
+                        child: SummaryMetric(
                           label: l10n.dashboardAssetCountLabel,
-                          alignment: _MetricAlignment.end,
+                          alignment: MetricAlignment.end,
                           value: '${activeAssets.length}',
                         ),
                       ),
@@ -96,7 +97,7 @@ class PortfolioSummaryCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: _SummaryMetric(
+                        child: SummaryMetric(
                           label: l10n.dashboardProfitLossLabel,
                           value: profitLoss == null
                               ? '-'
@@ -108,9 +109,9 @@ class PortfolioSummaryCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: _SummaryMetric(
+                        child: SummaryMetric(
                           label: l10n.commonReturnLabel,
-                          alignment: _MetricAlignment.center,
+                          alignment: MetricAlignment.center,
                           value: profitLoss?.percentage == null
                               ? '-'
                               : formatSignedPercentage(
@@ -123,9 +124,9 @@ class PortfolioSummaryCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
-                        child: _SummaryMetric(
+                        child: SummaryMetric(
                           label: l10n.dashboardPortfolioValueLabel,
-                          alignment: _MetricAlignment.end,
+                          alignment: MetricAlignment.end,
                           value: formatNumber(summary.totalValue),
                         ),
                       ),
@@ -233,71 +234,5 @@ class PortfolioSummaryCard extends StatelessWidget {
       );
     }
     return buffer.toString();
-  }
-}
-
-/// Kolom kiri rata kiri, tengah rata tengah, kanan rata kanan — pola kartu
-/// akun Stockbit supaya tiga angka sebaris terbaca sebagai tiga kolom.
-enum _MetricAlignment {
-  start(CrossAxisAlignment.start, Alignment.centerLeft, TextAlign.start),
-  center(CrossAxisAlignment.center, Alignment.center, TextAlign.center),
-  end(CrossAxisAlignment.end, Alignment.centerRight, TextAlign.end);
-
-  const _MetricAlignment(this.cross, this.fit, this.text);
-
-  final CrossAxisAlignment cross;
-  final Alignment fit;
-  final TextAlign text;
-}
-
-class _SummaryMetric extends StatelessWidget {
-  const _SummaryMetric({
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.alignment = _MetricAlignment.start,
-  });
-
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final _MetricAlignment alignment;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: alignment.cross,
-      children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: alignment.fit,
-          child: Text(
-            value,
-            maxLines: 1,
-            style: textTheme.titleSmall?.copyWith(
-              color: valueColor ?? colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        // Mengecil, bukan terpotong: label seperti "Portfolio Value" harus
-        // tetap terbaca utuh di kolom sempit.
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: alignment.fit,
-          child: Text(
-            label,
-            maxLines: 1,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

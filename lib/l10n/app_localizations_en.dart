@@ -685,6 +685,82 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get targetStatusOnTrack => 'On track';
+
+  @override
+  String get targetStatusBelow => 'Under';
+
+  @override
+  String get targetStatusAbove => 'Over';
+
+  @override
+  String get targetDifferenceLabel => 'Difference';
+
+  @override
+  String get targetSummaryToAdd => 'To add';
+
+  @override
+  String get targetSummaryToTrim => 'To trim';
+
+  @override
+  String get targetAllocationListTitle => 'Allocation by category';
+
+  @override
+  String get targetSummaryOffTrackLabel => 'Out of range';
+
+  @override
+  String get targetActualAllocationLabel => 'Actual allocation';
+
+  @override
+  String get targetDifferencePercentLabel => 'Allocation gap';
+
+  @override
+  String get targetStatusLabel => 'Status';
+
+  @override
+  String get historyTableDateHeader => 'Date';
+
+  @override
+  String get historyTableChangeHeader => 'Change';
+
+  @override
+  String get historyReturnSectionTitle => 'Portfolio Return';
+
+  @override
+  String historySinceLabel(String date) {
+    return 'since $date';
+  }
+
+  @override
+  String targetAllocationTargetValue(String target) {
+    return 'Target $target';
+  }
+
+  @override
+  String get targetHeroFromTarget => 'vs target';
+
+  @override
+  String get holdingDetailTitle => 'Portfolio Detail';
+
+  @override
+  String get removeShortButton => 'Remove';
+
+  @override
+  String get chartRange6M => '6M';
+
+  @override
+  String get historyMonthlyLabel => 'Monthly';
+
+  @override
+  String get historyYearlyLabel => 'Yearly';
+
+  @override
+  String get historyPortfolioLegend => 'Portfolio';
+
+  @override
+  String get viewAllShortLabel => 'See all';
+
+  @override
   String get sectionHeaderInfoTooltip => 'Info';
 
   @override

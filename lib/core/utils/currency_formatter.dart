@@ -27,6 +27,11 @@ String formatSignedNumber(double value) {
   return value > 0 ? '+${formatNumber(value)}' : formatNumber(value);
 }
 
+/// Seperti [formatCurrency], dengan tanda `+` untuk nilai positif.
+String formatSignedCurrency(double value) {
+  return value > 0 ? '+${formatCurrency(value)}' : formatCurrency(value);
+}
+
 String formatCompactCurrency(double value) {
   if (value.abs() >= 1000000000) {
     return 'Rp${_formatCompact(value / 1000000000)} miliar';
@@ -43,6 +48,29 @@ String _formatCompact(double value) {
   final hasDecimal = value.truncateToDouble() != value;
   final text = hasDecimal ? value.toStringAsFixed(1) : value.toStringAsFixed(0);
   return text.replaceAll('.', ',');
+}
+
+/// Label sumbu chart nominal ringkas ala Stockbit (`125 M`, `9,98 M`,
+/// `1,2 B`): angka penuh terlalu lebar untuk kolom sumbu Y.
+String formatAxisCompact(double value) {
+  final abs = value.abs();
+  final (divisor, suffix) = abs >= 1e12
+      ? (1e12, ' T')
+      : abs >= 1e9
+      ? (1e9, ' B')
+      : abs >= 1e6
+      ? (1e6, ' M')
+      : abs >= 1e3
+      ? (1e3, ' K')
+      : (1.0, '');
+  final scaled = value / divisor;
+  final pattern = scaled.abs() >= 100
+      ? '#,##0'
+      : scaled.abs() >= 10
+      ? '#,##0.#'
+      : '#,##0.##';
+  final text = NumberFormat(pattern, 'id_ID').format(scaled);
+  return '$text$suffix';
 }
 
 /// Jumlah unit (lot, lembar, koin, gram). Bilangan bulat tampil dengan

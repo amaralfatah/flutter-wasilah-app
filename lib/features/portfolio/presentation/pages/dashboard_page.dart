@@ -116,12 +116,11 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 if (activeAssets.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xl),
-                  AppSectionBand(
-                    label: l10n.mainAssetsTitle,
-                    actionLabel: l10n.viewAllLabel,
-                    onAction: () => context.go(RouteNames.portfolio),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                  // Stockbit memisahkan kartu ringkasan dan tabel dengan
+                  // pita jeda tanpa judul; daftar lengkap ada di tab
+                  // Portofolio.
+                  const AppSectionBand(),
+                  const SizedBox(height: AppSpacing.sm),
                   AppListCard(
                     children: [
                       const AssetTableHeader(),

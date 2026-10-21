@@ -2,15 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/percentage_formatter.dart';
+import 'package:flutter_wasilah_app/core/utils/profit_loss_formatter.dart';
+import 'package:flutter_wasilah_app/features/market/data/models/price_series.dart';
+import 'package:flutter_wasilah_app/features/market/presentation/widgets/price_line_chart.dart';
 import 'package:flutter_wasilah_app/features/portfolio/data/models/value_snapshot.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
-import 'package:flutter_wasilah_app/shared/widgets/app_card.dart';
 
+/// Chart nilai histori ala "Performance" Stockbit: garis hijau/merah
+/// berisian gradasi, acuan putus-putus di nilai awal, sumbu Y kanan, dan
+/// garis modal sebagai pembanding (seperti garis IHSG di Stockbit).
 class HistoryLineChart extends StatelessWidget {
   const HistoryLineChart({
     required this.history,
     super.key,
     this.showCost = true,
+    this.onScrub,
+    this.horizontalPadding = AppSpacing.xl,
+    this.valueLabel,
+    this.valueReturn,
+    this.costReturn,
   });
 
   /// Snapshots ordered oldest to newest.
@@ -20,271 +31,212 @@ class HistoryLineChart extends StatelessWidget {
   /// supaya garis modal tidak menimpa garis nilai.
   final bool showCost;
 
+  /// Snapshot yang sedang di-scrub, atau `null` saat jari dilepas.
+  final ValueChanged<ValueSnapshot?>? onScrub;
+
+  /// Jarak kiri legenda/plot; lebih kecil saat chart berada di dalam kartu.
+  final double horizontalPadding;
+
+  /// Label garis nilai di legenda; default "Nilai".
+  final String? valueLabel;
+
+  /// Return garis nilai & modal selama periode, ditampilkan di kotak
+  /// legenda seperti kotak "Portfolio -8,81% | IHSG -38,95%" Stockbit.
+  final double? valueReturn;
+  final double? costReturn;
+
   @override
   Widget build(BuildContext context) {
     if (history.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // Satu titik tidak bisa digambar sebagai garis. Tampilkan penjelasan,
-    // jangan menghilang begitu saja — kalau tidak, grafik akan lenyap tanpa
-    // sebab saat user memfilter tahun yang hanya punya satu pencatatan.
-    if (history.length < 2) {
-      return const _ChartPlaceholder();
-    }
-
     final l10n = context.l10n;
-    final locale = Localizations.localeOf(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final values = history.map((item) => item.totalValue).toList();
-    // Satu titik modal tidak membentuk garis dan hanya tampak seperti titik
-    // nyasar, jadi garis modal baru digambar mulai dua pencatatan.
-    final recordedCosts = history.map((item) => item.totalCost).toList();
-    final hasCost = showCost && recordedCosts.nonNulls.length >= 2;
-    final costs = hasCost
-        ? recordedCosts
-        : List<double?>.filled(history.length, null);
-    // Skala mencakup garis modal juga, supaya kedua garis bisa dibandingkan
-    // langsung: jarak antar garis = untung/rugi.
-    final scaleValues = [...values, ...costs.whereType<double>()];
-    final maxValue = scaleValues.reduce((a, b) => a > b ? a : b);
-    final minValue = scaleValues.reduce((a, b) => a < b ? a : b);
-    final costColor = colorScheme.tertiary;
 
+    // Satu titik tidak bisa digambar sebagai garis. Tampilkan penjelasan,
+    // jangan menghilang begitu saja — kalau tidak, grafik akan lenyap tanpa
+    // sebab saat user memfilter periode yang hanya punya satu pencatatan.
+    if (history.length < 2) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.xxl,
+        ),
+        child: Text(
+          l10n.historyChartPlaceholderMessage,
+          textAlign: TextAlign.center,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final locale = Localizations.localeOf(context);
+    final points = [
+      for (final item in history)
+        PricePoint(time: item.recordedAt, close: item.totalValue),
+    ];
+    // Satu titik modal tidak membentuk garis, jadi garis modal baru
+    // digambar mulai dua pencatatan.
+    final costs = history.map((item) => item.totalCost).toList();
+    final hasCost = showCost && costs.nonNulls.length >= 2;
+    final costColor = colorScheme.brightness == Brightness.dark
+        ? const Color(0xFFA07CFF)
+        : const Color(0xFF7C4DFF);
     final axisStyle = textTheme.bodySmall?.copyWith(
+      fontSize: 11,
       color: colorScheme.onSurfaceVariant,
     );
+    // Lima tanggal merata seperti sumbu X Stockbit (2 Jan … 21 Okt).
+    final axisDates = history.length <= 5
+        ? history
+        : [
+            for (var i = 0; i < 5; i++)
+              history[(i * (history.length - 1) / 4).round()],
+          ];
 
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(formatCurrency(maxValue), style: axisStyle),
-          const SizedBox(height: AppSpacing.sm),
-          // Kanvasnya kosong bagi pembaca layar: angka sumbu di atas dan
-          // bawah tidak menjelaskan bahwa keduanya batas sebuah grafik.
-          Semantics(
-            label: hasCost
-                ? l10n.historyChartSemanticLabelWithCost(
-                    formatMonthYear(history.first.recordedAt, locale),
-                    formatMonthYear(history.last.recordedAt, locale),
-                    formatCurrency(minValue),
-                    formatCurrency(maxValue),
-                  )
-                : l10n.historyChartSemanticLabelValueOnly(
-                    formatMonthYear(history.first.recordedAt, locale),
-                    formatMonthYear(history.last.recordedAt, locale),
-                    formatCurrency(minValue),
-                    formatCurrency(maxValue),
-                  ),
-            child: SizedBox(
-              height: 120,
-              width: double.infinity,
-              child: CustomPaint(
-                painter: _LineChartPainter(
-                  values: values,
-                  costs: costs,
-                  minValue: minValue,
-                  maxValue: maxValue,
-                  lineColor: colorScheme.primary,
-                  fillColor: colorScheme.primary.withValues(alpha: 0.12),
-                  costColor: costColor,
-                ),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (hasCost)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              AppSpacing.md,
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(formatCurrency(minValue), style: axisStyle),
-          const SizedBox(height: AppSpacing.xs),
-          Divider(height: AppSpacing.lg, color: colorScheme.outlineVariant),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                formatMonthYear(history.first.recordedAt, locale),
-                style: axisStyle,
-              ),
-              Text(
-                formatMonthYear(history.last.recordedAt, locale),
-                style: axisStyle,
-              ),
-            ],
-          ),
-          if (hasCost) ...[
-            const SizedBox(height: AppSpacing.md),
-            Row(
+            child: Row(
               children: [
-                _LegendItem(
-                  color: colorScheme.primary,
-                  label: l10n.assetTableValueHeader,
+                Expanded(
+                  child: _LegendItem(
+                    color: colorScheme.primary,
+                    label: valueLabel ?? l10n.assetTableValueHeader,
+                    value: valueReturn,
+                  ),
                 ),
-                const SizedBox(width: AppSpacing.lg),
-                _LegendItem(
-                  color: costColor,
-                  label: l10n.dashboardCapitalLabel,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _LegendItem(
+                    color: costColor,
+                    label: l10n.dashboardCapitalLabel,
+                    value: costReturn,
+                  ),
                 ),
               ],
             ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LegendItem extends StatelessWidget {
-  const _LegendItem({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
+          ),
+        Semantics(
+          label: l10n.historyChartSemanticLabelValueOnly(
+            formatMonthYear(history.first.recordedAt, locale),
+            formatMonthYear(history.last.recordedAt, locale),
+            formatCurrency(
+              points.map((p) => p.close).reduce((a, b) => a < b ? a : b),
+            ),
+            formatCurrency(
+              points.map((p) => p.close).reduce((a, b) => a > b ? a : b),
+            ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: horizontalPadding,
+              right: AppSpacing.sm,
+            ),
+            child: PriceLineChart(
+              points: points,
+              referencePrice: history.first.totalValue,
+              currency: 'IDR',
+              tickTarget: 5,
+              formatValue: formatNumber,
+              formatAxis: formatAxisCompact,
+              showExtremeLabels: false,
+              secondaryValues: hasCost ? costs : null,
+              secondaryColor: costColor,
+              onScrub: onScrub == null
+                  ? null
+                  : (point) => onScrub!(
+                      point == null
+                          ? null
+                          : history.firstWhere(
+                              (item) => item.recordedAt == point.time,
+                            ),
+                    ),
+            ),
           ),
         ),
-        const SizedBox(width: AppSpacing.xs),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: AppSpacing.sm),
+        Padding(
+          padding: EdgeInsets.only(
+            left: horizontalPadding,
+            // Sejajar ujung kanan plot, bukan kolom sumbu Y.
+            right: AppSpacing.sm + 56,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final item in axisDates)
+                Text(
+                  formatShortMonthYear(item.recordedAt, locale),
+                  style: axisStyle,
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-class _ChartPlaceholder extends StatelessWidget {
-  const _ChartPlaceholder();
+/// Kotak legenda ala "Portfolio | IHSG" Stockbit: garis warna, label, dan
+/// return periode di kanan.
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({required this.color, required this.label, this.value});
+
+  final Color color;
+  final String label;
+  final double? value;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final value = this.value;
 
-    return AppCard(
-      child: Row(
-        children: [
-          Icon(
-            Icons.show_chart_outlined,
-            color: colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(
-              context.l10n.historyChartPlaceholderMessage,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outline, width: 0.6),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 6,
+        ),
+        child: Row(
+          children: [
+            Container(width: 3, height: 14, color: color),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall,
               ),
             ),
-          ),
-        ],
+            if (value != null)
+              Text(
+                formatSignedPercentage(value),
+                style: textTheme.bodySmall?.copyWith(
+                  color: profitLossColorOf(context, value),
+                ),
+              ),
+          ],
+        ),
       ),
     );
-  }
-}
-
-class _LineChartPainter extends CustomPainter {
-  _LineChartPainter({
-    required this.values,
-    required this.costs,
-    required this.minValue,
-    required this.maxValue,
-    required this.lineColor,
-    required this.fillColor,
-    required this.costColor,
-  });
-
-  final List<double> values;
-
-  /// Modal per titik; `null` di bulan yang belum punya modal.
-  final List<double?> costs;
-  final double minValue;
-  final double maxValue;
-  final Color lineColor;
-  final Color fillColor;
-  final Color costColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final range = (maxValue - minValue).abs();
-    final stepX = values.length > 1 ? size.width / (values.length - 1) : 0.0;
-
-    double yOf(double value) {
-      if (range == 0) {
-        return size.height / 2;
-      }
-      final normalized = (value - minValue) / range;
-      return size.height - (normalized * size.height);
-    }
-
-    final points = [
-      for (var i = 0; i < values.length; i++) Offset(stepX * i, yOf(values[i])),
-    ];
-
-    final linePath = Path()..moveTo(points.first.dx, points.first.dy);
-    for (final point in points.skip(1)) {
-      linePath.lineTo(point.dx, point.dy);
-    }
-
-    final fillPath = Path.from(linePath)
-      ..lineTo(points.last.dx, size.height)
-      ..lineTo(points.first.dx, size.height)
-      ..close();
-
-    canvas
-      ..drawPath(fillPath, Paint()..color = fillColor)
-      ..drawPath(
-        linePath,
-        Paint()
-          ..color = lineColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-
-    final dotPaint = Paint()..color = lineColor;
-    for (final point in points) {
-      canvas.drawCircle(point, 3, dotPaint);
-    }
-
-    // Garis modal: tanpa isian, putus di bulan yang modalnya kosong.
-    final costPaint = Paint()
-      ..color = costColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final costDotPaint = Paint()..color = costColor;
-    Offset? previous;
-    for (var i = 0; i < costs.length; i++) {
-      final cost = costs[i];
-      if (cost == null) {
-        previous = null;
-        continue;
-      }
-      final point = Offset(stepX * i, yOf(cost));
-      if (previous != null) {
-        canvas.drawLine(previous, point, costPaint);
-      }
-      canvas.drawCircle(point, 2.5, costDotPaint);
-      previous = point;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _LineChartPainter oldDelegate) {
-    return oldDelegate.values != values ||
-        oldDelegate.costs != costs ||
-        oldDelegate.minValue != minValue ||
-        oldDelegate.maxValue != maxValue ||
-        oldDelegate.lineColor != lineColor ||
-        oldDelegate.fillColor != fillColor ||
-        oldDelegate.costColor != costColor;
   }
 }

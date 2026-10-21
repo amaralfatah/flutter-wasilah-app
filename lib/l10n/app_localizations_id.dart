@@ -676,6 +676,82 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get targetStatusOnTrack => 'Sesuai';
+
+  @override
+  String get targetStatusBelow => 'Kurang';
+
+  @override
+  String get targetStatusAbove => 'Lebih';
+
+  @override
+  String get targetDifferenceLabel => 'Selisih';
+
+  @override
+  String get targetSummaryToAdd => 'Perlu ditambah';
+
+  @override
+  String get targetSummaryToTrim => 'Perlu dikurangi';
+
+  @override
+  String get targetAllocationListTitle => 'Alokasi per kategori';
+
+  @override
+  String get targetSummaryOffTrackLabel => 'Di luar batas';
+
+  @override
+  String get targetActualAllocationLabel => 'Alokasi aktual';
+
+  @override
+  String get targetDifferencePercentLabel => 'Selisih alokasi';
+
+  @override
+  String get targetStatusLabel => 'Status';
+
+  @override
+  String get historyTableDateHeader => 'Tanggal';
+
+  @override
+  String get historyTableChangeHeader => 'Perubahan';
+
+  @override
+  String get historyReturnSectionTitle => 'Return Portofolio';
+
+  @override
+  String historySinceLabel(String date) {
+    return 'sejak $date';
+  }
+
+  @override
+  String targetAllocationTargetValue(String target) {
+    return 'Target $target';
+  }
+
+  @override
+  String get targetHeroFromTarget => 'dari target';
+
+  @override
+  String get holdingDetailTitle => 'Detail Portofolio';
+
+  @override
+  String get removeShortButton => 'Keluarkan';
+
+  @override
+  String get chartRange6M => '6B';
+
+  @override
+  String get historyMonthlyLabel => 'Bulanan';
+
+  @override
+  String get historyYearlyLabel => 'Tahunan';
+
+  @override
+  String get historyPortfolioLegend => 'Portofolio';
+
+  @override
+  String get viewAllShortLabel => 'Lihat semua';
+
+  @override
   String get sectionHeaderInfoTooltip => 'Info';
 
   @override

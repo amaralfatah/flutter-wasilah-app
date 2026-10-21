@@ -12,6 +12,7 @@ import 'package:flutter_wasilah_app/features/settings/presentation/pages/setting
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_detail_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_form_page.dart';
 import 'package:flutter_wasilah_app/features/target/presentation/pages/target_page.dart';
+import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
 
@@ -77,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RefreshIndicator), findsOneWidget);
-    expect(find.byType(LinearProgressIndicator), findsWidgets);
+    expect(find.byType(TargetAllocationItem), findsWidgets);
     expect(_scrollPadding(tester).bottom, greaterThan(AppSpacing.xl));
   });
 
@@ -94,9 +95,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nilai target'), findsOneWidget);
-    expect(find.text('Rp19.250.000'), findsOneWidget);
-    expect(find.text('Nilai aktual'), findsOneWidget);
-    expect(find.text('Rp18.200.000'), findsWidgets);
+    expect(find.text('19.250.000'), findsOneWidget);
+    // Kepala halaman: nilai aktual besar dan selisihnya dari target.
+    expect(find.text('Rp18.200.000'), findsOneWidget);
+    expect(find.textContaining('-1.050.000'), findsOneWidget);
+    expect(find.text('Perlu ditambah'), findsOneWidget);
   });
 
   testWidgets('target form follows the same Material pattern as asset form', (

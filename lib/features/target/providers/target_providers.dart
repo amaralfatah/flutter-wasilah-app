@@ -23,6 +23,7 @@ class TargetAllocationData {
     required this.actualPercentage,
     required this.targetValue,
     required this.actualValue,
+    required this.portfolioValue,
     required this.status,
   });
 
@@ -32,21 +33,30 @@ class TargetAllocationData {
   final double actualPercentage;
   final double targetValue;
   final double actualValue;
+
+  /// Total nilai portofolio, basis konversi persen ke rupiah.
+  final double portfolioValue;
   final TargetStatus status;
   double get differencePercentage => actualPercentage - targetPercentage;
+
+  /// Positif = kelebihan dari target, negatif = kekurangan.
+  double get differenceValue => actualValue - targetValue;
 
   double get tolerance => _rebalanceTolerance(targetPercentage);
   double get lowerBound => (targetPercentage - tolerance).clamp(0, 100);
   double get upperBound => (targetPercentage + tolerance).clamp(0, 100);
+  double get lowerBoundValue => portfolioValue * lowerBound / 100;
+  double get upperBoundValue => portfolioValue * upperBound / 100;
 
   Color statusColor(BuildContext context) {
     switch (status) {
       case TargetStatus.onTrack:
         return AppColors.positiveOf(context);
+      // Seperti angka lain di Stockbit: warna mengikuti tanda selisih.
       case TargetStatus.below:
-        return AppColors.warningOf(context);
-      case TargetStatus.above:
         return AppColors.negativeOf(context);
+      case TargetStatus.above:
+        return AppColors.positiveOf(context);
     }
   }
 }
@@ -86,6 +96,7 @@ final targetAllocationItemsProvider =
               actualPercentage: actual,
               targetValue: targetValue,
               actualValue: actualValue,
+              portfolioValue: summary.totalValue,
               status:
                   difference.abs() <=
                       _rebalanceTolerance(target.targetPercentage)

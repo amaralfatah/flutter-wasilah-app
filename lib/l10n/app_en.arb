@@ -316,6 +316,44 @@
     "placeholders": {"category": {"type": "String"}}
   },
 
+  "targetStatusOnTrack": "On track",
+  "targetStatusBelow": "Under",
+  "targetStatusAbove": "Over",
+  "targetDifferenceLabel": "Difference",
+  "targetSummaryToAdd": "To add",
+  "targetSummaryToTrim": "To trim",
+  "targetAllocationListTitle": "Allocation by category",
+
+  "targetSummaryOffTrackLabel": "Out of range",
+  "targetActualAllocationLabel": "Actual allocation",
+  "targetDifferencePercentLabel": "Allocation gap",
+  "targetStatusLabel": "Status",
+
+  "historyTableDateHeader": "Date",
+  "historyTableChangeHeader": "Change",
+  "historyReturnSectionTitle": "Portfolio Return",
+
+  "historySinceLabel": "since {date}",
+  "@historySinceLabel": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+
+  "targetAllocationTargetValue": "Target {target}",
+  "@targetAllocationTargetValue": {
+    "placeholders": {"target": {"type": "String"}}
+  },
+
+  "targetHeroFromTarget": "vs target",
+
+  "holdingDetailTitle": "Portfolio Detail",
+  "removeShortButton": "Remove",
+
+  "chartRange6M": "6M",
+  "historyMonthlyLabel": "Monthly",
+  "historyYearlyLabel": "Yearly",
+  "historyPortfolioLegend": "Portfolio",
+  "viewAllShortLabel": "See all",
+
   "sectionHeaderInfoTooltip": "Info",
 
   "appErrorDefaultTitle": "Data could not be loaded.",

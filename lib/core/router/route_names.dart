@@ -6,6 +6,7 @@ abstract final class RouteNames {
   static const String portfolio = '/portfolio';
   static const String portfolioUpdate = '/portfolio/update';
   static const String portfolioMarketSegment = 'market';
+  static const String portfolioHistorySegment = 'history';
 
   // Master aset: identitas aset, dikelola dari Pengaturan.
   static const String masterAssets = '/settings/assets';

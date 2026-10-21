@@ -145,7 +145,7 @@ class _MasterAssetTile extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
@@ -233,7 +233,7 @@ class _MarketColumns extends ConsumerWidget {
                               ? formatNumber(quote.price)
                               : formatPrice(quote.price, quote.currency),
                           style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
