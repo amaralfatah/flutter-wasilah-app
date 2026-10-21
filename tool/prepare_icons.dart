@@ -4,12 +4,12 @@
 // Skrip ini mengekstrak glyph jadi mask transparan, lalu menyusunnya ulang
 // pada kanvas 1024x1024 dengan ukuran dan posisi yang terukur:
 //
-//   splash_light.png    transparan, glyph biru   -> splash tema terang
+//   splash_light.png    transparan, glyph hijau  -> splash tema terang
 //   splash_dark.png     transparan, glyph putih  -> splash tema gelap
 //
 // Ikon launcher (icon.png, icon_background.png, icon_foreground.png) tidak
-// dibuat di sini: ketiganya diturunkan dari ikon keluarga Caang Labs di
-// next-caanglabs (`npm run icons`) agar sama persis dengan ikon di hub.
+// dibuat di sini: ketiganya diturunkan dari ikon keluarga Sararia di
+// next-sararia (`npm run icons`) agar sama persis dengan ikon di hub.
 //
 // Jalankan: dart run tool/prepare_icons.dart
 import 'dart:io';
@@ -18,7 +18,8 @@ import 'dart:math' as math;
 import 'package:image/image.dart';
 
 const canvas = 1024;
-final brandBlue = ColorRgb8(0x0B, 0x57, 0xD0);
+/// Tint Pakaya di hub next-sararia (`content/apps/pakaya/app.ts`).
+final brandGreen = ColorRgb8(0x0C, 0x8A, 0x57);
 
 /// Splash Android 12+ memotong logo dengan lingkaran berdiameter
 /// 768/1152 = 66,7% kanvas. 58% aman untuk itu sekaligus enak dilihat
@@ -44,7 +45,7 @@ void main() {
 
   _write(
     'assets/icon/splash_light.png',
-    _composeWithinCircle(mask, splashSafeDiameter, glyph: brandBlue),
+    _composeWithinCircle(mask, splashSafeDiameter, glyph: brandGreen),
   );
   _write(
     'assets/icon/splash_dark.png',

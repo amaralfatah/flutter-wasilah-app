@@ -10,12 +10,12 @@ flutter_native_splash:
   color: "#FFFFFF"
   image: assets/icon/splash_light.png
 
-  color_dark: "#101418"
+  color_dark: "#121212"
   image_dark: assets/icon/splash_dark.png
 
   # Android 12+ memakai jalur splash tersendiri milik sistem.
   android_12:
     color: "#FFFFFF"
     image: assets/icon/splash_light.png
-    color_dark: "#101418"
+    color_dark: "#121212"
     image_dark: assets/icon/splash_dark.png

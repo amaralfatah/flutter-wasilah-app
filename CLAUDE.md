@@ -11,7 +11,7 @@ Rujukan kanonik: `C:\Users\AmarAlFatah\OneDrive - PT Perkebunan Nusantara III (P
 - Codegen: `dart run build_runner build --force-jit` (tanpa `--force-jit` gagal: konflik build hooks di Dart 3.10)
 - Lint: `flutter analyze` — memakai `very_good_analysis`; `public_member_api_docs` dan `sort_pub_dependencies` sengaja dimatikan
 - Test: `flutter test`
-- Ikon launcher: diturunkan dari ikon keluarga Caang Labs (`next-caanglabs`, `npm run icons`) ke `assets/icon/icon*.png`, lalu `dart run flutter_launcher_icons`
+- Ikon launcher: diturunkan dari ikon keluarga Sararia (`next-sararia`, warna di `scripts/app-icons.mjs` lalu `npm run icons`) ke `assets/icon/icon*.png`, lalu `dart run flutter_launcher_icons`
 - Splash (setelah `assets/icon/logo-pakaya-light.png` berubah): `dart run tool/prepare_icons.dart` →
   `dart run flutter_native_splash:create --path=flutter_native_splash.yaml`
 
