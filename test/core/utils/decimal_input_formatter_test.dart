@@ -34,6 +34,12 @@ void main() {
     expect(_type('1.000', '1.00'), '100');
   });
 
+  test('typing more digits after a grouped value keeps grouping', () {
+    expect(_type('1.000', '1.0000'), '10.000');
+    expect(_type('10.000', '10.0000'), '100.000');
+    expect(_type('1.000', '1.0000', maxDecimals: 2), '10.000');
+  });
+
   test('limits decimals', () {
     expect(_type('', '1,23456', maxDecimals: 2), '1,23');
   });

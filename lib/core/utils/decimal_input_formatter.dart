@@ -5,8 +5,10 @@ import 'package:flutter_wasilah_app/core/utils/currency_formatter.dart';
 /// maupun koma sebagai tanda desimal, mengikuti tombol yang ada di keyboard.
 ///
 /// Pemisah ribuan (`.`) disisipkan otomatis, jadi pengguna tak perlu
-/// mengetiknya; titik yang diketik dibaca sebagai desimal kecuali teksnya
-/// memang berpola ribuan (`1.000`) atau sedang menghapus.
+/// mengetiknya. Titik yang baru diketik dibaca sebagai desimal; titik yang
+/// sudah ada adalah pemisah ribuan, jadi mengetik digit lanjutan pada
+/// `1.000` menghasilkan `10.000`, bukan `1,0000`. Teks tempelan dibaca
+/// desimal kecuali berpola ribuan (`1.000`).
 class DecimalInputFormatter extends TextInputFormatter {
   const DecimalInputFormatter({this.maxDecimals = 8});
 
@@ -20,10 +22,20 @@ class DecimalInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final text = newValue.text.replaceAll(' ', '');
-    final isDeleting = text.length < oldValue.text.length;
+    final inserted = text.length - oldValue.text.replaceAll(' ', '').length;
 
     var decimalIndex = text.indexOf(',');
-    if (decimalIndex < 0 && !isDeleting && !_groupedPattern.hasMatch(text)) {
+    if (decimalIndex < 0 && inserted == 1) {
+      // Satu karakter diketik: desimal hanya bila karakter itu titik.
+      final cursor = newValue.selection.isValid
+          ? newValue.selection.end - (newValue.text.length - text.length)
+          : text.length;
+      if (cursor > 0 && cursor <= text.length && text[cursor - 1] == '.') {
+        decimalIndex = cursor - 1;
+      }
+    } else if (decimalIndex < 0 &&
+        inserted > 1 &&
+        !_groupedPattern.hasMatch(text)) {
       decimalIndex = text.lastIndexOf('.');
     }
 
