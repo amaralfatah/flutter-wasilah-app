@@ -9,6 +9,7 @@ import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/update
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/shared/widgets/labeled_field.dart';
 
 import '../../../helpers/mock_portfolio_repository.dart';
 
@@ -47,7 +48,10 @@ Future<void> _pumpPage(
   );
 }
 
-Finder _field(String label) => find.widgetWithText(TextFormField, label);
+Finder _field(String label) => find.descendant(
+  of: find.widgetWithText(LabeledField, label),
+  matching: find.byType(TextFormField),
+);
 
 const _spy = Asset(
   id: 'spy',
@@ -500,9 +504,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // 2 × Rp8.000 = Rp16.000 = $1 pada kurs 16.000.
-    expect(find.text(r'$1.00 · Rp16.000'), findsOneWidget);
     expect(
-      find.byTooltip(r'Isi otomatis: $1.00 · Rp16.000'),
+      find.text(r'Isi otomatis: $1.00 · Rp16.000'),
       findsOneWidget,
     );
   });
@@ -521,7 +524,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Helper "Otomatis" sudah menampilkan nilai yang dipakai.
-    expect(find.byIcon(Icons.auto_fix_high), findsNothing);
+    expect(find.textContaining('Isi otomatis'), findsNothing);
     expect(find.text('Otomatis: Rp3.000'), findsNWidgets(2));
   });
 
@@ -539,7 +542,7 @@ void main() {
 
       await tester.enterText(_field('Total modal'), '1.000');
       await tester.enterText(_field('Total nilai aset'), '1.000');
-      expect(find.byIcon(Icons.auto_fix_high), findsNothing);
+      expect(find.textContaining('Isi otomatis'), findsNothing);
 
       await tester.enterText(_field('Jumlah unit'), '3');
       await tester.enterText(_field('Harga rata-rata beli'), '1000');
@@ -547,7 +550,7 @@ void main() {
 
       // Modal: unit × harga beli. Nilai tanpa harga pasar mengikuti modal,
       // yang saat ini masih 1.000 sehingga sama dan tak ditawarkan.
-      await tester.tap(find.byTooltip('Isi otomatis: Rp3.000'));
+      await tester.tap(find.text('Isi otomatis: Rp3.000'));
       await tester.pumpAndSettle();
       expect(
         find.descendant(
@@ -557,7 +560,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byTooltip('Isi otomatis: Rp3.000'));
+      await tester.tap(find.text('Isi otomatis: Rp3.000'));
       await tester.pumpAndSettle();
       expect(
         find.descendant(
@@ -566,13 +569,13 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byIcon(Icons.auto_fix_high), findsNothing);
+      expect(find.textContaining('Isi otomatis'), findsNothing);
 
       // Modal tetap bisa ditimpa manual, mis. untuk fee; nilai ditawarkan
       // lagi tanpa langsung berubah.
       await tester.enterText(_field('Total modal'), '3.100');
       await tester.pumpAndSettle();
-      expect(find.byTooltip('Isi otomatis: Rp3.100'), findsOneWidget);
+      expect(find.text('Isi otomatis: Rp3.100'), findsOneWidget);
       await tester.tap(find.byType(AppPrimaryButton));
       await tester.pumpAndSettle();
 

@@ -14,6 +14,7 @@ import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_error_view.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_loading.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_select_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/confirm_dialog.dart';
 import 'package:go_router/go_router.dart';
@@ -103,27 +104,19 @@ class _TargetFormPageState extends ConsumerState<TargetFormPage> {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         children: [
-          DropdownButtonFormField<AssetCategory>(
+          AppSelectField<AssetCategory>(
+            label: l10n.commonCategoryLabel,
             initialValue: _category,
-            decoration: InputDecoration(labelText: l10n.commonCategoryLabel),
-            items: categories
-                .map(
-                  (category) => DropdownMenuItem(
-                    value: category,
-                    child: Text(category.localizedLabel(l10n)),
-                  ),
-                )
-                .toList(),
+            options: [
+              for (final category in categories)
+                AppSelectOption(
+                  value: category,
+                  label: category.localizedLabel(l10n),
+                ),
+            ],
             onChanged: submitState.isLoading || _isEditing
                 ? null
-                : (value) {
-                    if (value == null) {
-                      return;
-                    }
-                    setState(() {
-                      _category = value;
-                    });
-                  },
+                : (value) => setState(() => _category = value),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(

@@ -18,20 +18,17 @@ class AutofillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: Alignment.centerRight,
-      child: Tooltip(
-        message: context.l10n.autofillButton(amount),
-        child: TextButton.icon(
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            textStyle: Theme.of(context).textTheme.labelMedium,
-          ),
-          icon: const Icon(Icons.auto_fix_high, size: 14),
-          label: Text(amount),
-          onPressed: onPressed,
+      alignment: Alignment.centerLeft,
+      child: TextButton(
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          minimumSize: Size.zero,
+          textStyle: Theme.of(context).textTheme.labelMedium,
         ),
+        onPressed: onPressed,
+        child: Text(context.l10n.autofillButton(amount)),
       ),
     );
   }

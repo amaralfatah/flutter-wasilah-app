@@ -18,12 +18,21 @@ class CurrencyPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onChanged = this.onChanged;
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isDense: true,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          icon: Icon(
+            Icons.expand_more,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
           items: updateValueCurrencies
               .map(
                 (currency) => DropdownMenuItem(

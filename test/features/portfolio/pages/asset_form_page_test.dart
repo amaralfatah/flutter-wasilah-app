@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_wasilah_app/features/portfolio/presentation/pages/asset_form_page.dart';
 import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_providers.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
+import 'package:flutter_wasilah_app/shared/widgets/labeled_field.dart';
 
 import '../../../helpers/mock_portfolio_repository.dart';
 
@@ -28,7 +29,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextFormField, 'Nama aset'), findsOneWidget);
+    expect(find.widgetWithText(LabeledField, 'Nama aset'), findsOneWidget);
     // Nilai, tanggal, dan mata uang harga beli milik portofolio, bukan
     // master aset: diisi lewat update nilai.
     expect(find.text('Tanggal pencatatan'), findsNothing);

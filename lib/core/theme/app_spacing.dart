@@ -6,4 +6,8 @@ abstract final class AppSpacing {
   static const double xl = 24;
   static const double xxl = 32;
   static const double xxxl = 48;
+
+  /// Jarak isi field dari tepi kotak; label, teks bantuan, dan pesan error
+  /// disejajarkan ke garis ini.
+  static const double fieldInset = 14;
 }

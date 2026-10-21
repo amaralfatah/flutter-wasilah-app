@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/utils/date_formatter.dart';
 import 'package:flutter_wasilah_app/core/utils/validators.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
+import 'package:flutter_wasilah_app/shared/widgets/labeled_field.dart';
 
 /// Field tanggal catat. Tanggal masa depan tidak bisa dipilih: nilai aset
 /// dicatat untuk hari ini atau sebelumnya.
@@ -31,23 +32,25 @@ class RecordedDateField extends StatelessWidget {
         final selectedDate = field.value;
         final hasValue = selectedDate != null;
 
-        return InkWell(
-          onTap: enabled ? () => unawaited(_pickDate(context, field)) : null,
-          child: InputDecorator(
-            decoration: InputDecoration(
-              labelText: l10n.commonRecordedAtLabel,
-              errorText: field.errorText,
-              suffixIcon: const Icon(Icons.calendar_today_outlined),
-            ),
-            child: Text(
-              hasValue
-                  ? formatFullDate(
-                      selectedDate,
-                      Localizations.localeOf(context),
-                    )
-                  : l10n.commonSelectDatePlaceholder,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: hasValue ? null : theme.colorScheme.onSurfaceVariant,
+        return LabeledField(
+          label: l10n.commonRecordedAtLabel,
+          child: InkWell(
+            onTap: enabled ? () => unawaited(_pickDate(context, field)) : null,
+            child: InputDecorator(
+              decoration: InputDecoration(
+                errorText: field.errorText,
+                suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+              ),
+              child: Text(
+                hasValue
+                    ? formatFullDate(
+                        selectedDate,
+                        Localizations.localeOf(context),
+                      )
+                    : l10n.commonSelectDatePlaceholder,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: hasValue ? null : theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ),

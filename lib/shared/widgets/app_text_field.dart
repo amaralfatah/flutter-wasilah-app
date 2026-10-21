@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_wasilah_app/shared/widgets/labeled_field.dart';
 
 class AppTextField extends StatelessWidget {
   const AppTextField({
@@ -37,22 +38,24 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      maxLines: maxLines,
-      maxLength: maxLength,
-      readOnly: readOnly,
-      onTap: onTap,
-      onChanged: onChanged,
-      inputFormatters: inputFormatters,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        suffixIcon: suffixIcon,
-        helperText: helperText,
-        prefixText: prefixText,
+    return LabeledField(
+      label: label,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        validator: validator,
+        maxLines: maxLines,
+        maxLength: maxLength,
+        readOnly: readOnly,
+        onTap: onTap,
+        onChanged: onChanged,
+        inputFormatters: inputFormatters,
+        decoration: InputDecoration(
+          hintText: hint,
+          suffixIcon: suffixIcon,
+          helperText: helperText,
+          prefixText: prefixText,
+        ),
       ),
     );
   }

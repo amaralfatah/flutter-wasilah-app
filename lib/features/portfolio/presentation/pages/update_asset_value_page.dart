@@ -20,6 +20,7 @@ import 'package:flutter_wasilah_app/features/portfolio/providers/portfolio_provi
 import 'package:flutter_wasilah_app/features/portfolio/providers/update_asset_value_controller.dart';
 import 'package:flutter_wasilah_app/l10n/l10n_extensions.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_select_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_text_field.dart';
 import 'package:flutter_wasilah_app/shared/widgets/async_value_view.dart';
 
@@ -173,24 +174,16 @@ class _UpdateAssetValuePageState extends ConsumerState<UpdateAssetValuePage> {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         children: [
-          DropdownButtonFormField<String>(
+          AppSelectField<String>(
             key: ValueKey(_selectedAssetId),
+            label: l10n.assetDropdownLabel,
             initialValue: _selectedAssetId,
-            decoration: InputDecoration(labelText: l10n.assetDropdownLabel),
-            items: assets
-                .map(
-                  (asset) => DropdownMenuItem<String>(
-                    value: asset.id,
-                    child: Text(asset.name),
-                  ),
-                )
-                .toList(),
+            options: [
+              for (final asset in assets)
+                AppSelectOption(value: asset.id, label: asset.name),
+            ],
             validator: (value) => validateSelectedAsset(value, l10n),
-            onChanged: (value) {
-              setState(() {
-                _selectedAssetId = value;
-              });
-            },
+            onChanged: (value) => setState(() => _selectedAssetId = value),
           ),
           const SizedBox(height: AppSpacing.lg),
           if (allowIncrement) ...[

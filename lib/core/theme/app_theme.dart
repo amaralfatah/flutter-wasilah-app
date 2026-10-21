@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_wasilah_app/core/theme/app_colors.dart';
+import 'package:flutter_wasilah_app/core/theme/app_spacing.dart';
 
 abstract final class AppTheme {
+  static OutlineInputBorder _fieldBorder(Color color, {double width = 1}) =>
+      OutlineInputBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        borderSide: BorderSide(color: color, width: width),
+      );
+
   static const _compactShape = RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(8)),
   );
@@ -232,47 +239,32 @@ abstract final class AppTheme {
       ),
       // Field Stockbit berlatar abu gelap tanpa garis (kolom pencarian,
       // form order); fokus ditandai garis hijau.
+      // Seperti form Stockbit: label statis di atas field (LabeledField),
+      // kotak outline tipis sewarna latar yang jadi hijau saat fokus.
       inputDecorationTheme: InputDecorationTheme(
-        isDense: true,
-        filled: true,
-        fillColor: colorScheme.surfaceContainer,
-        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        floatingLabelStyle: WidgetStateTextStyle.resolveWith(
-          (states) => TextStyle(
-            color: states.contains(WidgetState.error)
-                ? colorScheme.error
-                : states.contains(WidgetState.focused)
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
-          ),
+        filled: false,
+        floatingLabelBehavior: FloatingLabelBehavior.never,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.fieldInset,
+          vertical: 14,
         ),
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 44,
+          minHeight: 44,
+        ),
+        suffixIconColor: colorScheme.onSurfaceVariant,
         hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        // UnderlineInputBorder (bukan Outline) supaya label mengambang tetap
-        // di dalam isian, tidak menumpang di tepi atas seperti field outline.
-        border: const UnderlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide.none,
+        helperStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        helperMaxLines: 2,
+        errorMaxLines: 2,
+        border: _fieldBorder(colorScheme.outlineVariant),
+        enabledBorder: _fieldBorder(colorScheme.outlineVariant),
+        disabledBorder: _fieldBorder(
+          colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
-        enabledBorder: const UnderlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide.none,
-        ),
-        disabledBorder: const UnderlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
-        ),
-        errorBorder: UnderlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: colorScheme.error),
-        ),
-        focusedErrorBorder: UnderlineInputBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: colorScheme.error, width: 2),
-        ),
+        focusedBorder: _fieldBorder(colorScheme.primary, width: 1.5),
+        errorBorder: _fieldBorder(colorScheme.error),
+        focusedErrorBorder: _fieldBorder(colorScheme.error, width: 1.5),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
