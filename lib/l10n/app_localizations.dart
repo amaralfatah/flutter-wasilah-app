@@ -761,7 +761,7 @@ abstract class AppLocalizations {
   /// Pesan dialog konfirmasi hapus aset
   ///
   /// In id, this message translates to:
-  /// **'Master aset {assetName} akan dihapus.'**
+  /// **'{assetName} akan dihapus dari daftar aset.'**
   String deleteAssetMessage(String assetName);
 
   /// Snackbar gagal simpan aset
@@ -1019,7 +1019,7 @@ abstract class AppLocalizations {
   /// Pesan state kosong dashboard
   ///
   /// In id, this message translates to:
-  /// **'Catat aset pertama untuk melihat ringkasan.'**
+  /// **'Catat nilai aset pertama untuk melihat ringkasan.'**
   String get emptyAssetsDashboardMessage;
 
   /// Pesan kartu belum ada target di dashboard
@@ -1353,7 +1353,7 @@ abstract class AppLocalizations {
   /// Judul halaman detail holding
   ///
   /// In id, this message translates to:
-  /// **'Detail Portofolio'**
+  /// **'Detail aset'**
   String get holdingDetailTitle;
 
   /// Tombol singkat keluarkan aset dari portofolio di bar bawah detail
@@ -1689,7 +1689,7 @@ abstract class AppLocalizations {
   /// No description provided for @removeFromPortfolioMessage.
   ///
   /// In id, this message translates to:
-  /// **'Nilai dan histori {assetName} akan dihapus dari portofolio. Master aset tetap ada.'**
+  /// **'Nilai dan histori {assetName} akan dihapus dari portofolio. Asetnya tetap ada di daftar aset.'**
   String removeFromPortfolioMessage(String assetName);
 
   /// Pemisahan halaman master aset & portofolio
@@ -1701,7 +1701,7 @@ abstract class AppLocalizations {
   /// Pemisahan halaman master aset & portofolio
   ///
   /// In id, this message translates to:
-  /// **'Master aset'**
+  /// **'Daftar aset'**
   String get masterAssetsTitle;
 
   /// Pemisahan halaman master aset & portofolio
@@ -1719,7 +1719,7 @@ abstract class AppLocalizations {
   /// Pemisahan halaman master aset & portofolio
   ///
   /// In id, this message translates to:
-  /// **'Tambahkan aset (mis. saham, kripto, kas) sebelum mencatat nilainya di portofolio.'**
+  /// **'Tambahkan aset (mis. saham, kripto, kas) ke daftar ini. Nilainya dicatat di Portofolio.'**
   String get emptyMasterAssetsMessage;
 
   /// Pemisahan halaman master aset & portofolio
@@ -1731,19 +1731,19 @@ abstract class AppLocalizations {
   /// Pemisahan halaman master aset & portofolio
   ///
   /// In id, this message translates to:
-  /// **'Pilih aset dari master lalu catat nilainya.'**
+  /// **'Pilih aset dari daftar aset lalu catat nilainya.'**
   String get emptyPortfolioMessage;
 
   /// Pemisahan halaman master aset & portofolio
   ///
   /// In id, this message translates to:
-  /// **'Buat master aset dulu di Pengaturan, lalu catat nilainya di sini.'**
+  /// **'Tambahkan aset ke daftar aset dulu, lalu catat nilainya di sini.'**
   String get emptyPortfolioNoMasterMessage;
 
   /// Pemisahan halaman master aset & portofolio
   ///
   /// In id, this message translates to:
-  /// **'Kelola master aset'**
+  /// **'Buka daftar aset'**
   String get openMasterAssetsLabel;
 
   /// Pemisahan halaman master aset & portofolio
@@ -1893,7 +1893,7 @@ abstract class AppLocalizations {
   /// Baris setelan menuju daftar master aset
   ///
   /// In id, this message translates to:
-  /// **'Aset'**
+  /// **'Daftar aset'**
   String get settingsAssetsLabel;
 
   /// Snackbar saat restore diminta ketika backup/restore lain masih berjalan

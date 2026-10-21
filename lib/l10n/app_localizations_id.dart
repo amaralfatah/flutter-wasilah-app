@@ -367,7 +367,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String deleteAssetMessage(String assetName) {
-    return 'Master aset $assetName akan dihapus.';
+    return '$assetName akan dihapus dari daftar aset.';
   }
 
   @override
@@ -519,7 +519,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get emptyAssetsDashboardMessage =>
-      'Catat aset pertama untuk melihat ringkasan.';
+      'Catat nilai aset pertama untuk melihat ringkasan.';
 
   @override
   String get noTargetsCardMessage =>
@@ -731,7 +731,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get targetHeroFromTarget => 'dari target';
 
   @override
-  String get holdingDetailTitle => 'Detail Portofolio';
+  String get holdingDetailTitle => 'Detail aset';
 
   @override
   String get removeShortButton => 'Keluarkan';
@@ -915,14 +915,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String removeFromPortfolioMessage(String assetName) {
-    return 'Nilai dan histori $assetName akan dihapus dari portofolio. Master aset tetap ada.';
+    return 'Nilai dan histori $assetName akan dihapus dari portofolio. Asetnya tetap ada di daftar aset.';
   }
 
   @override
   String get portfolioTitle => 'Portofolio';
 
   @override
-  String get masterAssetsTitle => 'Master aset';
+  String get masterAssetsTitle => 'Daftar aset';
 
   @override
   String get settingsDataSection => 'Data';
@@ -933,21 +933,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get emptyMasterAssetsMessage =>
-      'Tambahkan aset (mis. saham, kripto, kas) sebelum mencatat nilainya di portofolio.';
+      'Tambahkan aset (mis. saham, kripto, kas) ke daftar ini. Nilainya dicatat di Portofolio.';
 
   @override
   String get emptyPortfolioTitle => 'Portofolio masih kosong';
 
   @override
   String get emptyPortfolioMessage =>
-      'Pilih aset dari master lalu catat nilainya.';
+      'Pilih aset dari daftar aset lalu catat nilainya.';
 
   @override
   String get emptyPortfolioNoMasterMessage =>
-      'Buat master aset dulu di Pengaturan, lalu catat nilainya di sini.';
+      'Tambahkan aset ke daftar aset dulu, lalu catat nilainya di sini.';
 
   @override
-  String get openMasterAssetsLabel => 'Kelola master aset';
+  String get openMasterAssetsLabel => 'Buka daftar aset';
 
   @override
   String get addToPortfolioLabel => 'Catat nilai aset';
@@ -1034,7 +1034,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get settingsAssetsLabel => 'Aset';
+  String get settingsAssetsLabel => 'Daftar aset';
 
   @override
   String get restoreInProgressMessage =>

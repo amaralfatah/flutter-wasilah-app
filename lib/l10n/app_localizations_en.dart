@@ -373,7 +373,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteAssetMessage(String assetName) {
-    return 'The asset $assetName will be deleted.';
+    return '$assetName will be removed from your asset list.';
   }
 
   @override
@@ -523,7 +523,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyAssetsDashboardMessage =>
-      'Record your first asset to see a summary.';
+      'Record your first asset value to see a summary.';
 
   @override
   String get noTargetsCardMessage =>
@@ -740,7 +740,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get targetHeroFromTarget => 'vs target';
 
   @override
-  String get holdingDetailTitle => 'Portfolio Detail';
+  String get holdingDetailTitle => 'Asset Detail';
 
   @override
   String get removeShortButton => 'Remove';
@@ -924,14 +924,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String removeFromPortfolioMessage(String assetName) {
-    return 'The value and history of $assetName will be removed from the portfolio. The asset itself is kept.';
+    return 'The value and history of $assetName will be removed from the portfolio. The asset stays in your asset list.';
   }
 
   @override
   String get portfolioTitle => 'Portfolio';
 
   @override
-  String get masterAssetsTitle => 'Master assets';
+  String get masterAssetsTitle => 'Asset list';
 
   @override
   String get settingsDataSection => 'Data';
@@ -942,21 +942,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyMasterAssetsMessage =>
-      'Add assets (e.g. stocks, crypto, cash) before recording their value in the portfolio.';
+      'Add assets (e.g. stocks, crypto, cash) to this list. Their values are recorded in Portfolio.';
 
   @override
   String get emptyPortfolioTitle => 'Your portfolio is empty';
 
   @override
   String get emptyPortfolioMessage =>
-      'Pick an asset from the master list and record its value.';
+      'Pick an asset from your asset list and record its value.';
 
   @override
   String get emptyPortfolioNoMasterMessage =>
-      'Create a master asset in Settings first, then record its value here.';
+      'Add an asset to your asset list first, then record its value here.';
 
   @override
-  String get openMasterAssetsLabel => 'Manage master assets';
+  String get openMasterAssetsLabel => 'Open asset list';
 
   @override
   String get addToPortfolioLabel => 'Record asset value';
@@ -1043,7 +1043,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsAssetsLabel => 'Assets';
+  String get settingsAssetsLabel => 'Asset list';
 
   @override
   String get restoreInProgressMessage =>

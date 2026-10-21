@@ -47,7 +47,7 @@ void main() {
     await tester.tap(find.text('BTC'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Detail Portofolio'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Detail aset'), findsOneWidget);
     expect(find.text('Bitcoin'), findsOneWidget);
     // Detail holding tidak menyediakan edit master aset.
     expect(find.byTooltip('Edit aset'), findsNothing);
@@ -86,7 +86,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(AppBar, 'Master aset'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Daftar aset'), findsOneWidget);
       expect(find.text('Bitcoin'), findsOneWidget);
 
       await tester.tap(find.text('Bitcoin'));

@@ -37,9 +37,9 @@ class DashboardPage extends ConsumerWidget {
                 return ref.refresh(portfolioSummaryProvider.future);
               },
               child: AppEmptyState(
-                title: l10n.commonEmptyAssetsTitle,
+                title: l10n.emptyPortfolioTitle,
                 message: l10n.emptyAssetsDashboardMessage,
-                actionLabel: l10n.commonAddAssetLabel,
+                actionLabel: l10n.addToPortfolioLabel,
                 onAction: () => context.go(RouteNames.portfolio),
               ),
             );
@@ -72,7 +72,7 @@ class DashboardPage extends ConsumerWidget {
                     children: [
                       PortfolioSummaryCard(
                         summary: summary,
-                        onViewHistory: () => context.push(RouteNames.history),
+                        onViewHistory: () => context.go(RouteNames.history),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       targetsValue.maybeWhen(

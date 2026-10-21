@@ -15,6 +15,7 @@ import 'package:flutter_wasilah_app/features/target/presentation/pages/target_pa
 import 'package:flutter_wasilah_app/features/target/presentation/widgets/target_allocation_item.dart';
 import 'package:flutter_wasilah_app/l10n/app_localizations.dart';
 import 'package:flutter_wasilah_app/shared/widgets/app_primary_button.dart';
+import 'package:flutter_wasilah_app/shared/widgets/app_select_field.dart';
 
 import '../../helpers/mock_portfolio_repository.dart';
 
@@ -120,10 +121,10 @@ void main() {
 
     // Kategori dikunci saat edit: id target diturunkan dari kategori.
     expect(find.text('Kripto'), findsOneWidget);
-    final lockedDropdown = tester.widget<DropdownButton<AssetCategory>>(
-      find.byType(DropdownButton<AssetCategory>),
+    final lockedField = tester.widget<AppSelectField<AssetCategory>>(
+      find.byType(AppSelectField<AssetCategory>),
     );
-    expect(lockedDropdown.onChanged, isNull);
+    expect(lockedField.enabled, isFalse);
   });
 
   testWidgets('target form in add mode only offers categories without target', (
@@ -141,7 +142,7 @@ void main() {
     expect(find.byType(AppPrimaryButton), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Hapus target'), findsNothing);
 
-    await tester.tap(find.byType(DropdownButtonFormField<AssetCategory>));
+    await tester.tap(find.byType(AppSelectField<AssetCategory>));
     await tester.pumpAndSettle();
 
     expect(find.text('Logam Mulia'), findsOneWidget);
@@ -161,7 +162,7 @@ void main() {
 
     await tester.pumpAndSettle();
     // Master aset dikelola dari Setelan, terpisah dari tab Portofolio.
-    expect(find.text('Aset'), findsOneWidget);
+    expect(find.text('Daftar aset'), findsOneWidget);
     expect(find.text('Tentang aplikasi'), findsOneWidget);
     await tester.ensureVisible(find.text('Tentang aplikasi'));
     await tester.pumpAndSettle();
